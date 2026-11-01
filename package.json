@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Run bb threads with Claude Code.",
+  "description": "Run Claude Code alongside the built-in provider with usage telemetry for each model request.",
   "engines": {
     "bb": ">=0.48.1",
     "bbPluginSdk": ">=0.6.104",
@@ -35,11 +35,11 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.93.0",
-    "@types/node": "^22.0.0",
     "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.0.0",
     "better-sqlite3": "^12.10.0",
     "cron-parser": "^5.5.0",
-    "hono": "4.11.9",
+    "hono": "^4.13.16",
     "typescript": "^5.7.0",
     "vitest": "^4.1.1"
   },
@@ -48,5 +48,6 @@
     "@get-bb/plugin-sdk": "0.6.104",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.3.6"
-  }
+  },
+  "license": "MIT"
 }

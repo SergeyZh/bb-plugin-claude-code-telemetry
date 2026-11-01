@@ -1,20 +1,20 @@
 ---
-name: claude-code-provider
-description: "Configure or troubleshoot BB-specific Claude Code provider settings and session behavior."
+name: claude-code-telemetry
+description: "Configure or troubleshoot the standalone Claude Code Telemetry provider and request usage."
 ---
 
-# Claude Code provider
+# Claude Code Telemetry provider
 
-Read settings with `bb plugin config provider-claude-code`; change a declared key
-with `bb plugin config provider-claude-code set <key> <value>`.
+Read settings with `bb plugin config claude-code-telemetry`; change a declared key
+with `bb plugin config claude-code-telemetry set <key> <value>`.
 
 - `subagentsDisabled` defaults to `false`. Enable with
-  `bb plugin config provider-claude-code set subagentsDisabled true` to remove
+  `bb plugin config claude-code-telemetry set subagentsDisabled true` to remove
   native Agent, Task, and ListAgents tools from the model context. Changes
   restart Claude before the next turn, preserving the conversation. A deny hook
   also blocks native delegation during an active turn after disabling it.
 - `disable1MContext` defaults to `false`. Enable with
-  `bb plugin config provider-claude-code set disable1MContext true` to set
+  `bb plugin config claude-code-telemetry set disable1MContext true` to set
   `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` (`0` when off). Changes restart the
   thread's Claude process before its next turn, preserving context.
 - `chromeEnabled` defaults to `false`. It starts Claude Code with `--chrome` for
@@ -22,7 +22,7 @@ with `bb plugin config provider-claude-code set <key> <value>`.
   A change restarts the thread's Claude process before its next turn, preserving
   context.
 - `artifactsEnabled` defaults to `false`. Enable with
-  `bb plugin config provider-claude-code set artifactsEnabled true` to set
+  `bb plugin config claude-code-telemetry set artifactsEnabled true` to set
   `CLAUDE_CODE_ARTIFACT=1`, which gives threads Claude Code's `Artifact`,
   `ArtifactComments`, and `ArtifactData` tools for reading `claude.ai/artifact/`
   links and publishing pages. Claude Code withholds them from SDK sessions
@@ -72,3 +72,17 @@ Automatic context breakdowns run in a separate, non-persisted fork of the saved
 conversation. Reporting never sends prompts or control requests to the live
 Claude session. A timeout, replacement, or thread stop closes the reporter;
 the live conversation does not wait for reporting or restart because of it.
+
+This standalone provider has id `claude-code-telemetry`. The built-in
+`claude-code` provider is independent. Select Claude Code Telemetry for new
+threads; do not migrate or restart existing Claude Code threads.
+
+Usage is emitted once per main-agent message ID after its last observed block,
+when the next request arrives or the turn settles. Each standard usage event
+is preceded by `thread/extensionState/updated` with kind
+`claude-code-telemetry/usage`. Its payload records messageId, model, counts,
+source (`request` or `aggregate-remainder`), and incomplete. An aggregate
+remainder can include subagents or requests not exposed by the SDK. It is not
+an individual request. A process interruption flushes the last observed
+request with incomplete=true. Requests without a stable message ID or complete
+cache counters are represented only by the final aggregate remainder.

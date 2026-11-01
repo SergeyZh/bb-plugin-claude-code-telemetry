@@ -85,8 +85,6 @@ export function registerUsageSource(bb: BbPluginApi) {
           observedAt:
             usage.status === "ok" ? Date.now() : (previous?.observedAt ?? null),
           usage: {
-            accountEmail: null,
-            planLabel: null,
             ...usage,
             plan: metadata.plan,
             ...(usage.status === "ok"
@@ -170,7 +168,7 @@ export function registerUsageSource(bb: BbPluginApi) {
     {
       experimental_discoverable: true,
       experimental_description:
-        "Host-local usage owned by the claude-code provider plugin. Inventory reads metadata only. Independent of display plugins.",
+        "Host-local usage owned by the Claude Code Telemetry provider plugin. Inventory reads metadata only. Independent of display plugins.",
     },
   );
 }

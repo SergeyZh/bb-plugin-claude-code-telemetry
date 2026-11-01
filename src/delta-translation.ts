@@ -1,3 +1,4 @@
+import { ClaudeRequestUsage } from "./request-usage.js";
 import type { z } from "zod";
 import {
   type DeltaItemShape,
@@ -10,7 +11,6 @@ import {
   type ThreadEventPlanStep,
   type ThreadEventTokenUsageBreakdown,
   ZERO_TOKEN_USAGE,
-  addTokenUsage,
   errorEnvelopeSchema,
   extractResultText,
   jsonRpcEnvelopeSchema,
@@ -387,6 +387,7 @@ interface HeldSkillOpen {
 interface ClaudeThreadDialectState {
   mirror: ClaudeTurnMirror;
   cumulativeTokens: ThreadEventTokenUsageBreakdown;
+  requestUsage: ClaudeRequestUsage;
   promptCacheTtlMs: number | undefined;
   latestRequestContextTokens: number | undefined;
   latestProviderCheckpointId: string | undefined;
@@ -408,6 +409,7 @@ function createThreadState(): ClaudeThreadDialectState {
   return {
     mirror: { turnOpen: false, responseStarted: false, segment: 0 },
     cumulativeTokens: ZERO_TOKEN_USAGE,
+    requestUsage: new ClaudeRequestUsage(),
     promptCacheTtlMs: undefined,
     latestRequestContextTokens: undefined,
     latestProviderCheckpointId: undefined,
@@ -459,6 +461,7 @@ export function createClaudeDeltaTranslator(
     state.suppressUnacceptedTurnStart = false;
     state.mirror.turnOpen = true;
     state.mirror.segment += 1;
+    state.requestUsage.resetTurn();
     state.mirror.responseStarted = false;
     state.latestRequestContextTokens = undefined;
     state.latestProviderCheckpointId = undefined;
@@ -808,6 +811,16 @@ export function createClaudeDeltaTranslator(
     state.lastModelFallback = { ...transition, segment: state.mirror.segment };
   }
 
+  function applyRequestUsage(state: ClaudeThreadDialectState, deltas: ThreadDelta[]): ThreadDelta[] {
+    for (const delta of deltas) {
+      if (delta.kind !== "usage") continue;
+      state.cumulativeTokens = delta.total;
+      state.promptCacheTtlMs = delta.promptCacheTtlMs ?? state.promptCacheTtlMs;
+      if (state.promptCacheTtlMs !== undefined) delta.promptCacheTtlMs = state.promptCacheTtlMs;
+    }
+    return deltas;
+  }
+
   function translateAssistantMessage(
     event: unknown,
     state: ClaudeThreadDialectState,
@@ -878,6 +891,9 @@ export function createClaudeDeltaTranslator(
       state.latestProviderCheckpointId = providerCheckpointId;
     }
     if (parentToolCallId === undefined) {
+      deltas.push(...applyRequestUsage(state, state.requestUsage.observe(
+        message.message, state.cumulativeTokens, state.selectedModelContextWindow,
+      )));
       const requestContextTokens = extractClaudeRequestContextTokens(message);
       if (requestContextTokens !== null) {
         state.latestRequestContextTokens = requestContextTokens;
@@ -1105,23 +1121,14 @@ export function createClaudeDeltaTranslator(
         attach: "open",
       });
     }
+    deltas.push(...applyRequestUsage(state, state.requestUsage.flush(
+      state.cumulativeTokens, state.selectedModelContextWindow,
+    )));
     const tokenUsage = extractClaudeResultTokenUsage(message);
     if (tokenUsage !== undefined) {
-      state.cumulativeTokens = addTokenUsage(
-        state.cumulativeTokens,
-        tokenUsage.last,
-      );
-      state.promptCacheTtlMs =
-        tokenUsage.promptCacheTtlMs ?? state.promptCacheTtlMs;
-      deltas.push({
-        kind: "usage",
-        total: state.cumulativeTokens,
-        last: tokenUsage.last,
-        modelContextWindow: tokenUsage.modelContextWindow,
-        ...(state.promptCacheTtlMs === undefined
-          ? {}
-          : { promptCacheTtlMs: state.promptCacheTtlMs }),
-      });
+      deltas.push(...applyRequestUsage(state, state.requestUsage.reconcile(
+        state.cumulativeTokens, tokenUsage.last, tokenUsage.modelContextWindow, tokenUsage.promptCacheTtlMs,
+      )));
     }
 
     const pendingHardRateLimitRejection =
@@ -1376,6 +1383,9 @@ export function createClaudeDeltaTranslator(
     const state = stateFor({ threadId });
     const deltas = releaseHeldSkillOpen(state, undefined);
     if (state.mirror.turnOpen) {
+      deltas.push(...applyRequestUsage(state, state.requestUsage.flush(
+        state.cumulativeTokens, state.selectedModelContextWindow, true,
+      )));
       deltas.push(...withMirror(state, [{ kind: "session.ended" }]));
     }
     deltas.push(
