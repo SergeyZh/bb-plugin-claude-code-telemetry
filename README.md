@@ -21,6 +21,17 @@ threads keep their provider. Settings are separate (`bb plugin config
 claude-code-telemetry`); the native Claude login and CLI remain shared.
 Disabling this plugin does not disable the built-in provider.
 
+## Upstream fixes
+
+Session forks stream transcript reads and writes and run in a worker, isolating
+out-of-memory failures. Failed Bash commands retain their reported exit code.
+
+The `commandDescriptionsEnabled` setting defaults to `false`. Enable it to
+include Claude's short Bash descriptions in command events. Displaying these
+descriptions requires a BB host with Plugin SDK 0.6.117 support; older hosts,
+including the verified BB 0.48.1 / SDK 0.6.104 host, ignore the new field.
+Approval prompts and expanded command details keep the original command.
+
 ## Telemetry
 
 Each main-agent SDK message ID yields one standard

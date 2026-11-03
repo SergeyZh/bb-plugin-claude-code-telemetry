@@ -49,6 +49,13 @@ with `bb plugin config claude-code-telemetry set <key> <value>`.
   (such as `rm` on a possibly-empty variable). It applies from the thread's
   next turn without a restart. When bb runs as root, Full Access always
   approves, because Claude Code refuses `bypassPermissions` there.
+- `commandDescriptionsEnabled` defaults to `false`, so Bash command rows are
+  titled with the command. Set it to `true` to title them with Claude's short
+  description of the command instead; approval prompts and the expanded row
+  still show the command. It takes effect from each thread's next message;
+  existing rows keep their titles.
+  Displaying descriptions requires a BB host with SDK 0.6.117 support. Older
+  hosts ignore the description field; command execution is unaffected.
 - bb passes only `BB_CLAUDE_CODE_EXECUTABLE` and `CLAUDE_CODE_OAUTH_TOKEN` to
   the CLI. Mint the token with `claude setup-token` for machines with no
   interactive login.
