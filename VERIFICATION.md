@@ -70,3 +70,28 @@ Used Claude Haiku 4.5 through the installed provider in BB, not the SDK directly
 Prompts, persisted event logs, and the checked summary are saved in the parent
 BB thread's storage under `live-provider-check/`. Command-description display
 remains unavailable on the old host as documented above.
+
+## Upstream sync, 2026-11-05
+
+Checked the official provider history after `51d8ddc` and imported all three
+new provider commits through `6d5597d`:
+
+- `d060de8`: report Max 20x as Ultra and normalize plan metadata.
+- `5c5d3e5`: settle background tasks when the Claude SDK stream ends, including
+  when an SDK process exits after the foreground turn has completed.
+- `6d5597d`: update provider dependencies and their lockfile. Installed versions
+  include Claude Agent SDK 0.3.318, MCP SDK 1.32.2, and Zod 4.6.7.
+
+The provider changes from the background-task commit are included. Its core
+runtime and daemon changes require updating BB itself. The standalone SDK pin
+remains 0.6.104 for compatibility with the installed BB 0.48.1 host.
+
+- Typecheck: passed.
+- Automated suite: 438 passed, 1 opt-in live SDK test skipped. This includes
+  the upstream SDK-stream termination regression and a Max 20x/Ultra check.
+- Request telemetry regressions: passed; collector and its dedicated tests
+  are unchanged by the sync.
+- Server and host artifacts: built successfully.
+- npm install audit: zero reported vulnerabilities.
+
+This sync did not reload the installed plugin or make live Claude requests.

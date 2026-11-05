@@ -23,6 +23,25 @@ function missingInstallationStatus() {
 }
 
 describe("Claude Code provider maintenance", () => {
+  it("reports the Max 20x tier as Ultra without a multiplier", () => {
+    expect(
+      __testing.normalizeUsage(
+        { five_hour: { utilization: 12, resets_at: null } },
+        {
+          accessToken: "token",
+          expiresAt: null,
+          subscriptionType: "max",
+          rateLimitTier: "default_claude_max_20x",
+        },
+        null,
+      ),
+    ).toMatchObject({
+      status: "ok",
+      planLabel: "Ultra",
+      plan: { id: "ultra", multiplier: null },
+    });
+  });
+
   it("normalizes aggregate and unique model-scoped usage windows", () => {
     const credentials = {
       accessToken: "token",
@@ -56,7 +75,8 @@ describe("Claude Code provider maintenance", () => {
     ).toMatchObject({
       status: "ok",
       accountEmail: "claude@example.com",
-      planLabel: "Max (5x)",
+      planLabel: "Max",
+      plan: { id: "max", multiplier: null },
       windows: [
         { label: "Current session", usedPercent: 12 },
         { label: "Weekly limit", usedPercent: 55 },

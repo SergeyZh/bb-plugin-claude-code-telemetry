@@ -25,6 +25,8 @@ Disabling this plugin does not disable the built-in provider.
 
 Session forks stream transcript reads and writes and run in a worker, isolating
 out-of-memory failures. Failed Bash commands retain their reported exit code.
+Background tasks settle when the Claude SDK stream ends. Usage and account
+metadata report the Max 20x tier as Ultra.
 
 The `commandDescriptionsEnabled` setting defaults to `false`. Enable it to
 include Claude's short Bash descriptions in command events. Displaying these
