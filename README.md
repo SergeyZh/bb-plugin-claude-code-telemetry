@@ -83,7 +83,7 @@ upstream copies and verifies that the resulting source files match this fork.
   selector requires Claude Code 2.1.242 or later. Displaying imported Bash
   descriptions requires BB support for SDK 0.6.117's description field; BB
   0.48.1 / SDK 0.6.104 ignores that field.
-- **Upstream maintenance is manual.** This is an experimental standalone fork.
+- **Upstream maintenance is manual.** This is a standalone fork.
   Updating the built-in provider does not update this plugin. Fixes to BB's
   core or daemon require updating BB itself. The tested versions and live-check
   scope are recorded in [VERIFICATION.md](VERIFICATION.md); provenance and the

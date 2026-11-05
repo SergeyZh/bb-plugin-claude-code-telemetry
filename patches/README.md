@@ -2,7 +2,7 @@
 
 Base: [get-bb/bb@6d5597d2851d4cef6d2fa22301d828daa6fbf319](https://github.com/get-bb/bb/tree/6d5597d2851d4cef6d2fa22301d828daa6fbf319/plugins/provider-claude-code).
 Target: this fork's source snapshot, version `0.1.0-telemetry.1`.
-Source snapshot SHA-256: `99acb861e5db1394121ba61089b17e7de76386cd8f2ec1a5d5e1ca1baef8c363`.
+Source snapshot SHA-256: `a149a832e4f4a93cdeedb5c0b49e37fda26d7ec8af9c0ff5e8b38ce358f89f28`.
 
 - [telemetry-runtime.patch](telemetry-runtime.patch): production TypeScript,
   including request telemetry, cache-write lifetime breakdown, per-session TTL

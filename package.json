@@ -10,7 +10,7 @@
     "node": ">=22"
   },
   "bb": {
-    "name": "Claude Code Telemetry [Experimental]",
+    "name": "Claude Code Telemetry",
     "description": "Run Claude Code alongside the built-in provider with usage telemetry for each model request.",
     "branding": {
       "icon": "./icons/claude-code.svg"

@@ -118,7 +118,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..864a8c97cc3a29342f632a382e2d6807
 +subject to the account's plan and billing.
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..522e1be414048bdd6319379693897e94430130a7
+index 0000000000000000000000000000000000000000..3debb9a57e554288fea584f4c8d5df604a0f499a
 --- /dev/null
 +++ b/README.md
 @@ -0,0 +1,201 @@
@@ -207,7 +207,7 @@ index 0000000000000000000000000000000000000000..522e1be414048bdd6319379693897e94
 +  selector requires Claude Code 2.1.242 or later. Displaying imported Bash
 +  descriptions requires BB support for SDK 0.6.117's description field; BB
 +  0.48.1 / SDK 0.6.104 ignores that field.
-+- **Upstream maintenance is manual.** This is an experimental standalone fork.
++- **Upstream maintenance is manual.** This is a standalone fork.
 +  Updating the built-in provider does not update this plugin. Fixes to BB's
 +  core or daemon require updating BB itself. The tested versions and live-check
 +  scope are recorded in [VERIFICATION.md](VERIFICATION.md); provenance and the
@@ -3775,7 +3775,7 @@ index 0000000000000000000000000000000000000000..421adbf1b81d01039bfd619d39dc2e40
 +  }
 +}
 diff --git a/package.json b/package.json
-index ed310724e73bd06ba8af9bab5d84a040ff4ed252..53f284027e18e409e73f765a9d188050b4ad7a4e 100644
+index ed310724e73bd06ba8af9bab5d84a040ff4ed252..4963a0d288a1289e62e67dd4add43df147305ce4 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,16 +1,17 @@
@@ -3798,7 +3798,7 @@ index ed310724e73bd06ba8af9bab5d84a040ff4ed252..53f284027e18e409e73f765a9d188050
    "bb": {
 -    "name": "Claude Code provider",
 -    "description": "Run bb threads with Claude Code.",
-+    "name": "Claude Code Telemetry [Experimental]",
++    "name": "Claude Code Telemetry",
 +    "description": "Run Claude Code alongside the built-in provider with usage telemetry for each model request.",
      "branding": {
        "icon": "./icons/claude-code.svg"
