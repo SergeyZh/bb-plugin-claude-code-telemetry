@@ -8,6 +8,19 @@ description: "Configure or troubleshoot the standalone Claude Code Telemetry pro
 Read settings with `bb plugin config claude-code-telemetry`; change a declared key
 with `bb plugin config claude-code-telemetry set <key> <value>`.
 
+Cache lifetime is a per-thread model option, not a global plugin setting.
+In the new-thread model picker, choose Prompt cache TTL:
+Automatic (`auto`, the default), 5 minutes (`5m`), or 1 hour (`1h`). CLI:
+`bb thread spawn --provider claude-code-telemetry --option promptCacheTtl=1h --prompt "Task"`.
+SDK callers use `sessionOptions: { promptCacheTtl: "1h" }`. Existing threads can
+use `bb thread options <id> --set promptCacheTtl=5m`; changes restart Claude
+before the next turn while preserving the conversation. Resume and fork keep
+the selected option. Automatic removes this plugin's session override and
+respects Claude Code's settings/defaults. This controls the main conversation;
+subagents retain their separate policy. Requires Claude Code 2.1.242 or later.
+TTL environment overrides retain Claude Code's documented precedence. The
+selection does not fabricate observed TTL or write-lifetime telemetry.
+
 - `subagentsDisabled` defaults to `false`. Enable with
   `bb plugin config claude-code-telemetry set subagentsDisabled true` to remove
   native Agent, Task, and ListAgents tools from the model context. Changes

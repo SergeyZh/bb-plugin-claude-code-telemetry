@@ -6,6 +6,18 @@ MIT license, Copyright (c) 2026 Michael Yong. See LICENSE.
 
 This standalone fork registers `claude-code-telemetry`; it never replaces `claude-code`.
 
+Review the [source comparison patches](patches/README.md) for production-only
+and full-source diffs against the latest imported upstream revision, including
+instructions to reproduce and verify them.
+
+## Versioning
+
+The package version follows `<upstream-provider-version>-telemetry.<revision>`.
+The upstream provider package is currently `0.1.0`, so the first numbered fork
+revision is `0.1.0-telemetry.1`; subsequent revisions use `telemetry.2`, and so on.
+This is valid SemVer, unlike a four-component version such as `0.1.0.1`.
+The base refers to the BB provider package, not the Claude Code CLI or Agent SDK.
+
 ## Imported upstream fixes
 
 Synced the provider changes through

@@ -1,0 +1,536 @@
+diff --git a/server.ts b/server.ts
+index 1fe495b15e96d4abfc124f7c095df814a50f8d7e..5573e6f567ab9e4d948ce23e06c33ad6dbcf0b24 100644
+--- a/server.ts
++++ b/server.ts
+@@ -1,3 +1,4 @@
++import { usageMetadataSchema } from "./src/request-usage.js";
+ import { registerUsageSource } from "./src/usage-source.js";
+ import type { BbPluginApi } from "@get-bb/plugin-sdk";
+ import { CLAUDE_NATIVE_ROOTS_DECLARATION } from "./src/native-roots.js";
+@@ -70,8 +71,8 @@ export default function plugin(bb: BbPluginApi) {
+   });
+ 
+   bb.providers.register({
+-    id: "claude-code",
+-    displayName: "Claude Code",
++    id: "claude-code-telemetry",
++    displayName: "Claude Code Telemetry",
+     icon: "./icons/claude-code.svg",
+     strings: {
+       signInHint: "Run `claude` on the machine to sign in.",
+@@ -84,6 +85,7 @@ export default function plugin(bb: BbPluginApi) {
+     },
+     ...CLAUDE_NATIVE_ROOTS_DECLARATION,
+     maintenance: { health: true, usage: true, installation: true },
++    extensionKinds: { usage: { state: usageMetadataSchema } },
+     capabilities: {
+       supportsServiceTier: true,
+       supportsNativeUserQuestion: true,
+diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
+index fbb41e3a7a9f62dcf0434605afb7d740bc20b4c9..5a3f422b1a66f5d97399160ab4f97665425b3209 100644
+--- a/src/bridge/bridge.ts
++++ b/src/bridge/bridge.ts
+@@ -445,6 +445,26 @@ function resolvePendingSessionWork(
+   resolvePendingInteractiveRequests(threadSession, message);
+ }
+ 
++function applyPromptCacheTtlSetting(
++  attachment: ThreadAttachment,
++  ttl: TurnStartParams["promptCacheTtl"],
++): void {
++  const construction = attachment.sessionConstructionConfig.sessionOptions;
++  if (ttl === undefined || construction.promptCacheTtl === ttl) return;
++  construction.promptCacheTtl = ttl;
++  const settings = typeof attachment.sessionOptions.settings === "object"
++    ? { ...attachment.sessionOptions.settings } : {};
++  if (ttl === "auto") delete settings.promptCacheTtl;
++  else settings.promptCacheTtl = ttl;
++  attachment.sessionOptions.settings = settings;
++  if (attachment.residentSession) {
++    attachment.residentSession.restartBeforeNextTurn = {
++      reason: "Claude Code prompt cache TTL changed",
++      showRuntimeNote: false,
++    };
++  }
++}
++
+ function applyChromeSetting(
+   attachment: ThreadAttachment,
+   enabled: boolean | undefined,
+@@ -1072,6 +1092,7 @@ function toSessionConstructionConfig(
+       permissionScope: params.permissionScope,
+       plugins: params.plugins,
+       sandboxEnabled: params.sandboxEnabled,
++      promptCacheTtl: params.promptCacheTtl,
+     },
+   };
+ }
+@@ -2588,6 +2609,7 @@ async function runTurnInput(
+       applyTurnEnvironment(attachment, params.config);
+     }
+     applyChromeSetting(attachment, params.chromeEnabled);
++    applyPromptCacheTtlSetting(attachment, params.promptCacheTtl);
+     applySubagentSetting(attachment, params.providerSubagentsEnabled);
+     applyContextWindowSetting(attachment, params.disable1MContext);
+     applyArtifactSetting(attachment, params.artifactsEnabled);
+diff --git a/src/bridge/commands.ts b/src/bridge/commands.ts
+index ea8b96305fbd0c508f00f39cb4481a7b5773d1ca..b7f190988dca7e8ea570f1a7c15f4003a0b29781 100644
+--- a/src/bridge/commands.ts
++++ b/src/bridge/commands.ts
+@@ -20,6 +20,7 @@ import {
+   providerInstallationStatusParamsSchema,
+ } from "@get-bb/plugin-sdk/provider-bridge";
+ import { z } from "zod";
++import { promptCacheTtlSchema } from "../prompt-cache.js";
+ import { claudePermissionModeSchema } from "../interactive-contract.js";
+ 
+ const bridgeInstructionModeSchema = z.enum(instructionModeValues);
+@@ -40,6 +41,7 @@ const bridgeClaudePluginsSchema = z
+   .optional();
+ 
+ export const claudeThreadStartParamsSchema = z.object({
++  promptCacheTtl: promptCacheTtlSchema.default("auto"),
+   threadId: z.string(),
+   cwd: z.string(),
+   baseInstructions: z.string(),
+@@ -80,6 +82,7 @@ export const claudeThreadForkParamsSchema =
+   });
+ 
+ export const claudeTurnStartParamsSchema = z.object({
++  promptCacheTtl: promptCacheTtlSchema.optional(),
+   threadId: z.string(),
+   providerThreadId: z.string().nullable(),
+   input: z.array(z.unknown()),
+diff --git a/src/bridge/session-options.ts b/src/bridge/session-options.ts
+index 9c2ab273dadfa77563a3f9b1d3447c252087066e..cdd85dba88cc8082a4556e0c6abb1c8d2a12a207 100644
+--- a/src/bridge/session-options.ts
++++ b/src/bridge/session-options.ts
+@@ -9,6 +9,7 @@ import { accessSync, constants, statSync } from "node:fs";
+ import { join } from "node:path";
+ import type { Options, Settings } from "@anthropic-ai/claude-agent-sdk";
+ import type { ClaudePermissionMode } from "../interactive-contract.js";
++import type { PromptCacheTtl } from "../prompt-cache.js";
+ import type {
+   ClaudeMutableFlagSettings,
+   ClaudeSdkReasoningEffort,
+@@ -16,6 +17,7 @@ import type {
+ } from "./sdk-session.js";
+ 
+ export interface BuildSessionOptionsArgs {
++  promptCacheTtl?: PromptCacheTtl;
+   additionalWorkspaceWriteRoots?: readonly string[];
+   baseInstructions?: string;
+   cwd: string;
+@@ -85,6 +87,8 @@ function buildFlagSettings(params: BuildSessionOptionsArgs): Settings {
+     enableWorkflows: params.workflowsEnabled,
+     ultracode: params.reasoningLevel === "ultracode",
+     fastMode: params.serviceTier === "fast",
++    ...(params.promptCacheTtl && params.promptCacheTtl !== "auto"
++      ? { promptCacheTtl: params.promptCacheTtl } : {}),
+   };
+ }
+ 
+diff --git a/src/delta-translation.ts b/src/delta-translation.ts
+index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22f5559815 100644
+--- a/src/delta-translation.ts
++++ b/src/delta-translation.ts
+@@ -1,3 +1,4 @@
++import { ClaudeRequestUsage } from "./request-usage.js";
+ import type { z } from "zod";
+ import {
+   type DeltaItemShape,
+@@ -10,7 +11,6 @@ import {
+   type ThreadEventPlanStep,
+   type ThreadEventTokenUsageBreakdown,
+   ZERO_TOKEN_USAGE,
+-  addTokenUsage,
+   errorEnvelopeSchema,
+   extractResultText,
+   jsonRpcEnvelopeSchema,
+@@ -313,7 +313,7 @@ function normalizeClaudeRateLimits(
+   const providerKey = info.rateLimitType ?? null;
+ 
+   return {
+-    providerId: "claude-code",
++    providerId: "claude-code-telemetry",
+     status,
+     kind:
+       providerKey === "overage"
+@@ -388,6 +388,7 @@ interface HeldSkillOpen {
+ interface ClaudeThreadDialectState {
+   mirror: ClaudeTurnMirror;
+   cumulativeTokens: ThreadEventTokenUsageBreakdown;
++  requestUsage: ClaudeRequestUsage;
+   promptCacheTtlMs: number | undefined;
+   latestRequestContextTokens: number | undefined;
+   latestProviderCheckpointId: string | undefined;
+@@ -409,6 +410,7 @@ function createThreadState(): ClaudeThreadDialectState {
+   return {
+     mirror: { turnOpen: false, responseStarted: false, segment: 0 },
+     cumulativeTokens: ZERO_TOKEN_USAGE,
++    requestUsage: new ClaudeRequestUsage(),
+     promptCacheTtlMs: undefined,
+     latestRequestContextTokens: undefined,
+     latestProviderCheckpointId: undefined,
+@@ -462,6 +464,7 @@ export function createClaudeDeltaTranslator(
+     state.suppressUnacceptedTurnStart = false;
+     state.mirror.turnOpen = true;
+     state.mirror.segment += 1;
++    state.requestUsage.resetTurn();
+     state.mirror.responseStarted = false;
+     state.latestRequestContextTokens = undefined;
+     state.latestProviderCheckpointId = undefined;
+@@ -811,6 +814,16 @@ export function createClaudeDeltaTranslator(
+     state.lastModelFallback = { ...transition, segment: state.mirror.segment };
+   }
+ 
++  function applyRequestUsage(state: ClaudeThreadDialectState, deltas: ThreadDelta[]): ThreadDelta[] {
++    for (const delta of deltas) {
++      if (delta.kind !== "usage") continue;
++      state.cumulativeTokens = delta.total;
++      state.promptCacheTtlMs = delta.promptCacheTtlMs ?? state.promptCacheTtlMs;
++      if (state.promptCacheTtlMs !== undefined) delta.promptCacheTtlMs = state.promptCacheTtlMs;
++    }
++    return deltas;
++  }
++
+   function translateAssistantMessage(
+     event: unknown,
+     state: ClaudeThreadDialectState,
+@@ -881,6 +894,9 @@ export function createClaudeDeltaTranslator(
+       state.latestProviderCheckpointId = providerCheckpointId;
+     }
+     if (parentToolCallId === undefined) {
++      deltas.push(...applyRequestUsage(state, state.requestUsage.observe(
++        message.message, state.cumulativeTokens, state.selectedModelContextWindow,
++      )));
+       const requestContextTokens = extractClaudeRequestContextTokens(message);
+       if (requestContextTokens !== null) {
+         state.latestRequestContextTokens = requestContextTokens;
+@@ -1113,23 +1129,14 @@ export function createClaudeDeltaTranslator(
+         attach: "open",
+       });
+     }
++    deltas.push(...applyRequestUsage(state, state.requestUsage.flush(
++      state.cumulativeTokens, state.selectedModelContextWindow,
++    )));
+     const tokenUsage = extractClaudeResultTokenUsage(message);
+     if (tokenUsage !== undefined) {
+-      state.cumulativeTokens = addTokenUsage(
+-        state.cumulativeTokens,
+-        tokenUsage.last,
+-      );
+-      state.promptCacheTtlMs =
+-        tokenUsage.promptCacheTtlMs ?? state.promptCacheTtlMs;
+-      deltas.push({
+-        kind: "usage",
+-        total: state.cumulativeTokens,
+-        last: tokenUsage.last,
+-        modelContextWindow: tokenUsage.modelContextWindow,
+-        ...(state.promptCacheTtlMs === undefined
+-          ? {}
+-          : { promptCacheTtlMs: state.promptCacheTtlMs }),
+-      });
++      deltas.push(...applyRequestUsage(state, state.requestUsage.reconcile(
++        state.cumulativeTokens, tokenUsage.last, tokenUsage.modelContextWindow, tokenUsage.promptCacheTtlMs, message.usage,
++      )));
+     }
+ 
+     const pendingHardRateLimitRejection =
+@@ -1384,6 +1391,9 @@ export function createClaudeDeltaTranslator(
+     const state = stateFor({ threadId });
+     const deltas = releaseHeldSkillOpen(state, undefined);
+     if (state.mirror.turnOpen) {
++      deltas.push(...applyRequestUsage(state, state.requestUsage.flush(
++        state.cumulativeTokens, state.selectedModelContextWindow, true,
++      )));
+       deltas.push(...withMirror(state, [{ kind: "session.ended" }]));
+     }
+     deltas.push(
+diff --git a/src/model-list.ts b/src/model-list.ts
+index d879dbc968b9b53ca967cafabdf27a5ef1aeecdc..46bebc44bf665b0febc6f4da309dcd434f405106 100644
+--- a/src/model-list.ts
++++ b/src/model-list.ts
+@@ -9,6 +9,7 @@ import {
+   type ModelReasoningEffort,
+ } from "@get-bb/plugin-sdk/provider-bridge";
+ import type { ModelInfo } from "@anthropic-ai/claude-agent-sdk";
++import { promptCacheTtlOption } from "./prompt-cache.js";
+ 
+ const CLAUDE_MODEL_ID_PATTERN =
+   /^claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?:-\d{8})?(\[1m\])?$/;
+@@ -68,6 +69,7 @@ function buildModel(
+     supportedReasoningEfforts,
+     defaultReasoningEffort,
+     isDefault: false,
++    sessionOptions: [promptCacheTtlOption()],
+   };
+ }
+ 
+diff --git a/src/prompt-cache.ts b/src/prompt-cache.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f39ab6e52f0af7cac82b4d6fb4029388cff5b015
+--- /dev/null
++++ b/src/prompt-cache.ts
+@@ -0,0 +1,21 @@
++import type { AvailableModel } from "@get-bb/plugin-sdk/provider-bridge";
++import { z } from "zod";
++
++export const PROMPT_CACHE_TTL_OPTION_ID = "promptCacheTtl";
++export const promptCacheTtlSchema = z.enum(["auto", "5m", "1h"]);
++export type PromptCacheTtl = z.infer<typeof promptCacheTtlSchema>;
++
++export function promptCacheTtlOption(): NonNullable<AvailableModel["sessionOptions"]>[number] {
++  return {
++    id: PROMPT_CACHE_TTL_OPTION_ID,
++    type: "select",
++    label: "Prompt cache TTL",
++    description: "Cache lifetime for this conversation. One-hour cache writes cost more than five-minute writes.",
++    value: "auto",
++    values: [
++      { id: "auto", label: "Automatic", description: "Use Claude Code's settings and defaults." },
++      { id: "5m", label: "5 minutes" },
++      { id: "1h", label: "1 hour" },
++    ],
++  };
++}
+diff --git a/src/request-usage.ts b/src/request-usage.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..de3f7a73c3bde5938a9089c438d8060a373af4ed
+--- /dev/null
++++ b/src/request-usage.ts
+@@ -0,0 +1,136 @@
++import { z } from 'zod';
++import {
++  addTokenUsage, ZERO_TOKEN_USAGE,
++  type ThreadDelta, type ThreadEventTokenUsageBreakdown,
++} from '@get-bb/plugin-sdk/provider-bridge';
++
++const tokens = z.number().int().nonnegative().safe();
++const cacheWriteBreakdownSchema = z.object({
++  fiveMinuteTokens: tokens.nullable(),
++  oneHourTokens: tokens.nullable(),
++  unknownTokens: tokens,
++});
++type CacheWriteBreakdown = z.infer<typeof cacheWriteBreakdownSchema>;
++const cacheCreationSchema = z.object({
++  cache_creation: z.object({
++    ephemeral_5m_input_tokens: tokens.optional(),
++    ephemeral_1h_input_tokens: tokens.optional(),
++  }).nullish(),
++});
++
++export const usageMetadataSchema = z.object({
++  source: z.enum(['request', 'aggregate-remainder']), messageId: z.string().nullable(),
++  model: z.string().nullable(), incomplete: z.boolean(),
++  counts: z.record(z.string(), z.number().nonnegative()),
++  cacheWriteBreakdown: cacheWriteBreakdownSchema.nullable().optional(),
++});
++
++function normalizeCacheWrites(write: number, five: number | null, hour: number | null): CacheWriteBreakdown {
++  if (write === 0) return { fiveMinuteTokens: 0, oneHourTokens: 0, unknownTokens: 0 };
++  const known = (five ?? 0) + (hour ?? 0);
++  return known <= write
++    ? { fiveMinuteTokens: five, oneHourTokens: hour, unknownTokens: write - known }
++    : { fiveMinuteTokens: null, oneHourTokens: null, unknownTokens: write };
++}
++
++function cacheWrites(usage: unknown, write: number | undefined, previous?: CacheWriteBreakdown): CacheWriteBreakdown | null {
++  if (write === undefined) return null;
++  const parsed = cacheCreationSchema.safeParse(usage);
++  const creation = parsed.success ? parsed.data.cache_creation : undefined;
++  const merge = (value: number | undefined, prior: number | null | undefined) =>
++    value === undefined ? prior ?? null : Math.max(value, prior ?? 0);
++  return normalizeCacheWrites(write,
++    merge(creation?.ephemeral_5m_input_tokens, previous?.fiveMinuteTokens),
++    merge(creation?.ephemeral_1h_input_tokens, previous?.oneHourTokens));
++}
++
++const assistantUsage = z.object({
++  id: z.string().min(1), model: z.string().optional(),
++  usage: z.object({
++    input_tokens: tokens, output_tokens: tokens,
++    cache_read_input_tokens: tokens, cache_creation_input_tokens: tokens,
++    cache_creation: z.object({ ephemeral_1h_input_tokens: tokens.optional(), ephemeral_5m_input_tokens: tokens.optional() }).nullish(),
++  }),
++});
++const fields = ['inputTokens', 'outputTokens', 'cachedInputTokens', 'cacheReadInputTokens', 'cacheWriteInputTokens', 'reasoningOutputTokens', 'totalTokens'] as const;
++type Breakdown = ThreadEventTokenUsageBreakdown;
++
++export class ClaudeRequestUsage {
++  private seen = new Set<string>();
++  private pending: { id: string; model?: string; counts: Breakdown; ttl?: number; cacheWrites: CacheWriteBreakdown } | undefined;
++  private turn: Breakdown = ZERO_TOKEN_USAGE;
++  private turnCacheWrites = { fiveMinuteTokens: 0, oneHourTokens: 0, unknownTokens: 0 };
++
++  resetTurn() {
++    this.seen.clear();
++    this.pending = undefined;
++    this.turn = ZERO_TOKEN_USAGE;
++    this.turnCacheWrites = { fiveMinuteTokens: 0, oneHourTokens: 0, unknownTokens: 0 };
++  }
++
++  observe(message: unknown, total: Breakdown, contextWindow: number | null): ThreadDelta[] {
++    const parsed = assistantUsage.safeParse(message);
++    if (!parsed.success || this.seen.has(parsed.data.id)) return [];
++    const { id, model, usage } = parsed.data;
++    if (model === '<synthetic>') return [];
++    const deltas = this.pending && this.pending.id !== id ? this.flush(total, contextWindow) : [];
++    const read = usage.cache_read_input_tokens;
++    const write = usage.cache_creation_input_tokens;
++    const counts: Breakdown = {
++      inputTokens: usage.input_tokens, outputTokens: usage.output_tokens,
++      cachedInputTokens: read + write, cacheReadInputTokens: read, cacheWriteInputTokens: write,
++      totalTokens: usage.input_tokens + usage.output_tokens + read + write, reasoningOutputTokens: 0,
++    };
++    if (this.pending?.id === id) {
++      for (const field of fields) counts[field] = Math.max(counts[field] ?? 0, this.pending.counts[field] ?? 0);
++    }
++    const ttl = (usage.cache_creation?.ephemeral_1h_input_tokens ?? 0) > 0 ? 3_600_000
++      : (usage.cache_creation?.ephemeral_5m_input_tokens ?? 0) > 0 ? 300_000 : this.pending?.ttl;
++    const breakdown = cacheWrites(usage, counts.cacheWriteInputTokens, this.pending?.id === id ? this.pending.cacheWrites : undefined)
++      ?? normalizeCacheWrites(write, null, null);
++    this.pending = { id, model, counts, ttl, cacheWrites: breakdown };
++    return deltas;
++  }
++
++  flush(total: Breakdown, contextWindow: number | null, incomplete = false): ThreadDelta[] {
++    const pending = this.pending;
++    if (!pending) return [];
++    this.pending = undefined;
++    this.seen.add(pending.id);
++    this.turn = addTokenUsage(this.turn, pending.counts);
++    this.turnCacheWrites.fiveMinuteTokens += pending.cacheWrites.fiveMinuteTokens ?? 0;
++    this.turnCacheWrites.oneHourTokens += pending.cacheWrites.oneHourTokens ?? 0;
++    this.turnCacheWrites.unknownTokens += pending.cacheWrites.unknownTokens;
++    return this.report(total, pending.counts, contextWindow, {
++      source: 'request', messageId: pending.id, model: pending.model ?? null, incomplete,
++    }, pending.ttl, pending.cacheWrites);
++  }
++
++  reconcile(total: Breakdown, aggregate: Breakdown, contextWindow: number | null, ttl?: number, aggregateUsage?: unknown): ThreadDelta[] {
++    const residual = { ...aggregate };
++    for (const field of fields) {
++      const reported = aggregate[field];
++      if (reported !== undefined) residual[field] = Math.max(0, reported - (this.turn[field] ?? 0));
++    }
++    residual.cachedInputTokens = Math.max(residual.cachedInputTokens, (residual.cacheReadInputTokens ?? 0) + (residual.cacheWriteInputTokens ?? 0));
++    residual.totalTokens = residual.inputTokens + residual.outputTokens + residual.cachedInputTokens;
++    if (this.seen.size > 0 && !fields.some(field => (residual[field] ?? 0) > 0)) return [];
++    const aggregateWrites = cacheWrites(aggregateUsage, aggregate.cacheWriteInputTokens);
++    let remainderWrites = cacheWrites(undefined, residual.cacheWriteInputTokens);
++    if (aggregateWrites && remainderWrites && residual.cacheWriteInputTokens !== undefined && this.turnCacheWrites.unknownTokens === 0) {
++      const five = aggregateWrites.fiveMinuteTokens === null ? null : aggregateWrites.fiveMinuteTokens - this.turnCacheWrites.fiveMinuteTokens;
++      const hour = aggregateWrites.oneHourTokens === null ? null : aggregateWrites.oneHourTokens - this.turnCacheWrites.oneHourTokens;
++      if ((five === null || five >= 0) && (hour === null || hour >= 0))
++        remainderWrites = normalizeCacheWrites(residual.cacheWriteInputTokens, five, hour);
++    }
++    return this.report(total, residual, contextWindow, { source: 'aggregate-remainder', messageId: null, model: null, incomplete: true }, ttl, remainderWrites);
++  }
++
++  private report(total: Breakdown, last: Breakdown, modelContextWindow: number | null, metadata: Record<string, string | boolean | null>, ttl?: number, cacheWriteBreakdown: CacheWriteBreakdown | null = null): ThreadDelta[] {
++    return [
++      { kind: 'extension.state', extensionKind: 'claude-code-telemetry/usage', payload: { ...metadata, counts: last, cacheWriteBreakdown } },
++      { kind: 'usage', total: addTokenUsage(total, last), last, modelContextWindow,
++        ...(ttl === undefined ? {} : { promptCacheTtlMs: ttl }) },
++    ];
++  }
++}
+diff --git a/src/session-params.ts b/src/session-params.ts
+index cbf39cac6c1a47314e7821bc38ae4228434b8945..3774e3e69d2fb6064d403521a347d18503f2de8e 100644
+--- a/src/session-params.ts
++++ b/src/session-params.ts
+@@ -10,6 +10,7 @@ import {
+   buildShellEnvOverrides,
+ } from "@get-bb/plugin-sdk/provider-bridge";
+ import { z } from "zod";
++import { PROMPT_CACHE_TTL_OPTION_ID, promptCacheTtlSchema, type PromptCacheTtl } from "./prompt-cache.js";
+ import {
+   toClaudePermissionMode,
+   type ClaudePermissionMode,
+@@ -67,6 +68,7 @@ function buildClaudeCodeConfig(
+ }
+ 
+ export type ClaudeSessionExecutionOptions = RuntimePermissionPolicy & {
++  promptCacheTtl?: PromptCacheTtl;
+   model?: string | undefined;
+   reasoningLevel?: ReasoningLevel | undefined;
+   serviceTier?: ServiceTier | undefined;
+@@ -144,6 +146,7 @@ function buildInternalSessionParams(
+     sandboxEnabled: args.options.sandboxEnabled,
+     fullAccessApprovalsEnabled: args.options.fullAccessApprovalsEnabled,
+     commandDescriptionsEnabled: args.options.commandDescriptionsEnabled,
++    promptCacheTtl: args.options.promptCacheTtl ?? "auto",
+     memoryEnabled: args.options.memoryEnabled,
+     providerSubagentsEnabled: args.options.providerSubagentsEnabled,
+     ...(dynamicTools && dynamicTools.length > 0 ? { dynamicTools } : {}),
+@@ -167,6 +170,7 @@ const claudeProviderOptionsSchema = z
+   .passthrough();
+ 
+ type ClaudeCanonicalExecutionOptions = RuntimePermissionPolicy & {
++  sessionOptions?: Record<string, string | boolean>;
+   model?: string | undefined;
+   reasoningLevel?: ReasoningLevel | undefined;
+   serviceTier?: ServiceTier | undefined;
+@@ -200,6 +204,7 @@ export function buildClaudeSessionParams(
+     threadId: args.threadId,
+     options: {
+       ...args.options,
++      promptCacheTtl: promptCacheTtlSchema.parse(args.options.sessionOptions?.[PROMPT_CACHE_TTL_OPTION_ID] ?? "auto"),
+       skillRoots: args.skillRoots,
+       claudeCodePermissionMode: providerOptions.claudeCodePermissionMode,
+       workflowsEnabled: providerOptions.workflowsEnabled ?? false,
+@@ -255,6 +260,9 @@ export function buildClaudeTurnParams(
+       input: args.input,
+       claudeCodePermissionMode: providerOptions.claudeCodePermissionMode,
+     }),
++    ...(args.options.sessionOptions?.[PROMPT_CACHE_TTL_OPTION_ID] === undefined ? {} : {
++      promptCacheTtl: promptCacheTtlSchema.parse(args.options.sessionOptions[PROMPT_CACHE_TTL_OPTION_ID]),
++    }),
+     ...(args.options.model ? { model: args.options.model } : {}),
+     ...(args.options.reasoningLevel
+       ? { reasoningLevel: args.options.reasoningLevel }
+diff --git a/src/usage-source.ts b/src/usage-source.ts
+index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc054696cc3 100644
+--- a/src/usage-source.ts
++++ b/src/usage-source.ts
+@@ -58,8 +58,8 @@ export function registerUsageSource(bb: BbPluginApi) {
+       !providers.some(
+         (provider) =>
+           provider.id === providerId &&
+-          provider.pluginId === "provider-claude-code" &&
+-          provider.id === "claude-code",
++          provider.pluginId === "claude-code-telemetry" &&
++          provider.id === "claude-code-telemetry",
+       )
+     )
+       throw new Error("Usage resource no longer exists.");
+@@ -85,8 +85,6 @@ export function registerUsageSource(bb: BbPluginApi) {
+           observedAt:
+             usage.status === "ok" ? Date.now() : (previous?.observedAt ?? null),
+           usage: {
+-            accountEmail: null,
+-            planLabel: null,
+             ...usage,
+             plan: metadata.plan,
+             ...(usage.status === "ok"
+@@ -140,8 +138,8 @@ export function registerUsageSource(bb: BbPluginApi) {
+               return providers
+                 .filter(
+                   (provider) =>
+-                    provider.pluginId === "provider-claude-code" &&
+-                    provider.id === "claude-code",
++                    provider.pluginId === "claude-code-telemetry" &&
++                    provider.id === "claude-code-telemetry",
+                 )
+                 .map((provider) => {
+                   const id = JSON.stringify([host.id, provider.id]);
+@@ -170,7 +168,7 @@ export function registerUsageSource(bb: BbPluginApi) {
+     {
+       experimental_discoverable: true,
+       experimental_description:
+-        "Host-local usage owned by the claude-code provider plugin. Inventory reads metadata only. Independent of display plugins.",
++        "Host-local usage owned by the Claude Code Telemetry provider plugin. Inventory reads metadata only. Independent of display plugins.",
+     },
+   );
+ }

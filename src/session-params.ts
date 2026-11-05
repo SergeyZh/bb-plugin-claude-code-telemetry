@@ -10,6 +10,7 @@ import {
   buildShellEnvOverrides,
 } from "@get-bb/plugin-sdk/provider-bridge";
 import { z } from "zod";
+import { PROMPT_CACHE_TTL_OPTION_ID, promptCacheTtlSchema, type PromptCacheTtl } from "./prompt-cache.js";
 import {
   toClaudePermissionMode,
   type ClaudePermissionMode,
@@ -67,6 +68,7 @@ function buildClaudeCodeConfig(
 }
 
 export type ClaudeSessionExecutionOptions = RuntimePermissionPolicy & {
+  promptCacheTtl?: PromptCacheTtl;
   model?: string | undefined;
   reasoningLevel?: ReasoningLevel | undefined;
   serviceTier?: ServiceTier | undefined;
@@ -144,6 +146,7 @@ function buildInternalSessionParams(
     sandboxEnabled: args.options.sandboxEnabled,
     fullAccessApprovalsEnabled: args.options.fullAccessApprovalsEnabled,
     commandDescriptionsEnabled: args.options.commandDescriptionsEnabled,
+    promptCacheTtl: args.options.promptCacheTtl ?? "auto",
     memoryEnabled: args.options.memoryEnabled,
     providerSubagentsEnabled: args.options.providerSubagentsEnabled,
     ...(dynamicTools && dynamicTools.length > 0 ? { dynamicTools } : {}),
@@ -167,6 +170,7 @@ const claudeProviderOptionsSchema = z
   .passthrough();
 
 type ClaudeCanonicalExecutionOptions = RuntimePermissionPolicy & {
+  sessionOptions?: Record<string, string | boolean>;
   model?: string | undefined;
   reasoningLevel?: ReasoningLevel | undefined;
   serviceTier?: ServiceTier | undefined;
@@ -200,6 +204,7 @@ export function buildClaudeSessionParams(
     threadId: args.threadId,
     options: {
       ...args.options,
+      promptCacheTtl: promptCacheTtlSchema.parse(args.options.sessionOptions?.[PROMPT_CACHE_TTL_OPTION_ID] ?? "auto"),
       skillRoots: args.skillRoots,
       claudeCodePermissionMode: providerOptions.claudeCodePermissionMode,
       workflowsEnabled: providerOptions.workflowsEnabled ?? false,
@@ -254,6 +259,9 @@ export function buildClaudeTurnParams(
     input: stripClaudePlanCommandMentions({
       input: args.input,
       claudeCodePermissionMode: providerOptions.claudeCodePermissionMode,
+    }),
+    ...(args.options.sessionOptions?.[PROMPT_CACHE_TTL_OPTION_ID] === undefined ? {} : {
+      promptCacheTtl: promptCacheTtlSchema.parse(args.options.sessionOptions[PROMPT_CACHE_TTL_OPTION_ID]),
     }),
     ...(args.options.model ? { model: args.options.model } : {}),
     ...(args.options.reasoningLevel

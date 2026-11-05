@@ -113,3 +113,28 @@ remainders subtract lifetime counts only when they can be attributed safely.
 The Cache Watch cost calculation has not been changed to consume this field.
 No live Claude requests were used, and the installed plugin was not reloaded
 for this metadata change.
+
+## Per-session cache TTL selection, 2026-11-05
+
+Every discovered model and selected-only alias now declares the
+`promptCacheTtl` select option: `auto`, `5m`, or `1h`. BB's existing model picker
+renders it when creating a thread. Canonical session selections are validated
+and forwarded as a session-scoped Claude SDK setting; no global plugin setting
+or fabricated TTL telemetry is used. Changing the option restarts Claude before
+the next turn with the same native conversation. Automatic removes the override.
+
+- Typecheck: passed.
+- Automated suite: 459 passed, 1 opt-in live SDK test skipped. Coverage includes
+  model and alias declarations, invalid values, default versus omitted turn
+  options, SDK launch settings, cold resume, fork, and changes back to Automatic.
+- Server and host artifacts: built successfully.
+- Reloaded `claude-code-telemetry` successfully on BB 0.48.1 / SDK 0.6.104.
+- The live model catalog advertises all three choices for the discovered models.
+- Browser check: opened the new-thread composer for this project, selected
+  Claude Code Telemetry, and verified the Prompt cache TTL radio group. Selected
+  5 minutes, 1 hour, then Automatic and verified each checked state. A screenshot
+  is saved in the BB thread's storage at `session-ttl-check/new-thread-picker.jpg`.
+  The browser session was closed without submitting a prompt or creating a thread.
+
+No live Claude inference was used for this option change. The installed Claude
+Code 2.1.318 supports the setting; it requires Claude Code 2.1.242 or later.
