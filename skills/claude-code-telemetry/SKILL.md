@@ -93,3 +93,13 @@ remainder can include subagents or requests not exposed by the SDK. It is not
 an individual request. A process interruption flushes the last observed
 request with incomplete=true. Requests without a stable message ID or complete
 cache counters are represented only by the final aggregate remainder.
+
+New usage metadata includes `cacheWriteBreakdown` with `fiveMinuteTokens`,
+`oneHourTokens`, and `unknownTokens`. These are observed write-token counts,
+not inferred from `promptCacheTtlMs`. Unreported lifetime fields are null;
+unknown write tokens remain separate. An unknown total write count makes the
+whole breakdown null. Older events can omit the field. For aggregate remainders,
+lifetime counts are subtracted only when the observed requests make that
+subtraction unambiguous. Consumers must read this field from event history;
+the current extension state contains only the latest report. Existing Cache
+Watch versions ignore the field and continue displaying their cost range.

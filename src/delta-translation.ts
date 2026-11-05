@@ -1135,7 +1135,7 @@ export function createClaudeDeltaTranslator(
     const tokenUsage = extractClaudeResultTokenUsage(message);
     if (tokenUsage !== undefined) {
       deltas.push(...applyRequestUsage(state, state.requestUsage.reconcile(
-        state.cumulativeTokens, tokenUsage.last, tokenUsage.modelContextWindow, tokenUsage.promptCacheTtlMs,
+        state.cumulativeTokens, tokenUsage.last, tokenUsage.modelContextWindow, tokenUsage.promptCacheTtlMs, message.usage,
       )));
     }
 

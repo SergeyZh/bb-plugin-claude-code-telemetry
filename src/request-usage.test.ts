@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZERO_TOKEN_USAGE, type ThreadDelta } from '@get-bb/plugin-sdk/provider-bridge';
-import { ClaudeRequestUsage } from './request-usage';
+import { ClaudeRequestUsage, usageMetadataSchema } from './request-usage';
 import { createClaudeDeltaHarness, loadFixture, loadSessionFixture } from './delta-test-harness';
 const counts = (input = 10, output = 20, read = 30, write = 40) => ({ inputTokens: input, outputTokens: output,
   cacheReadInputTokens: read, cacheWriteInputTokens: write, cachedInputTokens: read + write,
@@ -10,6 +10,76 @@ const message = (id: string, output = 20) => ({ id, model: 'claude-sonnet-4-6',
 const usage = (deltas: ThreadDelta[]) => deltas.filter(d => d.kind === 'usage');
 
 describe('per-request Claude usage', () => {
+  const splitMessage = (id: string, five: number, hour: number) => ({
+    ...message(id), usage: { ...message(id).usage, cache_creation: {
+      ephemeral_5m_input_tokens: five, ephemeral_1h_input_tokens: hour,
+    } },
+  });
+  const metadata = (deltas: ThreadDelta[]) => {
+    const delta = deltas.find(d => d.kind === 'extension.state');
+    if (delta?.kind !== 'extension.state') throw new Error('Missing usage metadata');
+    return usageMetadataSchema.parse(JSON.parse(JSON.stringify(delta.payload)));
+  };
+
+  it('persists mixed cache write lifetimes through the assembler without duplicating partial blocks', () => {
+    const harness = createClaudeDeltaHarness();
+    const sdkMessage = splitMessage('mixed', 10, 30);
+    harness.translate({ type: 'assistant', message: { ...sdkMessage, content: [] } });
+    harness.translate({ type: 'assistant', message: { ...message('mixed'), content: [] } });
+    const events = harness.translate({ ...loadFixture('result-success.json'), usage: sdkMessage.usage });
+    const reports = events.filter(e => e.type === 'thread/extensionState/updated');
+    expect(reports).toHaveLength(1);
+    const persisted = usageMetadataSchema.parse(JSON.parse(JSON.stringify(reports[0].payload)));
+    expect(persisted.cacheWriteBreakdown).toEqual({ fiveMinuteTokens: 10, oneHourTokens: 30, unknownTokens: 0 });
+    expect(persisted.counts).toEqual(counts());
+  });
+
+  it.each([
+    { write: 40, creation: undefined, expected: { fiveMinuteTokens: null, oneHourTokens: null, unknownTokens: 40 } },
+    { write: 40, creation: { ephemeral_5m_input_tokens: 10 }, expected: { fiveMinuteTokens: 10, oneHourTokens: null, unknownTokens: 30 } },
+    { write: 40, creation: { ephemeral_5m_input_tokens: 30, ephemeral_1h_input_tokens: 30 }, expected: { fiveMinuteTokens: null, oneHourTokens: null, unknownTokens: 40 } },
+    { write: 0, creation: undefined, expected: { fiveMinuteTokens: 0, oneHourTokens: 0, unknownTokens: 0 } },
+  ])('keeps missing or inconsistent write lifetimes conservative ($write, $creation)', ({ write, creation, expected }) => {
+    const collector = new ClaudeRequestUsage();
+    collector.observe({ ...message('one'), usage: { ...message('one').usage,
+      cache_creation_input_tokens: write, cache_creation: creation,
+    } }, ZERO_TOKEN_USAGE, null);
+    expect(metadata(collector.flush(ZERO_TOKEN_USAGE, null)).cacheWriteBreakdown).toEqual(expected);
+  });
+
+  it('subtracts observed lifetime counts from the final aggregate and resets them per turn', () => {
+    const collector = new ClaudeRequestUsage();
+    collector.observe(splitMessage('one', 10, 30), ZERO_TOKEN_USAGE, null);
+    collector.flush(ZERO_TOKEN_USAGE, null);
+    const aggregate = counts(20, 40, 60, 80);
+    const finalUsage = { cache_creation: { ephemeral_5m_input_tokens: 25, ephemeral_1h_input_tokens: 55 } };
+    expect(metadata(collector.reconcile(counts(), aggregate, null, undefined, finalUsage)).cacheWriteBreakdown)
+      .toEqual({ fiveMinuteTokens: 15, oneHourTokens: 25, unknownTokens: 0 });
+    collector.resetTurn();
+    expect(metadata(collector.reconcile(aggregate, aggregate, null, undefined, finalUsage)).cacheWriteBreakdown)
+      .toEqual({ fiveMinuteTokens: 25, oneHourTokens: 55, unknownTokens: 0 });
+  });
+
+  it('does not guess the remainder lifetimes when observed request lifetimes were unknown', () => {
+    const collector = new ClaudeRequestUsage();
+    collector.observe(message('one'), ZERO_TOKEN_USAGE, null);
+    collector.flush(ZERO_TOKEN_USAGE, null);
+    const remainder = collector.reconcile(counts(), counts(20, 40, 60, 80), null, undefined,
+      { cache_creation: { ephemeral_5m_input_tokens: 25, ephemeral_1h_input_tokens: 55 } });
+    expect(metadata(remainder).cacheWriteBreakdown)
+      .toEqual({ fiveMinuteTokens: null, oneHourTokens: null, unknownTokens: 40 });
+  });
+
+  it('retains write lifetimes on interruption and leaves old metadata readable', () => {
+    const collector = new ClaudeRequestUsage();
+    collector.observe(splitMessage('one', 40, 0), ZERO_TOKEN_USAGE, null);
+    expect(metadata(collector.flush(ZERO_TOKEN_USAGE, null, true))).toMatchObject({ incomplete: true,
+      cacheWriteBreakdown: { fiveMinuteTokens: 40, oneHourTokens: 0, unknownTokens: 0 },
+    });
+    expect(usageMetadataSchema.parse({ source: 'request', messageId: 'old', model: null, incomplete: false, counts: counts() }))
+      .not.toHaveProperty('cacheWriteBreakdown');
+  });
+
   it('buffers partial blocks, deduplicates message IDs, and retains the final output count', () => {
     const collector = new ClaudeRequestUsage();
     expect(collector.observe(message('one', 1), ZERO_TOKEN_USAGE, null)).toEqual([]);

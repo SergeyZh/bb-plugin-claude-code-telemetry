@@ -48,6 +48,20 @@ and `incomplete`. These events are persisted by BB and available through its
 SDK and `bb thread log <id> --json`. The latest extension state is only a snapshot;
 read the event history for all requests.
 
+New usage metadata also records `cacheWriteBreakdown`:
+`fiveMinuteTokens`, `oneHourTokens`, and `unknownTokens`. These are token counts,
+not TTL estimates. A lifetime counter is `null` when unreported; unknown writes
+remain in `unknownTokens`. An explicit zero total write count gives zero for
+both lifetimes. The entire breakdown is `null` when the total write count is
+unknown; older events may omit the field altogether.
+
+Repeated blocks of a request do not add the counters twice. Aggregate remainder
+breakdowns subtract observed lifetime counts only when the subtraction is
+unambiguous; interruptions keep observed counts with `incomplete=true`.
+Existing BB token counters are unchanged. Cache Watch must consume this new
+metadata before it can replace its 5m–1h write-price range with exact lifetime
+pricing. Historical events without the breakdown cannot recover it from TTL.
+
 The final SDK result contributes only positive counts that have not already
 been observed. This `aggregate-remainder` is combined usage, potentially from
 subagents, compaction, or messages with no stable ID. It does not claim to be

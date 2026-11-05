@@ -95,3 +95,21 @@ remains 0.6.104 for compatibility with the installed BB 0.48.1 host.
 - npm install audit: zero reported vulnerabilities.
 
 This sync did not reload the installed plugin or make live Claude requests.
+
+## Cache write lifetime metadata, 2026-11-05
+
+Usage extension events now preserve the SDK's 5-minute and 1-hour write counts
+as `cacheWriteBreakdown`, separately from standard BB token counters and TTL.
+Missing and inconsistent splits remain explicitly unknown. Final aggregate
+remainders subtract lifetime counts only when they can be attributed safely.
+
+- Typecheck: passed.
+- Automated suite: 446 passed, 1 opt-in live SDK test skipped.
+- Regressions cover mixed write lifetimes, repeated blocks, missing and partial
+  splits, inconsistent sums, explicit zero writes, aggregate subtraction,
+  turn resets, interruptions, and backward-compatible metadata parsing.
+- Metadata survives JSON serialization and the real delta assembler.
+
+The Cache Watch cost calculation has not been changed to consume this field.
+No live Claude requests were used, and the installed plugin was not reloaded
+for this metadata change.
