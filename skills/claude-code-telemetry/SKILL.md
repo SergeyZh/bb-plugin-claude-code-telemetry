@@ -116,3 +116,10 @@ lifetime counts are subtracted only when the observed requests make that
 subtraction unambiguous. Consumers must read this field from event history;
 the current extension state contains only the latest report. Existing Cache
 Watch versions ignore the field and continue displaying their cost range.
+
+Provider health and subscription usage are queried from Claude Code itself,
+using its active profile (including `CLAUDE_CONFIG_DIR`). These checks start
+short-lived Claude Code processes without sending a model prompt; they do not
+read login tokens or call the OAuth usage endpoint directly. An unusable login
+reports `unauthenticated`, rather than checking token expiry independently.
+Native user skills also follow the selected Claude config directory.

@@ -138,3 +138,31 @@ the next turn with the same native conversation. Automatic removes the override.
 
 No live Claude inference was used for this option change. The installed Claude
 Code 2.1.318 supports the setting; it requires Claude Code 2.1.242 or later.
+
+## Upstream sync, 2026-11-09
+
+Imported all three provider changes after `6d5597d`, through `ac2829b`:
+
+- `5538a27`: list native user skills only from the resolved Claude profile.
+- `f51e6b0`: obtain account health and subscription limits from Claude Code,
+  preserve profile-specific account UUIDs, and resolve relative fork config
+  directories against the session working directory.
+- `ac2829b`: opt into the host's experimental guided sign-in flow.
+
+The provider identity, per-request usage extension, cache-write lifetime
+breakdown, and per-thread prompt cache TTL remain specific to this fork.
+The existing Ultra regression now uses Claude Code's reported account format.
+The pinned BB SDK 0.6.104 is unchanged; the newer guided sign-in declaration
+uses an object spread so it can be passed to supporting hosts with older types.
+
+- Typecheck: passed.
+- Automated suite: 462 passed, 1 opt-in live SDK test skipped (31 files passed,
+  1 skipped), including account-profile, signed-out, plan-limit, session-fork,
+  bridge conformance, request telemetry, and native-root coverage.
+- Server and host artifacts: built successfully. BB reported the existing SDK
+  pin differs from its SDK 0.6.132; no dependency update was made.
+- Both source comparison patches were regenerated against `ac2829b` and
+  verified by applying them to disposable upstream copies and checking their
+  resulting contents.
+
+No live Claude requests were made and the installed plugin was not reloaded.

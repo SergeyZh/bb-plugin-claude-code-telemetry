@@ -23,17 +23,15 @@ function missingInstallationStatus() {
 }
 
 describe("Claude Code provider maintenance", () => {
-  it("reports the Max 20x tier as Ultra without a multiplier", () => {
+  it("reports Claude Ultra without a multiplier", () => {
     expect(
       __testing.normalizeUsage(
         { five_hour: { utilization: 12, resets_at: null } },
         {
-          accessToken: "token",
-          expiresAt: null,
-          subscriptionType: "max",
-          rateLimitTier: "default_claude_max_20x",
+          email: "claude@example.com",
+          subscriptionType: "Claude Ultra",
+          apiProvider: "firstParty",
         },
-        null,
       ),
     ).toMatchObject({
       status: "ok",
@@ -43,11 +41,10 @@ describe("Claude Code provider maintenance", () => {
   });
 
   it("normalizes aggregate and unique model-scoped usage windows", () => {
-    const credentials = {
-      accessToken: "token",
-      expiresAt: null,
-      subscriptionType: "pro",
-      rateLimitTier: "max_5x",
+    const account = {
+      email: "claude@example.com",
+      subscriptionType: "Claude Max",
+      apiProvider: "firstParty" as const,
     };
     expect(
       __testing.normalizeUsage(
@@ -69,8 +66,7 @@ describe("Claude Code provider maintenance", () => {
             },
           ],
         },
-        credentials,
-        "claude@example.com",
+        account,
       ),
     ).toMatchObject({
       status: "ok",

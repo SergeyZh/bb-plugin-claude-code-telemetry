@@ -5,7 +5,7 @@ provider and uses the same native login and CLI.
 ## Differences from the built-in provider
 
 Compared with the original provider at
-[6d5597d (2026-11-05)](https://github.com/get-bb/bb/tree/6d5597d2851d4cef6d2fa22301d828daa6fbf319/plugins/provider-claude-code):
+[ac2829b (2026-11-06)](https://github.com/get-bb/bb/tree/ac2829b9a66004c32d2f4b04e01b9176222b2af1/plugins/provider-claude-code):
 
 - Usage is reported for observed main-agent requests, with message-ID
   deduplication, instead of only a final turn aggregate. Unobserved usage is

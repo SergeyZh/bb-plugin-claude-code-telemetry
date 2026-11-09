@@ -1,5 +1,5 @@
 diff --git a/server.ts b/server.ts
-index 1fe495b15e96d4abfc124f7c095df814a50f8d7e..5573e6f567ab9e4d948ce23e06c33ad6dbcf0b24 100644
+index 12a77d3b090bcc905a4d8e7b7667f2b1d025a8e8..7a259d86a84728e8bea245a6d88b8590a5511c61 100644
 --- a/server.ts
 +++ b/server.ts
 @@ -1,3 +1,4 @@
@@ -26,8 +26,18 @@ index 1fe495b15e96d4abfc124f7c095df814a50f8d7e..5573e6f567ab9e4d948ce23e06c33ad6
      capabilities: {
        supportsServiceTier: true,
        supportsNativeUserQuestion: true,
+@@ -117,7 +119,8 @@ export default function plugin(bb: BbPluginApi) {
+     ],
+     composerActions: ["plan"],
+     completedTurnDisplay: "flat",
+-    internal_DO_NOT_USE_guidedSignIn: true,
++    // Newer BB hosts use this upstream flag; SDK 0.6.104 predates it.
++    ...{ internal_DO_NOT_USE_guidedSignIn: true },
+     env: {
+       passthrough: ["BB_CLAUDE_CODE_EXECUTABLE", "CLAUDE_CODE_OAUTH_TOKEN"],
+     },
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index fbb41e3a7a9f62dcf0434605afb7d740bc20b4c9..5a3f422b1a66f5d97399160ab4f97665425b3209 100644
+index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1ee56822ea 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
 @@ -445,6 +445,26 @@ function resolvePendingSessionWork(
@@ -65,7 +75,7 @@ index fbb41e3a7a9f62dcf0434605afb7d740bc20b4c9..5a3f422b1a66f5d97399160ab4f97665
      },
    };
  }
-@@ -2588,6 +2609,7 @@ async function runTurnInput(
+@@ -2589,6 +2610,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);

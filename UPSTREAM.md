@@ -12,17 +12,29 @@ instructions to reproduce and verify them.
 
 ## Versioning
 
-The package version follows `<upstream-provider-version>-telemetry.<revision>`.
-The upstream provider package is currently `0.1.0`, so the first numbered fork
-revision is `0.1.0-telemetry.1`; subsequent revisions use `telemetry.2`, and so on.
-This is valid SemVer, unlike a four-component version such as `0.1.0.1`.
-The base refers to the BB provider package, not the Claude Code CLI or Agent SDK.
+The package version follows
+`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
+The current version is `0.1.0-telemetry.2+upstream.ac2829b`:
+
+- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
+  or Agent SDK version.
+- `telemetry.2` is this fork's release revision. Increment it for every release,
+  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
+- `upstream.ac2829b` identifies the latest fully imported upstream baseline.
+  Use the first seven characters of its commit SHA; keep the full SHA and
+  import date below and in the comparison-patch generator.
+
+This is valid SemVer. Build metadata after `+` does not affect version ordering;
+`telemetry.<revision>` determines the order of fork releases for the same base.
+A local fix after this release would be
+`0.1.0-telemetry.3+upstream.ac2829b`. A later upstream import would increment the
+revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
 
 Synced the provider changes through
-[`6d5597d`](https://github.com/get-bb/bb/commit/6d5597d2851d4cef6d2fa22301d828daa6fbf319)
-on 2026-11-05, preserving this fork's identity and request telemetry:
+[`ac2829b`](https://github.com/get-bb/bb/commit/ac2829b9a66004c32d2f4b04e01b9176222b2af1)
+on 2026-11-09, preserving this fork's identity and request telemetry:
 
 - [`9dec2ae`](https://github.com/get-bb/bb/commit/9dec2aefb8852514942ffafc16a2316ae304de6e):
   stream transcript reads and writes when forking long sessions.
@@ -48,3 +60,24 @@ therefore assert the outgoing deltas directly; the older SDK assembler drops
 the field. Displaying descriptions requires a BB host that supports SDK
 0.6.117's command description field. Exit codes and fork fixes work with the
 existing host.
+
+## Imported on 2026-11-09
+
+- [`5538a27`](https://github.com/get-bb/bb/commit/5538a27bccb4): stop declaring
+  the default home skill root alongside the roots resolved from
+  `CLAUDE_CONFIG_DIR`, so BB lists only skills Claude Code can load.
+- [`f51e6b0`](https://github.com/get-bb/bb/commit/f51e6b01420e9396e44575b09f8d78f3ba07f762):
+  query Claude Code for its active account and plan limits instead of reading
+  credentials or calling the OAuth usage endpoint directly. Health no longer
+  marks refreshable tokens as expired. Account UUID lookup follows the selected
+  profile, and fork resolves a relative `CLAUDE_CONFIG_DIR` against the session
+  working directory. Keeps the fork's Ultra plan regression test using the
+  account format returned by Claude Code.
+- [`ac2829b`](https://github.com/get-bb/bb/commit/ac2829b9a66004c32d2f4b04e01b9176222b2af1):
+  opt into BB's experimental guided sign-in flow. The flag is passed through
+  with an object spread because the pinned SDK 0.6.104 predates it; older BB
+  hosts ignore it. Display requires a BB host with the new setup experiment.
+
+The Agent SDK dependency already supports the account and usage probes; no
+package upgrades are needed. Probes start short-lived Claude Code processes
+without sending a model prompt and close them after reading the result.

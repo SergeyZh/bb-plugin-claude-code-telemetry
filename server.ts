@@ -119,6 +119,8 @@ export default function plugin(bb: BbPluginApi) {
     ],
     composerActions: ["plan"],
     completedTurnDisplay: "flat",
+    // Newer BB hosts use this upstream flag; SDK 0.6.104 predates it.
+    ...{ internal_DO_NOT_USE_guidedSignIn: true },
     env: {
       passthrough: ["BB_CLAUDE_CODE_EXECUTABLE", "CLAUDE_CODE_OAUTH_TOKEN"],
     },
