@@ -4,6 +4,12 @@ This repository is a standalone fork of the BB Claude Code provider. Preserve
 provider ID `claude-code-telemetry`, request telemetry, cache-write lifetime
 breakdown, per-thread prompt cache TTL, and standalone packaging when syncing.
 
+Daily upstream maintenance is configured in BB; see
+`scripts/UPSTREAM-AUTOMATION.md` for the checker, agent prompt, schedule,
+validation, and commands to inspect or refresh it. Automated integration
+commits must use `git -c commit.gpgsign=false commit --no-gpg-sign` without
+changing persistent signing settings.
+
 ## Checking for upstream changes
 
 Upstream is **`get-bb/bb`**, directory **`plugins/provider-claude-code`**.

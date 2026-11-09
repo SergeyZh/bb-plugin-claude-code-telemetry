@@ -7,6 +7,9 @@ A standalone fork of BB's Claude Code provider, installed alongside it.
 - Picker name: **Claude Code Telemetry**
 - Original provider: `claude-code`, unchanged
 
+Daily upstream checks and automatic Codex integration are described in
+[the automation guide](scripts/UPSTREAM-AUTOMATION.md).
+
 ## Differences from the built-in provider
 
 Choose this provider when you want more detailed usage records or a cache TTL
