@@ -14,27 +14,27 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.2+upstream.ac2829b`:
+The current version is `0.1.0-telemetry.3+upstream.0509f46`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.2` is this fork's release revision. Increment it for every release,
+- `telemetry.3` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.ac2829b` identifies the latest fully imported upstream baseline.
+- `upstream.0509f46` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.3+upstream.ac2829b`. A later upstream import would increment the
+`0.1.0-telemetry.4+upstream.0509f46`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
 
 Synced the provider changes through
-[`ac2829b`](https://github.com/get-bb/bb/commit/ac2829b9a66004c32d2f4b04e01b9176222b2af1)
-on 2026-11-09, preserving this fork's identity and request telemetry:
+[`0509f46`](https://github.com/get-bb/bb/commit/0509f46aae61a5b30afac23551b084b0f28b6d4f)
+on 2026-11-10, preserving this fork's identity and request telemetry:
 
 - [`9dec2ae`](https://github.com/get-bb/bb/commit/9dec2aefb8852514942ffafc16a2316ae304de6e):
   stream transcript reads and writes when forking long sessions.
@@ -81,3 +81,25 @@ existing host.
 The Agent SDK dependency already supports the account and usage probes; no
 package upgrades are needed. Probes start short-lived Claude Code processes
 without sending a model prompt and close them after reading the result.
+
+## Imported on 2026-11-10
+
+- [`0509f46`](https://github.com/get-bb/bb/commit/0509f46aae61a5b30afac23551b084b0f28b6d4f)
+  (2026-11-09): add type-aware promise linting. Comparing every provider file
+  from the exact old and target archives confirms the only provider change is
+  its `lint:type-aware` package script; no runtime changes or new tests occur.
+
+The standalone command uses a local `.oxlintrc.type-aware.json` with all five
+upstream rules: floating promises, misused promises, awaiting non-promises,
+returns within error-handling scopes, and meaningless void operators. Monorepo
+ignore paths are omitted. Oxlint and oxlint-tsgolint are development dependencies
+instead of inherited workspace tooling. The command runs typecheck first to
+preserve upstream's task dependency without Turbo or generated workspace types.
+The lockfile resolves Oxlint 1.93.0 and oxlint-tsgolint 7.0.2006 within upstream's
+requested ranges. Development linting requires Node 22.12 or newer on Node 22.
+
+No new BB host, wire protocol, runtime dependency, or Plugin SDK requirement is
+introduced. The standalone SDK remains pinned to 0.6.104; existing Bash
+description and guided sign-in host limitations above still apply. Provider
+identity, request telemetry, cache-write lifetime breakdown, per-thread TTL,
+and regression coverage are preserved.

@@ -15,6 +15,42 @@ index 0000000000000000000000000000000000000000..c19bb02d7e1e640ee86f6a94031460d4
 +dist/
 +coverage/
 +*.tsbuildinfo
+diff --git a/.oxlintrc.type-aware.json b/.oxlintrc.type-aware.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..df07d00f921a4533b37128673a99248c6fdfc7de
+--- /dev/null
++++ b/.oxlintrc.type-aware.json
+@@ -0,0 +1,30 @@
++{
++  "$schema": "./node_modules/oxlint/configuration_schema.json",
++  "plugins": [
++    "typescript"
++  ],
++  "categories": {
++    "correctness": "off"
++  },
++  "options": {
++    "typeAware": true
++  },
++  "env": {
++    "builtin": true
++  },
++  "rules": {
++    "typescript/no-floating-promises": "error",
++    "typescript/no-misused-promises": "error",
++    "typescript/await-thenable": "error",
++    "typescript/return-await": [
++      "error",
++      "error-handling-correctness-only"
++    ],
++    "typescript/no-meaningless-void-operator": "error"
++  },
++  "ignorePatterns": [
++    "**/node_modules/**",
++    "**/dist/**",
++    "**/coverage/**"
++  ]
++}
 diff --git a/AGENTS.md b/AGENTS.md
 new file mode 100644
 index 0000000000000000000000000000000000000000..8d9c760a0312c08bb8f9f0cf1ad05e5f2aadf0c1
@@ -214,16 +250,16 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..e32596f9cb1d7873260309cb80a73452
 +subject to the account's plan and billing.
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..5879f0fcb79ffea89b65bcc72c3d43cebb9a33d6
+index 0000000000000000000000000000000000000000..8448d7765efc950885cbe9dae252906a5b9b532c
 --- /dev/null
 +++ b/README.md
-@@ -0,0 +1,205 @@
+@@ -0,0 +1,209 @@
 +# Claude Code Telemetry for BB
 +
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.2+upstream.ac2829b` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.3+upstream.0509f46` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -238,7 +274,7 @@ index 0000000000000000000000000000000000000000..5879f0fcb79ffea89b65bcc72c3d43ce
 +existing threads keep their provider, and the built-in provider stays available.
 +
 +This comparison is against the original provider at
-+[`ac2829b` (2026-11-06)](https://github.com/get-bb/bb/tree/ac2829b9a66004c32d2f4b04e01b9176222b2af1/plugins/provider-claude-code),
++[`0509f46` (2026-11-09)](https://github.com/get-bb/bb/tree/0509f46aae61a5b30afac23551b084b0f28b6d4f/plugins/provider-claude-code),
 +the latest upstream provider revision imported into this fork.
 +
 +| Capability | Original provider at this revision | Claude Code Telemetry |
@@ -416,6 +452,10 @@ index 0000000000000000000000000000000000000000..5879f0fcb79ffea89b65bcc72c3d43ce
 +checks, plus request accounting regressions. See UPSTREAM.md and LICENSE for
 +provenance. No private BB workspace packages are required.
 +
++`npm run lint:type-aware` runs typecheck first, then the upstream promise rules
++using the local Oxlint configuration. Install development dependencies to use
++it; the lint tooling requires Node 22.12 or newer on the supported Node 22 line.
++
 +An opt-in live SDK smoke test makes two or more requests on your Claude account
 +and checks that their sum exactly matches the SDK result. It creates no BB
 +thread, disables persistence, and uses only a fixed Bash printf check:
@@ -425,10 +465,10 @@ index 0000000000000000000000000000000000000000..5879f0fcb79ffea89b65bcc72c3d43ce
 +```
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..5602ebd6820f85c3fd354866dcf20302c8283060
+index 0000000000000000000000000000000000000000..545337718189e3dc1b8ed16fdc4614d7e68da6b3
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,105 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -445,27 +485,27 @@ index 0000000000000000000000000000000000000000..5602ebd6820f85c3fd354866dcf20302
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.2+upstream.ac2829b`:
++The current version is `0.1.0-telemetry.3+upstream.0509f46`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.2` is this fork's release revision. Increment it for every release,
++- `telemetry.3` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-+- `upstream.ac2829b` identifies the latest fully imported upstream baseline.
++- `upstream.0509f46` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
 +  import date below and in the comparison-patch generator.
 +
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.3+upstream.ac2829b`. A later upstream import would increment the
++`0.1.0-telemetry.4+upstream.0509f46`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
 +
 +Synced the provider changes through
-+[`ac2829b`](https://github.com/get-bb/bb/commit/ac2829b9a66004c32d2f4b04e01b9176222b2af1)
-+on 2026-11-09, preserving this fork's identity and request telemetry:
++[`0509f46`](https://github.com/get-bb/bb/commit/0509f46aae61a5b30afac23551b084b0f28b6d4f)
++on 2026-11-10, preserving this fork's identity and request telemetry:
 +
 +- [`9dec2ae`](https://github.com/get-bb/bb/commit/9dec2aefb8852514942ffafc16a2316ae304de6e):
 +  stream transcript reads and writes when forking long sessions.
@@ -512,12 +552,34 @@ index 0000000000000000000000000000000000000000..5602ebd6820f85c3fd354866dcf20302
 +The Agent SDK dependency already supports the account and usage probes; no
 +package upgrades are needed. Probes start short-lived Claude Code processes
 +without sending a model prompt and close them after reading the result.
++
++## Imported on 2026-11-10
++
++- [`0509f46`](https://github.com/get-bb/bb/commit/0509f46aae61a5b30afac23551b084b0f28b6d4f)
++  (2026-11-09): add type-aware promise linting. Comparing every provider file
++  from the exact old and target archives confirms the only provider change is
++  its `lint:type-aware` package script; no runtime changes or new tests occur.
++
++The standalone command uses a local `.oxlintrc.type-aware.json` with all five
++upstream rules: floating promises, misused promises, awaiting non-promises,
++returns within error-handling scopes, and meaningless void operators. Monorepo
++ignore paths are omitted. Oxlint and oxlint-tsgolint are development dependencies
++instead of inherited workspace tooling. The command runs typecheck first to
++preserve upstream's task dependency without Turbo or generated workspace types.
++The lockfile resolves Oxlint 1.93.0 and oxlint-tsgolint 7.0.2006 within upstream's
++requested ranges. Development linting requires Node 22.12 or newer on Node 22.
++
++No new BB host, wire protocol, runtime dependency, or Plugin SDK requirement is
++introduced. The standalone SDK remains pinned to 0.6.104; existing Bash
++description and guided sign-in host limitations above still apply. Provider
++identity, request telemetry, cache-write lifetime breakdown, per-thread TTL,
++and regression coverage are preserved.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..ebd3c8605b3fbedf6c0e91872a0e05e80329b2a4
+index 0000000000000000000000000000000000000000..b33d50988d81dea86d9cb6fca81b2694b4c26ff2
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,168 @@
+@@ -0,0 +1,202 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -686,21 +748,55 @@ index 0000000000000000000000000000000000000000..ebd3c8605b3fbedf6c0e91872a0e05e8
 +  resulting contents.
 +
 +No live Claude requests were made and the installed plugin was not reloaded.
++
++## Upstream sync, 2026-11-10
++
++Imported the sole provider change after `ac2829b` through
++`0509f46aae61a5b30afac23551b084b0f28b6d4f` (2026-11-09): type-aware
++promise linting. Compared all provider files from both exact commit archives;
++only the package lint script changed. Upstream package version remains 0.1.0;
++this release increments the fork to `0.1.0-telemetry.3+upstream.0509f46`.
++The new source checksum was computed with the comparison generator's `digest()`
++over every provider file from the target archive.
++
++- Typecheck: passed (`npm run typecheck`, also run by the lint command).
++- Type-aware lint: passed using the five upstream rules and locally installed
++  Oxlint 1.93.0 / oxlint-tsgolint 7.0.2006. A temporary TypeScript probe with an
++  unawaited typed `node:fs/promises` call failed with `no-floating-promises` as
++  expected; the probe was removed before the final lint pass.
++- Automated suite: 462 passed, 1 opt-in live SDK test skipped (31 files passed,
++  1 skipped). Existing conformance, telemetry, cache-lifetime and TTL coverage
++  remains in the suite; this import changes no runtime or test files.
++- Server and host artifacts: built successfully. BB reported the existing SDK
++  0.6.104 pin differs from its SDK 0.6.132; the pin was preserved.
++- Both comparison patches regenerated against the exact target archive;
++  generator `--check` verified patch application and every resulting file.
++- `git diff --check`: passed.
++- npm dependency audit: zero reported vulnerabilities. Only development lint
++  dependencies were added; no runtime dependencies changed.
++
++No new host or SDK requirement is introduced. Existing Bash-description and
++guided sign-in host limitations remain documented in UPSTREAM.md. The lint
++command runs typecheck first, replacing upstream's Turbo dependency, and uses a
++local configuration instead of the monorepo root. Lint tooling requires Node
++22.12 or newer on Node 22; verification used Node 24.17.0.
++
++No live Claude requests were made, and the installed plugin was not reloaded.
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..7f66f056846bc2c2aab145cb15348ded3b3e73b7
+index 0000000000000000000000000000000000000000..0108d9f772830498f2be36d337cb154798bbdac1
 --- /dev/null
 +++ b/package-lock.json
-@@ -0,0 +1,3243 @@
+@@ -0,0 +1,3743 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.2+upstream.ac2829b",
++  "version": "0.1.0-telemetry.3+upstream.0509f46",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.2+upstream.ac2829b",
++      "version": "0.1.0-telemetry.3+upstream.0509f46",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -715,6 +811,8 @@ index 0000000000000000000000000000000000000000..7f66f056846bc2c2aab145cb15348ded
 +        "better-sqlite3": "12.11.1",
 +        "cron-parser": "^5.10.3",
 +        "hono": "4.13.16",
++        "oxlint": "^1.91.0",
++        "oxlint-tsgolint": "^7.0.2006",
 +        "typescript": "^5.7.0",
 +        "vitest": "^4.1.12"
 +      },
@@ -1006,6 +1104,437 @@ index 0000000000000000000000000000000000000000..7f66f056846bc2c2aab145cb15348ded
 +      "license": "MIT",
 +      "funding": {
 +        "url": "https://github.com/sponsors/oxc-project"
++      }
++    },
++    "node_modules/@oxlint-tsgolint/darwin-arm64": {
++      "version": "7.0.2006",
++      "resolved": "https://registry.npmjs.org/@oxlint-tsgolint/darwin-arm64/-/darwin-arm64-7.0.2006.tgz",
++      "integrity": "sha512-uc0MEHXZUDW23Zmo5X28eSNeSnP17jKnh9GiehpVZqhfy99ks8spyXT5Llar3tjDN7ppnQN0Qd9FK6WNkdD+fQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ]
++    },
++    "node_modules/@oxlint-tsgolint/darwin-x64": {
++      "version": "7.0.2006",
++      "resolved": "https://registry.npmjs.org/@oxlint-tsgolint/darwin-x64/-/darwin-x64-7.0.2006.tgz",
++      "integrity": "sha512-+x1/pa3S3VMC9cif8XKTOCQUuqRT+wu1Ix+FK5svXa2xbXCuE7+4S0SfmuSnK/mk9AI5+xBxZFhILxmCPUZ1hA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ]
++    },
++    "node_modules/@oxlint-tsgolint/linux-arm64": {
++      "version": "7.0.2006",
++      "resolved": "https://registry.npmjs.org/@oxlint-tsgolint/linux-arm64/-/linux-arm64-7.0.2006.tgz",
++      "integrity": "sha512-90v7HX8m54kHXn5DpjNEN18Fb7xwJMREe/wji3USyAf9pTMv7a3qZ3cPoLViIcIzxPLmkcYZIs1j1H3Z2gbVLA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@oxlint-tsgolint/linux-x64": {
++      "version": "7.0.2006",
++      "resolved": "https://registry.npmjs.org/@oxlint-tsgolint/linux-x64/-/linux-x64-7.0.2006.tgz",
++      "integrity": "sha512-/k0wsEqHiA5dWBJYuld3Vecv6bIhKCasxpho/aFkvh870Qox33MuTkKUGWIVm/njAxw7W4pu1a/Xfa3jwuKuPQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@oxlint-tsgolint/win32-arm64": {
++      "version": "7.0.2006",
++      "resolved": "https://registry.npmjs.org/@oxlint-tsgolint/win32-arm64/-/win32-arm64-7.0.2006.tgz",
++      "integrity": "sha512-CQT5sqcLZLNZSWLzUUEjQmp74UX8h1agp3ZJ8pfRktHbx6gfBa8a7CjrnRrZ9VXlwnXVkpw7m5KBO6y+S5MQRA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@oxlint-tsgolint/win32-x64": {
++      "version": "7.0.2006",
++      "resolved": "https://registry.npmjs.org/@oxlint-tsgolint/win32-x64/-/win32-x64-7.0.2006.tgz",
++      "integrity": "sha512-VZsGowXcp3vQNkjoGeVCOTf4aGrRpRk6bBJWhefnJVPr6z+dX+LKqqHfwaqnFvg66Q2iJpXqklRW38YO21ee+Q==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@oxlint/binding-android-arm-eabi": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-android-arm-eabi/-/binding-android-arm-eabi-1.93.0.tgz",
++      "integrity": "sha512-KKw70pbD5Pvq3G2lJ+WQ71XPMjCmg37rkSe2+mDqCRP3PoTSdDMuEi4UOnE8JBtyNM7bek61EC2s0Jt7S7u+Sg==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-android-arm64": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-android-arm64/-/binding-android-arm64-1.93.0.tgz",
++      "integrity": "sha512-fvr1fTUZGelwRxKDt64pf28aL1WaWgviwz3X+E/FcRYvrlEahH0NECRz/c1SY+K+KWmZk5uAf6h1kQnyBkp/2A==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-darwin-arm64": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-darwin-arm64/-/binding-darwin-arm64-1.93.0.tgz",
++      "integrity": "sha512-VdvSN9JRf4Es6ZzoAdvEeh8tgKdw8L4H82WmA8MMPVfPdZGCwE/nI27Z1HrRHYQhPxOh4kmnxQEioSUFrOvDaw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-darwin-x64": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-darwin-x64/-/binding-darwin-x64-1.93.0.tgz",
++      "integrity": "sha512-QR1V890Ml0YGRG0F/iV0K9igG+pOhe+VWd+aZnxY849rRHZf3F2gEoQks5+GVHf105X9Mh/6HdShTP5juekG2g==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-freebsd-x64": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-freebsd-x64/-/binding-freebsd-x64-1.93.0.tgz",
++      "integrity": "sha512-jDfIbi30zZaKi+rTvig3sge+Xhi8pFFSgHxb0jzovc4qh8ETm/irKV9c7N/JsuwnYc5sbvf4IC8w1vQQ0IL+BA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-arm-gnueabihf": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-arm-gnueabihf/-/binding-linux-arm-gnueabihf-1.93.0.tgz",
++      "integrity": "sha512-qtxZ714ND/koFgVH00QgxlzZiIbRPmguaPhnHRU5DFFtrtEdOrSnZD4U/H2AzXrXkZ59eQbMBnJwbum5XohrIQ==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-arm-musleabihf": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-arm-musleabihf/-/binding-linux-arm-musleabihf-1.93.0.tgz",
++      "integrity": "sha512-5pJ9NjMvH7WMUqXB6bTTOSemBm39w2cod27Hu3+Yom/GhbTeNXlYcpDx1o4CgBP6fhp0YHG66TNdVaUm6sHjsA==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-arm64-gnu": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-arm64-gnu/-/binding-linux-arm64-gnu-1.93.0.tgz",
++      "integrity": "sha512-pRf+7jtbt2fHE23SX7qBxRgnBZicUgsoCK1PVIjnOk+t3a6UBkpt/GrKI99WlxsKUxftz/5nv/kfKvScmYywkw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-arm64-musl": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-arm64-musl/-/binding-linux-arm64-musl-1.93.0.tgz",
++      "integrity": "sha512-zM8Fd/K8sqGvsBcJBZ3oVZ3ctGWbszA08IaGt5gFFF5RcunppAI/ZnAXbouABvnWeJ//S44KKlfPZnDDbeiphg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-ppc64-gnu": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-ppc64-gnu/-/binding-linux-ppc64-gnu-1.93.0.tgz",
++      "integrity": "sha512-7qKCnvhZKDXJG2pdbLazd2hw4FxjJHbZOFrrbzyy5PdHfPLH9vnNUa1le01A8uItZuYKPBPncH+HCoEiFT4SgA==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-riscv64-gnu": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-riscv64-gnu/-/binding-linux-riscv64-gnu-1.93.0.tgz",
++      "integrity": "sha512-2pgulxC6G8V5wE750NJE/fRkf9aO6i6yoj10wyaR2EdiNtan4OemsOtsQ0ZTXGdY8Q3IoTmlND3GYvjJsvikYg==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-riscv64-musl": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-riscv64-musl/-/binding-linux-riscv64-musl-1.93.0.tgz",
++      "integrity": "sha512-yWsn6Gg2PnGG5jlyDz5+pHGiMTMiy4adaa4WRMzDgzB8efaShk1JMmTHIBSVLQMh0tYXRs4CN5uJCO79r4Mi4g==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-s390x-gnu": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-s390x-gnu/-/binding-linux-s390x-gnu-1.93.0.tgz",
++      "integrity": "sha512-WCn5plwp/ezS2RDPQKp0/EXEVRr9/dDexUdRKmsMFqzNM5xBSZ1wbsi3PuMk1VfkMRnI5BuazCsziCWMXRDOlw==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-x64-gnu": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-x64-gnu/-/binding-linux-x64-gnu-1.93.0.tgz",
++      "integrity": "sha512-F2CGjb9LAkzH+IYTZSzd1klQ1vk5z6Utjax64WeLByCkYXbVDbsun+Oy2hLfW2MDSKCvW+jwy/9ld0EPgdeu+A==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "libc": [
++        "glibc"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-linux-x64-musl": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-linux-x64-musl/-/binding-linux-x64-musl-1.93.0.tgz",
++      "integrity": "sha512-plf5DE2objcG8Tf7mXRuRa8tT8rzDkpjqXQtKoGsKHWkpgsialbON1+cCtoSEUTVbQUjXvuAm8vV9+3rR0yCBw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "libc": [
++        "musl"
++      ],
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-openharmony-arm64": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-openharmony-arm64/-/binding-openharmony-arm64-1.93.0.tgz",
++      "integrity": "sha512-Kp2yJrKvoTe9FfKdO/xwLNUbs2bYTMKx0+aoQD1s0h/Tx0kSgtHSdGmrk8tTKdluosjFbo88qYRIaNIX43AfFw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openharmony"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-win32-arm64-msvc": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.93.0.tgz",
++      "integrity": "sha512-vigjcHCFsR6KjnWTEVfaCxcMYapEuaK9FZa1MpewwQ1S+Xud3v0okfkj1RySsD6RF1NRHIjSlQSalTnKIaj3nA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-win32-ia32-msvc": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-win32-ia32-msvc/-/binding-win32-ia32-msvc-1.93.0.tgz",
++      "integrity": "sha512-0Ot3BEe/AAr2/uQhe55r8CmPlperYk2mQmxdutOru7oU0kir6IiEVHb1TG3GORRlfra97lPHVDLhgmihiKzLrg==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      }
++    },
++    "node_modules/@oxlint/binding-win32-x64-msvc": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/@oxlint/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.93.0.tgz",
++      "integrity": "sha512-ZzzIIVs/Qkm8trUWYKF0OYub5ALlv50/3gsEZbKAvWgz+yNJX6uRmQ8ySPXU2Q0/Y9m4JCOjhpmC8XUYbPHX5Q==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
 +      }
 +    },
 +    "node_modules/@rolldown/binding-android-arm-eabi": {
@@ -2946,6 +3475,73 @@ index 0000000000000000000000000000000000000000..7f66f056846bc2c2aab145cb15348ded
 +        "wrappy": "1"
 +      }
 +    },
++    "node_modules/oxlint": {
++      "version": "1.93.0",
++      "resolved": "https://registry.npmjs.org/oxlint/-/oxlint-1.93.0.tgz",
++      "integrity": "sha512-19JMsQFX+YvEbcUTFQxjTwhvs0Ibg0D6CFneSLgpwnACWcY/6LjhpGpkPodh0T5aIT1pjMTLlYaeBFzaVgugTA==",
++      "dev": true,
++      "license": "MIT",
++      "bin": {
++        "oxlint": "bin/oxlint"
++      },
++      "engines": {
++        "node": "^20.19.0 || >=22.12.0"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/oxc-project"
++      },
++      "optionalDependencies": {
++        "@oxlint/binding-android-arm-eabi": "1.93.0",
++        "@oxlint/binding-android-arm64": "1.93.0",
++        "@oxlint/binding-darwin-arm64": "1.93.0",
++        "@oxlint/binding-darwin-x64": "1.93.0",
++        "@oxlint/binding-freebsd-x64": "1.93.0",
++        "@oxlint/binding-linux-arm-gnueabihf": "1.93.0",
++        "@oxlint/binding-linux-arm-musleabihf": "1.93.0",
++        "@oxlint/binding-linux-arm64-gnu": "1.93.0",
++        "@oxlint/binding-linux-arm64-musl": "1.93.0",
++        "@oxlint/binding-linux-ppc64-gnu": "1.93.0",
++        "@oxlint/binding-linux-riscv64-gnu": "1.93.0",
++        "@oxlint/binding-linux-riscv64-musl": "1.93.0",
++        "@oxlint/binding-linux-s390x-gnu": "1.93.0",
++        "@oxlint/binding-linux-x64-gnu": "1.93.0",
++        "@oxlint/binding-linux-x64-musl": "1.93.0",
++        "@oxlint/binding-openharmony-arm64": "1.93.0",
++        "@oxlint/binding-win32-arm64-msvc": "1.93.0",
++        "@oxlint/binding-win32-ia32-msvc": "1.93.0",
++        "@oxlint/binding-win32-x64-msvc": "1.93.0"
++      },
++      "peerDependencies": {
++        "oxlint-tsgolint": ">=7.0.2005",
++        "vite-plus": "*"
++      },
++      "peerDependenciesMeta": {
++        "oxlint-tsgolint": {
++          "optional": true
++        },
++        "vite-plus": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/oxlint-tsgolint": {
++      "version": "7.0.2006",
++      "resolved": "https://registry.npmjs.org/oxlint-tsgolint/-/oxlint-tsgolint-7.0.2006.tgz",
++      "integrity": "sha512-5B3UtH71kycPHUC1kFEIffivEAs49SUmkJuHZOZnTY0NPj4legp0bcsCQucuLVNCoJzDucS68P2C4WIhP+LypQ==",
++      "dev": true,
++      "license": "MIT",
++      "bin": {
++        "tsgolint": "bin/tsgolint.js"
++      },
++      "optionalDependencies": {
++        "@oxlint-tsgolint/darwin-arm64": "7.0.2006",
++        "@oxlint-tsgolint/darwin-x64": "7.0.2006",
++        "@oxlint-tsgolint/linux-arm64": "7.0.2006",
++        "@oxlint-tsgolint/linux-x64": "7.0.2006",
++        "@oxlint-tsgolint/win32-arm64": "7.0.2006",
++        "@oxlint-tsgolint/win32-x64": "7.0.2006"
++      }
++    },
 +    "node_modules/parseurl": {
 +      "version": "1.3.3",
 +      "resolved": "https://registry.npmjs.org/parseurl/-/parseurl-1.3.3.tgz",
@@ -3936,7 +4532,7 @@ index 0000000000000000000000000000000000000000..7f66f056846bc2c2aab145cb15348ded
 +  }
 +}
 diff --git a/package.json b/package.json
-index ed310724e73bd06ba8af9bab5d84a040ff4ed252..7cb037a99d763b665a6cbeb1b8172d3286813bac 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..cfe3a2ac7bdd2e487fcbfb2265733b599489ba04 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,16 +1,17 @@
@@ -3944,7 +4540,7 @@ index ed310724e73bd06ba8af9bab5d84a040ff4ed252..7cb037a99d763b665a6cbeb1b8172d32
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.2+upstream.ac2829b",
++  "version": "0.1.0-telemetry.3+upstream.0509f46",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -3975,17 +4571,19 @@ index ed310724e73bd06ba8af9bab5d84a040ff4ed252..7cb037a99d763b665a6cbeb1b8172d32
        }
      ]
    },
-@@ -28,27 +29,25 @@
+@@ -28,28 +29,28 @@
      "bb-plugin"
    ],
    "scripts": {
 -    "test": "vitest run --config vitest.config.ts",
 -    "typecheck": "tsrs --noEmit",
+-    "lint:type-aware": "oxlint -c ../../.oxlintrc.type-aware.json",
 -    "lint": "oxlint --ignore-pattern node_modules --ignore-pattern dist .",
 -    "prepare:bundled": "bb-plugin-build prepare-bundled"
 +    "build": "bb plugin build",
 +    "test": "vitest run",
-+    "typecheck": "tsc --noEmit"
++    "typecheck": "tsc --noEmit",
++    "lint:type-aware": "npm run typecheck && oxlint -c .oxlintrc.type-aware.json"
    },
    "devDependencies": {
      "@anthropic-ai/sdk": "^0.93.0",
@@ -3997,6 +4595,8 @@ index ed310724e73bd06ba8af9bab5d84a040ff4ed252..7cb037a99d763b665a6cbeb1b8172d32
      "hono": "4.13.16",
 -    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
 -    "typescript": "npm:@typescript/typescript6@^6.0.2",
++    "oxlint": "^1.91.0",
++    "oxlint-tsgolint": "^7.0.2006",
 +    "typescript": "^5.7.0",
      "vitest": "^4.1.12"
    },
@@ -4404,7 +5004,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..64f0926fd8aedbd2ff60b7aaeefc578d39ee0b90
+index 0000000000000000000000000000000000000000..1297b523196e8fc4e31be1777fc8dc4c85735e99
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -4420,8 +5020,8 @@ index 0000000000000000000000000000000000000000..64f0926fd8aedbd2ff60b7aaeefc578d
 +import urllib.request
 +
 +
-+UPSTREAM_COMMIT = "ac2829b9a66004c32d2f4b04e01b9176222b2af1"
-+UPSTREAM_SOURCE_SHA256 = "884d8d10cf84e81e8f60193a82b8f0ea44a38a3d9b9e73c792debc33d6af035a"
++UPSTREAM_COMMIT = "0509f46aae61a5b30afac23551b084b0f28b6d4f"
++UPSTREAM_SOURCE_SHA256 = "51498cf70d68ad054c2c53492f9dee08c06a75691d9a07314784bac6d93ff51b"
 +ROOT = Path(__file__).resolve().parents[1]
 +GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 +

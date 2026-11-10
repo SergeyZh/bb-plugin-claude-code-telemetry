@@ -166,3 +166,37 @@ uses an object spread so it can be passed to supporting hosts with older types.
   resulting contents.
 
 No live Claude requests were made and the installed plugin was not reloaded.
+
+## Upstream sync, 2026-11-10
+
+Imported the sole provider change after `ac2829b` through
+`0509f46aae61a5b30afac23551b084b0f28b6d4f` (2026-11-09): type-aware
+promise linting. Compared all provider files from both exact commit archives;
+only the package lint script changed. Upstream package version remains 0.1.0;
+this release increments the fork to `0.1.0-telemetry.3+upstream.0509f46`.
+The new source checksum was computed with the comparison generator's `digest()`
+over every provider file from the target archive.
+
+- Typecheck: passed (`npm run typecheck`, also run by the lint command).
+- Type-aware lint: passed using the five upstream rules and locally installed
+  Oxlint 1.93.0 / oxlint-tsgolint 7.0.2006. A temporary TypeScript probe with an
+  unawaited typed `node:fs/promises` call failed with `no-floating-promises` as
+  expected; the probe was removed before the final lint pass.
+- Automated suite: 462 passed, 1 opt-in live SDK test skipped (31 files passed,
+  1 skipped). Existing conformance, telemetry, cache-lifetime and TTL coverage
+  remains in the suite; this import changes no runtime or test files.
+- Server and host artifacts: built successfully. BB reported the existing SDK
+  0.6.104 pin differs from its SDK 0.6.132; the pin was preserved.
+- Both comparison patches regenerated against the exact target archive;
+  generator `--check` verified patch application and every resulting file.
+- `git diff --check`: passed.
+- npm dependency audit: zero reported vulnerabilities. Only development lint
+  dependencies were added; no runtime dependencies changed.
+
+No new host or SDK requirement is introduced. Existing Bash-description and
+guided sign-in host limitations remain documented in UPSTREAM.md. The lint
+command runs typecheck first, replacing upstream's Turbo dependency, and uses a
+local configuration instead of the monorepo root. Lint tooling requires Node
+22.12 or newer on Node 22; verification used Node 24.17.0.
+
+No live Claude requests were made, and the installed plugin was not reloaded.

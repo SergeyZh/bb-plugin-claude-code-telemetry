@@ -3,7 +3,7 @@
 A standalone fork of BB's Claude Code provider, installed alongside it.
 
 - Plugin and provider ID: `claude-code-telemetry`
-- Version: `0.1.0-telemetry.2+upstream.ac2829b` (see [versioning](UPSTREAM.md#versioning))
+- Version: `0.1.0-telemetry.3+upstream.0509f46` (see [versioning](UPSTREAM.md#versioning))
 - Picker name: **Claude Code Telemetry**
 - Original provider: `claude-code`, unchanged
 
@@ -18,7 +18,7 @@ as the built-in provider. It adds a separate picker entry and plugin settings;
 existing threads keep their provider, and the built-in provider stays available.
 
 This comparison is against the original provider at
-[`ac2829b` (2026-11-06)](https://github.com/get-bb/bb/tree/ac2829b9a66004c32d2f4b04e01b9176222b2af1/plugins/provider-claude-code),
+[`0509f46` (2026-11-09)](https://github.com/get-bb/bb/tree/0509f46aae61a5b30afac23551b084b0f28b6d4f/plugins/provider-claude-code),
 the latest upstream provider revision imported into this fork.
 
 | Capability | Original provider at this revision | Claude Code Telemetry |
@@ -195,6 +195,10 @@ information; consumers can price observed requests using their reported model.
 `npm test` includes the upstream bridge conformance suite and recorded transcript
 checks, plus request accounting regressions. See UPSTREAM.md and LICENSE for
 provenance. No private BB workspace packages are required.
+
+`npm run lint:type-aware` runs typecheck first, then the upstream promise rules
+using the local Oxlint configuration. Install development dependencies to use
+it; the lint tooling requires Node 22.12 or newer on the supported Node 22 line.
 
 An opt-in live SDK smoke test makes two or more requests on your Claude account
 and checks that their sum exactly matches the SDK result. It creates no BB

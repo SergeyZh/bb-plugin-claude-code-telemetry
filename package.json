@@ -1,6 +1,6 @@
 {
   "name": "bb-plugin-claude-code-telemetry",
-  "version": "0.1.0-telemetry.2+upstream.ac2829b",
+  "version": "0.1.0-telemetry.3+upstream.0509f46",
   "private": true,
   "type": "module",
   "description": "Run Claude Code alongside the built-in provider with usage telemetry for each model request.",
@@ -31,7 +31,8 @@
   "scripts": {
     "build": "bb plugin build",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint:type-aware": "npm run typecheck && oxlint -c .oxlintrc.type-aware.json"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.93.0",
@@ -40,6 +41,8 @@
     "better-sqlite3": "12.11.1",
     "cron-parser": "^5.10.3",
     "hono": "4.13.16",
+    "oxlint": "^1.91.0",
+    "oxlint-tsgolint": "^7.0.2006",
     "typescript": "^5.7.0",
     "vitest": "^4.1.12"
   },
