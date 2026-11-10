@@ -14,6 +14,8 @@ When changes exist, it starts one BB thread in environment `env_r4vevp8jj8`
 and Full Access for unattended local maintenance. The prompt is read from
 `scripts/upstream-sync-prompt.md` in the checkout at dispatch time. It requires:
 
+- Russian for all user-facing conversation messages; English for repository
+  documentation, code comments, and Git commit messages.
 - Complete import through the pinned provider commit, preserving fork behavior.
 - A release version bump with the new upstream SHA, documentation and patch updates.
 - Typecheck, tests, build, and comparison-patch verification before committing.

@@ -4612,10 +4612,10 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..cfe3a2ac7bdd2e487fcbfb2265733b59
  }
 diff --git a/scripts/UPSTREAM-AUTOMATION.md b/scripts/UPSTREAM-AUTOMATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..35b72a01060c5c3fa4abb4fd84bee5a2775e77a7
+index 0000000000000000000000000000000000000000..fd37ea22199fbcc7245ce362d0025a3aa243532f
 --- /dev/null
 +++ b/scripts/UPSTREAM-AUTOMATION.md
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,75 @@
 +# Daily upstream integration
 +
 +BB automation `auto_syvconbnnhc` in project `proj_zpyirjtmqp` runs
@@ -4632,6 +4632,8 @@ index 0000000000000000000000000000000000000000..35b72a01060c5c3fa4abb4fd84bee5a2
 +and Full Access for unattended local maintenance. The prompt is read from
 +`scripts/upstream-sync-prompt.md` in the checkout at dispatch time. It requires:
 +
++- Russian for all user-facing conversation messages; English for repository
++  documentation, code comments, and Git commit messages.
 +- Complete import through the pinned provider commit, preserving fork behavior.
 +- A release version bump with the new upstream SHA, documentation and patch updates.
 +- Typecheck, tests, build, and comparison-patch verification before committing.
@@ -5213,13 +5215,18 @@ index 0000000000000000000000000000000000000000..1297b523196e8fc4e31be1777fc8dc4c
 +    main()
 diff --git a/scripts/upstream-sync-prompt.md b/scripts/upstream-sync-prompt.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..ee5e5b81f8183330e80620acab2c87c78505a24c
+index 0000000000000000000000000000000000000000..055c4cab77f1a5ed0a7599fd9744a2ecc4cbc49a
 --- /dev/null
 +++ b/scripts/upstream-sync-prompt.md
-@@ -0,0 +1,45 @@
+@@ -0,0 +1,50 @@
 +Integrate the newly detected upstream Claude Code provider changes into this
 +standalone plugin. This is the user's authorized daily maintenance automation.
 +Use this thread's configured Codex gpt-6.1-sol model with medium reasoning.
++
++Write all user-facing messages in the BB conversation in Russian, including
++progress updates, questions, failure reports, and the final result. Keep all
++repository documentation, code comments, and Git commit messages in English.
++Preserve literal commands, identifiers, version strings, and upstream titles.
 +
 +Read AGENTS.md and UPSTREAM.md first. The dispatch context below pins the
 +checkout HEAD, imported baseline, target baseline, and ordered commit list.
