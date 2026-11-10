@@ -200,3 +200,47 @@ local configuration instead of the monorepo root. Lint tooling requires Node
 22.12 or newer on Node 22; verification used Node 24.17.0.
 
 No live Claude requests were made, and the installed plugin was not reloaded.
+
+## Steer and pooled model sync, 2026-11-10
+
+Imported all provider changes after `0509f46` through
+`8b232325543ae66d4374a71ee4d05838ad5cd793`, in commit order:
+`bb8c2af` (keep queued steers in their accepted BB turn), then `8b23232`
+(discover pooled account models with the request's environment). Both commits
+are dated 2026-11-10. Exact archives were compared at baseline, intermediate,
+and target; applying the ordered provider patches to the exact old provider
+reproduced every target provider file. The generator's `digest()` over all
+provider files in the exact target archive produced the pinned source checksum.
+
+Upstream package version remains `0.1.0`; the fork revision increases once to
+`0.1.0-telemetry.4+upstream.8b23232`. Both root lockfile versions agree.
+Upstream's new bridge tests use this fork's `claude-code-telemetry` identity.
+Existing telemetry, cache-write lifetime, TTL, and standalone packaging code
+and regression coverage are retained.
+
+- `npm run typecheck`: passed.
+- `npm test`: 470 passed, 1 opt-in live SDK test skipped (32 files passed,
+  1 skipped). Includes three steer-completion regressions, per-environment
+  model discovery/memoization, paginated HTTP catalogs, effort mapping, alias
+  retention, HTTP 404 fallback, and failures for empty catalogs and HTTP 503.
+  Existing bridge conformance, request telemetry, cache-lifetime, and TTL tests
+  remain in the passing suite.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm run build`: passed for server and host artifacts. The existing SDK
+  0.6.104 pin differs from this BB's SDK 0.6.132; the pin was preserved.
+- Both comparison patches regenerated against the exact target archive;
+  generator `--check` verified application and every resulting file.
+- `git diff --check`: passed.
+
+No new host protocol or SDK dependency is needed. SDK 0.6.104 already exports
+`modelListParamsSchema` including `envVars`, and the installed Agent SDK types
+support the imported code. The pooled catalog needs the external Account Pooler
+route `/claude/v1/models` and `BB_CLAUDE_MODELS_URL` from upstream `8b23232`.
+This integration imports the provider portion only. Missing URL/token and older
+pools returning HTTP 404 retain CLI discovery. Steer tracking requires CLI
+consumption reports for the new behavior; older CLIs without
+`user_message_uuids` keep legacy turn completion. Existing Bash-description
+and guided sign-in host limitations remain documented in UPSTREAM.md.
+
+No live Claude requests were made, and the installed plugin was not reloaded.
+No changes were pushed.

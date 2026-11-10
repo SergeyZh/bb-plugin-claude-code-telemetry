@@ -37,10 +37,10 @@ index 12a77d3b090bcc905a4d8e7b7667f2b1d025a8e8..7a259d86a84728e8bea245a6d88b8590
        passthrough: ["BB_CLAUDE_CODE_EXECUTABLE", "CLAUDE_CODE_OAUTH_TOKEN"],
      },
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1ee56822ea 100644
+index 96d1b8d801290c096934cd451d94fda76c243c43..4c7ad80a936a5b98f0d1c001aa8c3b95f78698ab 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
-@@ -445,6 +445,26 @@ function resolvePendingSessionWork(
+@@ -448,6 +448,26 @@ function resolvePendingSessionWork(
    resolvePendingInteractiveRequests(threadSession, message);
  }
  
@@ -67,7 +67,7 @@ index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1e
  function applyChromeSetting(
    attachment: ThreadAttachment,
    enabled: boolean | undefined,
-@@ -1072,6 +1092,7 @@ function toSessionConstructionConfig(
+@@ -1081,6 +1101,7 @@ function toSessionConstructionConfig(
        permissionScope: params.permissionScope,
        plugins: params.plugins,
        sandboxEnabled: params.sandboxEnabled,
@@ -75,7 +75,7 @@ index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1e
      },
    };
  }
-@@ -2589,6 +2610,7 @@ async function runTurnInput(
+@@ -2601,6 +2622,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);
@@ -84,10 +84,10 @@ index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1e
      applyContextWindowSetting(attachment, params.disable1MContext);
      applyArtifactSetting(attachment, params.artifactsEnabled);
 diff --git a/src/bridge/commands.ts b/src/bridge/commands.ts
-index ea8b96305fbd0c508f00f39cb4481a7b5773d1ca..b7f190988dca7e8ea570f1a7c15f4003a0b29781 100644
+index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..294f2c8667b8d73b07bcdbe156c31a62f42ac5e3 100644
 --- a/src/bridge/commands.ts
 +++ b/src/bridge/commands.ts
-@@ -20,6 +20,7 @@ import {
+@@ -21,6 +21,7 @@ import {
    providerInstallationStatusParamsSchema,
  } from "@get-bb/plugin-sdk/provider-bridge";
  import { z } from "zod";
@@ -95,7 +95,7 @@ index ea8b96305fbd0c508f00f39cb4481a7b5773d1ca..b7f190988dca7e8ea570f1a7c15f4003
  import { claudePermissionModeSchema } from "../interactive-contract.js";
  
  const bridgeInstructionModeSchema = z.enum(instructionModeValues);
-@@ -40,6 +41,7 @@ const bridgeClaudePluginsSchema = z
+@@ -41,6 +42,7 @@ const bridgeClaudePluginsSchema = z
    .optional();
  
  export const claudeThreadStartParamsSchema = z.object({
@@ -103,7 +103,7 @@ index ea8b96305fbd0c508f00f39cb4481a7b5773d1ca..b7f190988dca7e8ea570f1a7c15f4003
    threadId: z.string(),
    cwd: z.string(),
    baseInstructions: z.string(),
-@@ -80,6 +82,7 @@ export const claudeThreadForkParamsSchema =
+@@ -81,6 +83,7 @@ export const claudeThreadForkParamsSchema =
    });
  
  export const claudeTurnStartParamsSchema = z.object({
@@ -141,7 +141,7 @@ index 9c2ab273dadfa77563a3f9b1d3447c252087066e..cdd85dba88cc8082a4556e0c6abb1c8d
  }
  
 diff --git a/src/delta-translation.ts b/src/delta-translation.ts
-index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22f5559815 100644
+index f2caf965fb27b078a416b65cddf361dad35a6640..c53fb010217bab30a9e4e38ec43973dc81cfbe61 100644
 --- a/src/delta-translation.ts
 +++ b/src/delta-translation.ts
 @@ -1,3 +1,4 @@
@@ -174,7 +174,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
    promptCacheTtlMs: number | undefined;
    latestRequestContextTokens: number | undefined;
    latestProviderCheckpointId: string | undefined;
-@@ -409,6 +410,7 @@ function createThreadState(): ClaudeThreadDialectState {
+@@ -411,6 +412,7 @@ function createThreadState(): ClaudeThreadDialectState {
    return {
      mirror: { turnOpen: false, responseStarted: false, segment: 0 },
      cumulativeTokens: ZERO_TOKEN_USAGE,
@@ -182,7 +182,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
      promptCacheTtlMs: undefined,
      latestRequestContextTokens: undefined,
      latestProviderCheckpointId: undefined,
-@@ -462,6 +464,7 @@ export function createClaudeDeltaTranslator(
+@@ -466,6 +468,7 @@ export function createClaudeDeltaTranslator(
      state.suppressUnacceptedTurnStart = false;
      state.mirror.turnOpen = true;
      state.mirror.segment += 1;
@@ -190,7 +190,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
      state.mirror.responseStarted = false;
      state.latestRequestContextTokens = undefined;
      state.latestProviderCheckpointId = undefined;
-@@ -811,6 +814,16 @@ export function createClaudeDeltaTranslator(
+@@ -815,6 +818,16 @@ export function createClaudeDeltaTranslator(
      state.lastModelFallback = { ...transition, segment: state.mirror.segment };
    }
  
@@ -207,7 +207,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
    function translateAssistantMessage(
      event: unknown,
      state: ClaudeThreadDialectState,
-@@ -881,6 +894,9 @@ export function createClaudeDeltaTranslator(
+@@ -885,6 +898,9 @@ export function createClaudeDeltaTranslator(
        state.latestProviderCheckpointId = providerCheckpointId;
      }
      if (parentToolCallId === undefined) {
@@ -217,7 +217,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
        const requestContextTokens = extractClaudeRequestContextTokens(message);
        if (requestContextTokens !== null) {
          state.latestRequestContextTokens = requestContextTokens;
-@@ -1113,23 +1129,14 @@ export function createClaudeDeltaTranslator(
+@@ -1155,23 +1171,14 @@ export function createClaudeDeltaTranslator(
          attach: "open",
        });
      }
@@ -247,7 +247,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
      }
  
      const pendingHardRateLimitRejection =
-@@ -1384,6 +1391,9 @@ export function createClaudeDeltaTranslator(
+@@ -1433,6 +1440,9 @@ export function createClaudeDeltaTranslator(
      const state = stateFor({ threadId });
      const deltas = releaseHeldSkillOpen(state, undefined);
      if (state.mirror.turnOpen) {

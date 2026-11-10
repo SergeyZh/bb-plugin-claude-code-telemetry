@@ -250,7 +250,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..e32596f9cb1d7873260309cb80a73452
 +subject to the account's plan and billing.
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..8448d7765efc950885cbe9dae252906a5b9b532c
+index 0000000000000000000000000000000000000000..dbc1c65930eef1c8296acbcc90378100a54f7029
 --- /dev/null
 +++ b/README.md
 @@ -0,0 +1,209 @@
@@ -259,7 +259,7 @@ index 0000000000000000000000000000000000000000..8448d7765efc950885cbe9dae252906a
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.3+upstream.0509f46` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.4+upstream.8b23232` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -274,7 +274,7 @@ index 0000000000000000000000000000000000000000..8448d7765efc950885cbe9dae252906a
 +existing threads keep their provider, and the built-in provider stays available.
 +
 +This comparison is against the original provider at
-+[`0509f46` (2026-11-09)](https://github.com/get-bb/bb/tree/0509f46aae61a5b30afac23551b084b0f28b6d4f/plugins/provider-claude-code),
++[`8b23232` (2026-11-10)](https://github.com/get-bb/bb/tree/8b232325543ae66d4374a71ee4d05838ad5cd793/plugins/provider-claude-code),
 +the latest upstream provider revision imported into this fork.
 +
 +| Capability | Original provider at this revision | Claude Code Telemetry |
@@ -465,10 +465,10 @@ index 0000000000000000000000000000000000000000..8448d7765efc950885cbe9dae252906a
 +```
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..545337718189e3dc1b8ed16fdc4614d7e68da6b3
+index 0000000000000000000000000000000000000000..4e06bd87feeb8cbae0f868297aa377da29efb5b9
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,139 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -485,26 +485,26 @@ index 0000000000000000000000000000000000000000..545337718189e3dc1b8ed16fdc4614d7
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.3+upstream.0509f46`:
++The current version is `0.1.0-telemetry.4+upstream.8b23232`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.3` is this fork's release revision. Increment it for every release,
++- `telemetry.4` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-+- `upstream.0509f46` identifies the latest fully imported upstream baseline.
++- `upstream.8b23232` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
 +  import date below and in the comparison-patch generator.
 +
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.4+upstream.0509f46`. A later upstream import would increment the
++`0.1.0-telemetry.5+upstream.8b23232`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
 +
 +Synced the provider changes through
-+[`0509f46`](https://github.com/get-bb/bb/commit/0509f46aae61a5b30afac23551b084b0f28b6d4f)
++[`8b23232`](https://github.com/get-bb/bb/commit/8b232325543ae66d4374a71ee4d05838ad5cd793)
 +on 2026-11-10, preserving this fork's identity and request telemetry:
 +
 +- [`9dec2ae`](https://github.com/get-bb/bb/commit/9dec2aefb8852514942ffafc16a2316ae304de6e):
@@ -574,12 +574,46 @@ index 0000000000000000000000000000000000000000..545337718189e3dc1b8ed16fdc4614d7
 +description and guided sign-in host limitations above still apply. Provider
 +identity, request telemetry, cache-write lifetime breakdown, per-thread TTL,
 +and regression coverage are preserved.
++
++## Steer and pooled model sync, 2026-11-10
++
++Imported both provider commits after `0509f46`, oldest first:
++
++- [`bb8c2af`](https://github.com/get-bb/bb/commit/bb8c2afd784949990e24ce18bcf8b81478464f6a)
++  (2026-11-10), "Keep a Claude Code turn open until the SDK has run every steer pushed into it (#7321)":
++  track accepted prompt UUIDs and wait for queued steers before completing the
++  BB turn. Older CLIs without consumption reports retain the previous completion
++  behavior. Includes all three upstream bridge regressions.
++- [`8b23232`](https://github.com/get-bb/bb/commit/8b232325543ae66d4374a71ee4d05838ad5cd793)
++  (2026-11-10), "List pooled accounts' Claude models in the Claude Code picker (#7401)":
++  use request environment variables for discovery, memoize per environment,
++  and prefer the paginated account catalog while retaining available CLI aliases
++  and descriptions. Includes upstream bridge, memo, and HTTP catalog regressions.
++
++All provider files from the exact baseline, intermediate, and target archives
++were compared. Applying the two ordered provider patches reproduces every file
++in the target provider archive. Upstream package version remains `0.1.0`.
++
++No new BB SDK or wire protocol is required: the pinned SDK 0.6.104 already
++exports `modelListParamsSchema` with `envVars`. Runtime dependencies and the
++standalone SDK pin are unchanged. Pooled catalog discovery requires Account
++Pooler's new `/claude/v1/models` route and contributed `BB_CLAUDE_MODELS_URL`,
++as implemented in upstream `8b23232`; those external plugin changes are not
++part of this standalone provider. Without the URL/token, or on HTTP 404 from an
++older pool, discovery keeps the CLI catalog. Other HTTP failures and empty
++catalogs fail discovery rather than publishing a partial list. Steer tracking
++uses CLI replay/result consumption reports when available and falls back to
++legacy completion behavior when `user_message_uuids` is absent.
++
++Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
++TTL selection, standalone packaging, and extra regression coverage are preserved.
++Existing Bash-description and guided sign-in host limitations still apply.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..b33d50988d81dea86d9cb6fca81b2694b4c26ff2
+index 0000000000000000000000000000000000000000..4bd05cc64f8b203ba3134bfcc9a842726a5bff23
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,202 @@
+@@ -0,0 +1,246 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -782,21 +816,65 @@ index 0000000000000000000000000000000000000000..b33d50988d81dea86d9cb6fca81b2694
 +22.12 or newer on Node 22; verification used Node 24.17.0.
 +
 +No live Claude requests were made, and the installed plugin was not reloaded.
++
++## Steer and pooled model sync, 2026-11-10
++
++Imported all provider changes after `0509f46` through
++`8b232325543ae66d4374a71ee4d05838ad5cd793`, in commit order:
++`bb8c2af` (keep queued steers in their accepted BB turn), then `8b23232`
++(discover pooled account models with the request's environment). Both commits
++are dated 2026-11-10. Exact archives were compared at baseline, intermediate,
++and target; applying the ordered provider patches to the exact old provider
++reproduced every target provider file. The generator's `digest()` over all
++provider files in the exact target archive produced the pinned source checksum.
++
++Upstream package version remains `0.1.0`; the fork revision increases once to
++`0.1.0-telemetry.4+upstream.8b23232`. Both root lockfile versions agree.
++Upstream's new bridge tests use this fork's `claude-code-telemetry` identity.
++Existing telemetry, cache-write lifetime, TTL, and standalone packaging code
++and regression coverage are retained.
++
++- `npm run typecheck`: passed.
++- `npm test`: 470 passed, 1 opt-in live SDK test skipped (32 files passed,
++  1 skipped). Includes three steer-completion regressions, per-environment
++  model discovery/memoization, paginated HTTP catalogs, effort mapping, alias
++  retention, HTTP 404 fallback, and failures for empty catalogs and HTTP 503.
++  Existing bridge conformance, request telemetry, cache-lifetime, and TTL tests
++  remain in the passing suite.
++- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
++- `npm run build`: passed for server and host artifacts. The existing SDK
++  0.6.104 pin differs from this BB's SDK 0.6.132; the pin was preserved.
++- Both comparison patches regenerated against the exact target archive;
++  generator `--check` verified application and every resulting file.
++- `git diff --check`: passed.
++
++No new host protocol or SDK dependency is needed. SDK 0.6.104 already exports
++`modelListParamsSchema` including `envVars`, and the installed Agent SDK types
++support the imported code. The pooled catalog needs the external Account Pooler
++route `/claude/v1/models` and `BB_CLAUDE_MODELS_URL` from upstream `8b23232`.
++This integration imports the provider portion only. Missing URL/token and older
++pools returning HTTP 404 retain CLI discovery. Steer tracking requires CLI
++consumption reports for the new behavior; older CLIs without
++`user_message_uuids` keep legacy turn completion. Existing Bash-description
++and guided sign-in host limitations remain documented in UPSTREAM.md.
++
++No live Claude requests were made, and the installed plugin was not reloaded.
++No changes were pushed.
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..0108d9f772830498f2be36d337cb154798bbdac1
+index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abebb5831940
 --- /dev/null
 +++ b/package-lock.json
 @@ -0,0 +1,3743 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.3+upstream.0509f46",
++  "version": "0.1.0-telemetry.4+upstream.8b23232",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.3+upstream.0509f46",
++      "version": "0.1.0-telemetry.4+upstream.8b23232",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -4532,7 +4610,7 @@ index 0000000000000000000000000000000000000000..0108d9f772830498f2be36d337cb1547
 +  }
 +}
 diff --git a/package.json b/package.json
-index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..cfe3a2ac7bdd2e487fcbfb2265733b599489ba04 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..aed123eddc5ccaa07fb26436aa3d2beea40ca8c8 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,16 +1,17 @@
@@ -4540,7 +4618,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..cfe3a2ac7bdd2e487fcbfb2265733b59
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.3+upstream.0509f46",
++  "version": "0.1.0-telemetry.4+upstream.8b23232",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -5006,7 +5084,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..1297b523196e8fc4e31be1777fc8dc4c85735e99
+index 0000000000000000000000000000000000000000..b4fa549888efb2037fa1c5cc88c63cc888fbbdd2
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -5022,8 +5100,8 @@ index 0000000000000000000000000000000000000000..1297b523196e8fc4e31be1777fc8dc4c
 +import urllib.request
 +
 +
-+UPSTREAM_COMMIT = "0509f46aae61a5b30afac23551b084b0f28b6d4f"
-+UPSTREAM_SOURCE_SHA256 = "51498cf70d68ad054c2c53492f9dee08c06a75691d9a07314784bac6d93ff51b"
++UPSTREAM_COMMIT = "8b232325543ae66d4374a71ee4d05838ad5cd793"
++UPSTREAM_SOURCE_SHA256 = "3c5463039d22a0643717dd527957a498513b296a1c84b06b09bd9a59054e19ba"
 +ROOT = Path(__file__).resolve().parents[1]
 +GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 +
@@ -5561,7 +5639,7 @@ index 16a30b869f43e95ccc91fe0cdf27fb77e39a14a3..7d8568b5424c79ef1c3fbfb493fa42de
    "turn/completed",
  ];
 diff --git a/src/bridge/__tests__/bridge.test.ts b/src/bridge/__tests__/bridge.test.ts
-index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62dcc6fe65 100644
+index 6b7d1bda17b610649dd0228e9d7d62c3fe410a34..a5331aa05cd376a429fed09c86b6d6879941a040 100644
 --- a/src/bridge/__tests__/bridge.test.ts
 +++ b/src/bridge/__tests__/bridge.test.ts
 @@ -233,7 +233,7 @@ function getLatestQueryCall(): ClaudeQueryCall {
@@ -5704,10 +5782,10 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
 +    }
 +  });
 +
-   it("forks a Claude session from the session config directory through the requested checkpoint", async () => {
-     const root = mkdtempSync(join(tmpdir(), "bb-claude-fork-"));
-     tempDirs.push(root);
-@@ -1285,6 +1358,7 @@ describe("bridge", () => {
+   it("lists models with each request's contributed environment", async () => {
+     const bridge = createBridgeJsonRpcTestHarness(handleLine);
+     queryMock.mockImplementation(() => ({
+@@ -1330,6 +1403,7 @@ describe("bridge", () => {
            permissionEscalation: "ask",
            instructions: "test",
            envVars: { CLAUDE_CONFIG_DIR: projectConfigDir },
@@ -5715,7 +5793,7 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
            providerOptions: {
              workflowsEnabled: false,
            },
-@@ -1306,7 +1380,7 @@ describe("bridge", () => {
+@@ -1351,7 +1425,7 @@ describe("bridge", () => {
        expect(forkedTranscript).not.toContain("discarded follow-up");
        expect(queryMock).toHaveBeenLastCalledWith(
          expect.objectContaining({
@@ -5724,7 +5802,7 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
          }),
        );
      } finally {
-@@ -5456,7 +5530,7 @@ describe("bridge", () => {
+@@ -5501,7 +5575,7 @@ describe("bridge", () => {
        await bridge.flushWork();
  
        expect(
@@ -5733,7 +5811,7 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
            (event) => {
              const item =
                event.type === "item/started" ||
-@@ -5924,7 +5998,7 @@ describe("bridge", () => {
+@@ -5969,7 +6043,7 @@ describe("bridge", () => {
  
          expect(bridge.hasResponse(2)).toBe(false);
          expect(
@@ -5742,7 +5820,7 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
              (event) => event.type === "turn/started",
            ),
          ).toBe(false);
-@@ -5937,7 +6011,7 @@ describe("bridge", () => {
+@@ -5982,7 +6056,7 @@ describe("bridge", () => {
  
          const events = assembleCapturedThreadEvents(
            bridge.messages,
@@ -5751,7 +5829,7 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
          );
          const started = events.find((event) => event.type === "turn/started");
          expect(started).toBeDefined();
-@@ -5972,7 +6046,7 @@ describe("bridge", () => {
+@@ -6017,7 +6091,7 @@ describe("bridge", () => {
            await bridge.waitForResponse(3);
            const steered = assembleCapturedThreadEvents(
              bridge.messages,
@@ -5760,7 +5838,7 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
            );
            expect(
              steered.filter((event) => event.type === "turn/started"),
-@@ -5990,7 +6064,7 @@ describe("bridge", () => {
+@@ -6035,7 +6109,7 @@ describe("bridge", () => {
          await stopBridgeThread({ bridge, queries, threadId });
          const stopped = assembleCapturedThreadEvents(
            bridge.messages,
@@ -5769,7 +5847,16 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
          );
          expect(stopped).toContainEqual(
            expect.objectContaining({
-@@ -6495,7 +6569,7 @@ describe("canonical model context-window hint", () => {
+@@ -6136,7 +6210,7 @@ describe("bridge", () => {
+     function turnEvents(bridge: BridgeJsonRpcTestHarness) {
+       const events = assembleCapturedThreadEvents(
+         bridge.messages,
+-        "claude-code",
++        "claude-code-telemetry",
+       );
+       return {
+         completed: events.filter((event) => event.type === "turn/completed"),
+@@ -6770,7 +6844,7 @@ describe("canonical model context-window hint", () => {
  
        const contextWindowEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -5778,7 +5865,7 @@ index cacbb5b24001ca35c4a9de29e4bb4fb3ecfea9c0..7622c6388b2782fc2d3c5ad13a162f62
        ).filter(
          (
            event,
-@@ -6511,7 +6585,7 @@ describe("canonical model context-window hint", () => {
+@@ -6786,7 +6860,7 @@ describe("canonical model context-window hint", () => {
  
        const tokenUsageEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -5801,10 +5888,10 @@ index ea9d97ca9561bb3e2c875ed2135d62dc624fdbb8..c9aceb3e30f71749b1050a09256dbd16
        cwd: workspaceDir,
        promptInput: [{ type: "text", text: "say hello", mentions: [] }],
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1ee56822ea 100644
+index 96d1b8d801290c096934cd451d94fda76c243c43..4c7ad80a936a5b98f0d1c001aa8c3b95f78698ab 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
-@@ -445,6 +445,26 @@ function resolvePendingSessionWork(
+@@ -448,6 +448,26 @@ function resolvePendingSessionWork(
    resolvePendingInteractiveRequests(threadSession, message);
  }
  
@@ -5831,7 +5918,7 @@ index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1e
  function applyChromeSetting(
    attachment: ThreadAttachment,
    enabled: boolean | undefined,
-@@ -1072,6 +1092,7 @@ function toSessionConstructionConfig(
+@@ -1081,6 +1101,7 @@ function toSessionConstructionConfig(
        permissionScope: params.permissionScope,
        plugins: params.plugins,
        sandboxEnabled: params.sandboxEnabled,
@@ -5839,7 +5926,7 @@ index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1e
      },
    };
  }
-@@ -2589,6 +2610,7 @@ async function runTurnInput(
+@@ -2601,6 +2622,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);
@@ -5848,10 +5935,10 @@ index aeec375d01842986f28405084b25474ac7103859..e377eecc25c60363caa06e4bdeb4ce1e
      applyContextWindowSetting(attachment, params.disable1MContext);
      applyArtifactSetting(attachment, params.artifactsEnabled);
 diff --git a/src/bridge/commands.ts b/src/bridge/commands.ts
-index ea8b96305fbd0c508f00f39cb4481a7b5773d1ca..b7f190988dca7e8ea570f1a7c15f4003a0b29781 100644
+index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..294f2c8667b8d73b07bcdbe156c31a62f42ac5e3 100644
 --- a/src/bridge/commands.ts
 +++ b/src/bridge/commands.ts
-@@ -20,6 +20,7 @@ import {
+@@ -21,6 +21,7 @@ import {
    providerInstallationStatusParamsSchema,
  } from "@get-bb/plugin-sdk/provider-bridge";
  import { z } from "zod";
@@ -5859,7 +5946,7 @@ index ea8b96305fbd0c508f00f39cb4481a7b5773d1ca..b7f190988dca7e8ea570f1a7c15f4003
  import { claudePermissionModeSchema } from "../interactive-contract.js";
  
  const bridgeInstructionModeSchema = z.enum(instructionModeValues);
-@@ -40,6 +41,7 @@ const bridgeClaudePluginsSchema = z
+@@ -41,6 +42,7 @@ const bridgeClaudePluginsSchema = z
    .optional();
  
  export const claudeThreadStartParamsSchema = z.object({
@@ -5867,7 +5954,7 @@ index ea8b96305fbd0c508f00f39cb4481a7b5773d1ca..b7f190988dca7e8ea570f1a7c15f4003
    threadId: z.string(),
    cwd: z.string(),
    baseInstructions: z.string(),
-@@ -80,6 +82,7 @@ export const claudeThreadForkParamsSchema =
+@@ -81,6 +83,7 @@ export const claudeThreadForkParamsSchema =
    });
  
  export const claudeTurnStartParamsSchema = z.object({
@@ -6044,7 +6131,7 @@ index 36ff6d37266d8c961e5ddb483459ae4ee307e9b7..0562d461fbcc07a5633b0d3b9d4bfa0c
  
      expect(
 diff --git a/src/delta-translation.ts b/src/delta-translation.ts
-index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22f5559815 100644
+index f2caf965fb27b078a416b65cddf361dad35a6640..c53fb010217bab30a9e4e38ec43973dc81cfbe61 100644
 --- a/src/delta-translation.ts
 +++ b/src/delta-translation.ts
 @@ -1,3 +1,4 @@
@@ -6077,7 +6164,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
    promptCacheTtlMs: number | undefined;
    latestRequestContextTokens: number | undefined;
    latestProviderCheckpointId: string | undefined;
-@@ -409,6 +410,7 @@ function createThreadState(): ClaudeThreadDialectState {
+@@ -411,6 +412,7 @@ function createThreadState(): ClaudeThreadDialectState {
    return {
      mirror: { turnOpen: false, responseStarted: false, segment: 0 },
      cumulativeTokens: ZERO_TOKEN_USAGE,
@@ -6085,7 +6172,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
      promptCacheTtlMs: undefined,
      latestRequestContextTokens: undefined,
      latestProviderCheckpointId: undefined,
-@@ -462,6 +464,7 @@ export function createClaudeDeltaTranslator(
+@@ -466,6 +468,7 @@ export function createClaudeDeltaTranslator(
      state.suppressUnacceptedTurnStart = false;
      state.mirror.turnOpen = true;
      state.mirror.segment += 1;
@@ -6093,7 +6180,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
      state.mirror.responseStarted = false;
      state.latestRequestContextTokens = undefined;
      state.latestProviderCheckpointId = undefined;
-@@ -811,6 +814,16 @@ export function createClaudeDeltaTranslator(
+@@ -815,6 +818,16 @@ export function createClaudeDeltaTranslator(
      state.lastModelFallback = { ...transition, segment: state.mirror.segment };
    }
  
@@ -6110,7 +6197,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
    function translateAssistantMessage(
      event: unknown,
      state: ClaudeThreadDialectState,
-@@ -881,6 +894,9 @@ export function createClaudeDeltaTranslator(
+@@ -885,6 +898,9 @@ export function createClaudeDeltaTranslator(
        state.latestProviderCheckpointId = providerCheckpointId;
      }
      if (parentToolCallId === undefined) {
@@ -6120,7 +6207,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
        const requestContextTokens = extractClaudeRequestContextTokens(message);
        if (requestContextTokens !== null) {
          state.latestRequestContextTokens = requestContextTokens;
-@@ -1113,23 +1129,14 @@ export function createClaudeDeltaTranslator(
+@@ -1155,23 +1171,14 @@ export function createClaudeDeltaTranslator(
          attach: "open",
        });
      }
@@ -6150,7 +6237,7 @@ index 5eb0cef44f2c358c5c29b7b7e79d207d2ba6e97d..f946c759f8f41fb9e62ef27547b8bc22
      }
  
      const pendingHardRateLimitRejection =
-@@ -1384,6 +1391,9 @@ export function createClaudeDeltaTranslator(
+@@ -1433,6 +1440,9 @@ export function createClaudeDeltaTranslator(
      const state = stateFor({ threadId });
      const deltas = releaseHeldSkillOpen(state, undefined);
      if (state.mirror.turnOpen) {
