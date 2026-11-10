@@ -175,10 +175,10 @@ index 0000000000000000000000000000000000000000..2d6c97c2ceb3913ec3af0128ea6684c0
 +OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 +SOFTWARE.
 diff --git a/PLUGIN_OVERVIEW.md b/PLUGIN_OVERVIEW.md
-index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..e32596f9cb1d7873260309cb80a734523b67604f 100644
+index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..ad75f4fe6e801fc063829c9e8ef9243288b2823a 100644
 --- a/PLUGIN_OVERVIEW.md
 +++ b/PLUGIN_OVERVIEW.md
-@@ -1,23 +1,53 @@
+@@ -1,23 +1,56 @@
 -Start a thread, pick Claude Code, and let it work in your repository from bb. The plugin drives the Claude Code CLI on the host machine. It streams the agent's work into the bb timeline.
 +Inspect Claude usage per observed request and choose a cache lifetime for each
 +thread. This experimental fork installs alongside BB's built-in Claude Code
@@ -204,7 +204,10 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..e32596f9cb1d7873260309cb80a73452
 +  and completeness. Cache writes include separate 5-minute, 1-hour, and unknown
 +  lifetime counts when the SDK supplies them.
 +- The new-thread model picker offers Prompt cache TTL: Automatic, 5 minutes,
-+  or 1 hour. The choice is per thread, survives resume and fork, and is also
++  or 1 hour, with API cache write prices of 1.25× and 2× the input token price.
++  A small frontend content script displays the two price hints on direct hover
++  or keyboard focus, independent of native browser title activation.
++  The choice is per thread, survives resume and fork, and is also
 +  available through SDK and CLI.
 +- A separate Claude Code Telemetry picker entry and settings keep the built-in
 +  provider available. Existing threads keep their provider; settings are
@@ -250,16 +253,16 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..e32596f9cb1d7873260309cb80a73452
 +subject to the account's plan and billing.
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..dbc1c65930eef1c8296acbcc90378100a54f7029
+index 0000000000000000000000000000000000000000..ba5cfb64557f417c5a23d2b91ed3ca9e2d45a7d3
 --- /dev/null
 +++ b/README.md
-@@ -0,0 +1,209 @@
+@@ -0,0 +1,215 @@
 +# Claude Code Telemetry for BB
 +
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.4+upstream.8b23232` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.9+upstream.8b23232` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -383,7 +386,13 @@ index 0000000000000000000000000000000000000000..dbc1c65930eef1c8296acbcc90378100
 +**Prompt cache TTL**: **Automatic**, **5 minutes**, or **1 hour**.
 +The choice belongs to that thread, not to the provider's global settings.
 +Automatic leaves Claude Code's existing configuration and defaults in effect.
-+One-hour cache writes cost more than five-minute writes.
++The options show API cache write prices relative to the input token price:
++**5 minutes: 1.25×**, **1 hour: 2×**. These multipliers apply to writes;
++hover over either TTL button for the explanation. Cache reads are billed
++separately. See [Anthropic's prompt caching pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing).
++The plugin renders these price tooltips on hover or keyboard focus, including
++when entering a button directly from above. It does not rely on native browser
++tooltip activation. Other model-picker controls keep BB's own behavior.
 +
 +The same option is available through the SDK's `sessionOptions.promptCacheTtl`
 +and the CLI:
@@ -465,10 +474,10 @@ index 0000000000000000000000000000000000000000..dbc1c65930eef1c8296acbcc90378100
 +```
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..4e06bd87feeb8cbae0f868297aa377da29efb5b9
+index 0000000000000000000000000000000000000000..fa3443b7f77d844c900c7d8c2e589e332ca0432c
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,139 @@
+@@ -0,0 +1,156 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -485,11 +494,11 @@ index 0000000000000000000000000000000000000000..4e06bd87feeb8cbae0f868297aa377da
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.4+upstream.8b23232`:
++The current version is `0.1.0-telemetry.9+upstream.8b23232`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.4` is this fork's release revision. Increment it for every release,
++- `telemetry.9` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
 +- `upstream.8b23232` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
@@ -498,10 +507,27 @@ index 0000000000000000000000000000000000000000..4e06bd87feeb8cbae0f868297aa377da
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.5+upstream.8b23232`. A later upstream import would increment the
++`0.1.0-telemetry.10+upstream.8b23232`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
++
++Local release `telemetry.5` adds API cache write price multipliers to the
++per-session TTL labels: 1.25× input for 5 minutes and 2× input for 1 hour.
++The imported upstream baseline is unchanged.
++
++Local release `telemetry.6` shortens those labels to `5m · ×1.25` and
++`1h · ×2`, with the shared hint `API cache writes: × input price.`
++
++Local release `telemetry.7` moves the price explanation to each TTL value's
++description, which BB displays as a tooltip on the corresponding button.
++
++Local release `telemetry.8` adds a frontend content script for the two cache
++price hints. It renders accessible tooltips on direct hover or keyboard focus,
++without depending on native browser title activation. The SDK pin is unchanged.
++
++Local release `telemetry.9` packages the cache price labels and reliable hover
++tooltips for commit; the imported upstream baseline remains unchanged.
 +
 +Synced the provider changes through
 +[`8b23232`](https://github.com/get-bb/bb/commit/8b232325543ae66d4374a71ee4d05838ad5cd793)
@@ -610,10 +636,10 @@ index 0000000000000000000000000000000000000000..4e06bd87feeb8cbae0f868297aa377da
 +Existing Bash-description and guided sign-in host limitations still apply.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..4bd05cc64f8b203ba3134bfcc9a842726a5bff23
+index 0000000000000000000000000000000000000000..fabd6cfa9575cf698eb006979649010e4ed01f3c
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,354 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -860,21 +886,144 @@ index 0000000000000000000000000000000000000000..4bd05cc64f8b203ba3134bfcc9a84272
 +
 +No live Claude requests were made, and the installed plugin was not reloaded.
 +No changes were pushed.
++
++## Cache TTL price labels, 2026-11-10
++
++Release `0.1.0-telemetry.5+upstream.8b23232` adds API cache write price
++multipliers directly to the existing TTL labels: `5 minutes (write: 1.25× input)`
++and `1 hour (write: 2× input)`. The option description identifies the input
++token price as the reference. TTL values, defaults, and behavior are unchanged.
++The multipliers and supported 5-minute/1-hour lifetimes were checked against
++[Anthropic's prompt caching documentation](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing).
++
++- `npm run typecheck`: passed.
++- `npm test`: 470 passed, 1 opt-in live SDK test skipped.
++- `npm run build`: passed for server and host artifacts; existing SDK pin retained.
++- Installed source confirmed as this checkout, then only
++  `claude-code-telemetry` reloaded. `bb plugin list --json` reports the new
++  version, enabled, running, and zero handler errors.
++- Comparison patches regenerated; generator `--check` and `git diff --check`
++  passed.
++
++No live Claude requests or browser UI checks were made for this label change.
++
++## Compact cache TTL labels, 2026-11-10
++
++Release `0.1.0-telemetry.6+upstream.8b23232` shortens the labels to
++`5m · ×1.25` and `1h · ×2`, and the shared description to
++`API cache writes: × input price.` This is a text-only change.
++
++- Typecheck and server/host build: passed; existing SDK pin retained.
++- Installed source confirmed as this checkout, then only
++  `claude-code-telemetry` reloaded. Plugin inventory confirms the new version,
++  enabled, running, and zero handler errors.
++- Comparison patches regenerated; generator `--check` and `git diff --check`
++  passed.
++
++The earlier passing 470-test suite was not rerun for this text-only revision.
++No live Claude requests or browser UI checks were made.
++
++## Cache TTL button tooltips, 2026-11-10
++
++Release `0.1.0-telemetry.7+upstream.8b23232` moves the price explanation from
++the select option's shared description to each explicit TTL value's description:
++`API cache writes: 1.25× input price.` and `API cache writes: 2× input price.`
++The compact labels remain unchanged. BB's model picker source uses each item's
++description for the button's native `title` tooltip; the shared select description
++is not rendered there.
++
++- Typecheck and server/host build: passed; existing SDK pin retained.
++- Installed source confirmed as this checkout, then only
++  `claude-code-telemetry` reloaded. Plugin inventory confirms the new version,
++  enabled, running, and zero handler errors.
++- Comparison patches regenerated; generator `--check` and `git diff --check`
++  passed.
++
++The earlier passing 470-test suite was not rerun for this text-only revision.
++Tooltip wiring was checked in BB's local source, without a live browser check
++or a Claude request.
++
++## Cache tooltip hover activation, 2026-11-10
++
++Release `0.1.0-telemetry.8+upstream.8b23232` replaces native browser tooltip
++activation for the two explicit TTL price buttons with a small frontend content
++script. Before the change, live DOM inspection and pointer events confirmed
++that direct entry into `1h` reached the correct button with the correct title.
++This alone did not validate native tooltip appearance; the reported difference
++between direct entry and entry from `5m` is handled by removing that dependency.
++
++The script listens for pointer entry and keyboard focus, displays an accessible
++tooltip after 300 ms, suppresses the active native title to avoid duplicates,
++and restores attributes when the hint closes. It only targets these two price
++buttons in the Prompt cache TTL group. Escape, exit, scroll, resize, window blur,
++menu removal, and plugin disposal clear pending/visible hints and restore the
++original attributes. Positioning stays inside the viewport, with the hint above
++the button when space allows. The frontend uses the existing SDK 0.6.104
++content-script API; no SDK repin or runtime dependency was added. JSDOM 26.1.0
++is a development dependency for DOM behavior/lifecycle regression coverage.
++
++- Typecheck and type-aware lint: passed.
++- `npm test`: 484 passed, 1 opt-in live SDK test skipped. Fourteen new DOM
++  regressions cover direct entry with no previous hover, adjacent entry,
++  pending-hint cancellation, repeated entry, child elements, focus/Escape,
++  menu removal, abort/remount cleanup, scope, and viewport changes.
++- Server, host, and new frontend artifacts built successfully. Installed source
++  confirmed as this checkout, then only `claude-code-telemetry` reloaded.
++  Plugin inventory reports the new version, enabled, running, zero handler
++  errors, and a compatible frontend bundle using only `pluginSdkApp`.
++- Live BB desktop browser check: actual pointer movement directly down into
++  `1h` displayed the hour-price tooltip without visiting `5m`; captured and
++  visually inspected the result. Moving horizontally from `5m` to `1h`
++  correctly replaced the price hint. Leaving above and reentering `1h`
++  again displayed the correct hint. No model prompt was sent or thread started.
++- Both comparison patches regenerated; the production comparison now includes
++  the new `app.ts` entry. Generator `--check` and `git diff --check`: passed.
++
++## Release version, 2026-11-11
++
++Raised the package version to `0.1.0-telemetry.9+upstream.8b23232` for the cache
++price labels and reliable hover tooltips. Both root lockfile versions and the
++README/versioning documentation agree. The upstream baseline is unchanged.
++
++- `npm run build`: passed for server, host, and frontend artifacts.
++- Asserted that the package, both lockfile versions, and all three artifact
++  metadata versions equal the release version.
++- Comparison patches regenerated; generator `--check` and `git diff --check`:
++  passed.
++
++No runtime code changed after the preceding successful typecheck, lint,
++484-test suite, and live hover checks, so those checks were not repeated.
++The installed plugin was not reloaded for this version-only step.
+diff --git a/app.ts b/app.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7beb5bab3a
+--- /dev/null
++++ b/app.ts
+@@ -0,0 +1,9 @@
++import { definePluginApp } from "@get-bb/plugin-sdk/app";
++import { mountPromptCacheTooltips } from "./src/prompt-cache-tooltips.js";
++
++export default definePluginApp((app) => {
++  app.contentScripts.register({
++    id: "prompt-cache-tooltips",
++    mount: ({ signal }) => mountPromptCacheTooltips(signal),
++  });
++});
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abebb5831940
+index 0000000000000000000000000000000000000000..ba780e5c6fa96bb5911aa5569fb0e8fb7cb3761b
 --- /dev/null
 +++ b/package-lock.json
-@@ -0,0 +1,3743 @@
+@@ -0,0 +1,4242 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.4+upstream.8b23232",
++  "version": "0.1.0-telemetry.9+upstream.8b23232",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.4+upstream.8b23232",
++      "version": "0.1.0-telemetry.9+upstream.8b23232",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -889,6 +1038,7 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "better-sqlite3": "12.11.1",
 +        "cron-parser": "^5.10.3",
 +        "hono": "4.13.16",
++        "jsdom": "26.1.0",
 +        "oxlint": "^1.91.0",
 +        "oxlint-tsgolint": "^7.0.2006",
 +        "typescript": "^5.7.0",
@@ -1060,6 +1210,20 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        }
 +      }
 +    },
++    "node_modules/@asamuzakjp/css-color": {
++      "version": "3.2.0",
++      "resolved": "https://registry.npmjs.org/@asamuzakjp/css-color/-/css-color-3.2.0.tgz",
++      "integrity": "sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@csstools/css-calc": "^2.1.3",
++        "@csstools/css-color-parser": "^3.0.9",
++        "@csstools/css-parser-algorithms": "^3.0.4",
++        "@csstools/css-tokenizer": "^3.0.3",
++        "lru-cache": "^10.4.3"
++      }
++    },
 +    "node_modules/@babel/runtime": {
 +      "version": "7.29.10",
 +      "resolved": "https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.10.tgz",
@@ -1067,6 +1231,121 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +      "license": "MIT",
 +      "engines": {
 +        "node": ">=6.9.0"
++      }
++    },
++    "node_modules/@csstools/color-helpers": {
++      "version": "5.1.0",
++      "resolved": "https://registry.npmjs.org/@csstools/color-helpers/-/color-helpers-5.1.0.tgz",
++      "integrity": "sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/csstools"
++        },
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/csstools"
++        }
++      ],
++      "license": "MIT-0",
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@csstools/css-calc": {
++      "version": "2.1.4",
++      "resolved": "https://registry.npmjs.org/@csstools/css-calc/-/css-calc-2.1.4.tgz",
++      "integrity": "sha512-3N8oaj+0juUw/1H3YwmDDJXCgTB1gKU6Hc/bB502u9zR0q2vd786XJH9QfrKIEgFlZmhZiq6epXl4rHqhzsIgQ==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/csstools"
++        },
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/csstools"
++        }
++      ],
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "@csstools/css-parser-algorithms": "^3.0.5",
++        "@csstools/css-tokenizer": "^3.0.4"
++      }
++    },
++    "node_modules/@csstools/css-color-parser": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/@csstools/css-color-parser/-/css-color-parser-3.1.0.tgz",
++      "integrity": "sha512-nbtKwh3a6xNVIp/VRuXV64yTKnb1IjTAEEh3irzS+HkKjAOYLTGNb9pmVNntZ8iVBHcWDA2Dof0QtPgFI1BaTA==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/csstools"
++        },
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/csstools"
++        }
++      ],
++      "license": "MIT",
++      "dependencies": {
++        "@csstools/color-helpers": "^5.1.0",
++        "@csstools/css-calc": "^2.1.4"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "@csstools/css-parser-algorithms": "^3.0.5",
++        "@csstools/css-tokenizer": "^3.0.4"
++      }
++    },
++    "node_modules/@csstools/css-parser-algorithms": {
++      "version": "3.0.5",
++      "resolved": "https://registry.npmjs.org/@csstools/css-parser-algorithms/-/css-parser-algorithms-3.0.5.tgz",
++      "integrity": "sha512-DaDeUkXZKjdGhgYaHNJTV9pV7Y9B3b644jCLs9Upc3VeNGg6LWARAT6O+Q+/COo+2gg/bM5rhpMAtf70WqfBdQ==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/csstools"
++        },
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/csstools"
++        }
++      ],
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "@csstools/css-tokenizer": "^3.0.4"
++      }
++    },
++    "node_modules/@csstools/css-tokenizer": {
++      "version": "3.0.4",
++      "resolved": "https://registry.npmjs.org/@csstools/css-tokenizer/-/css-tokenizer-3.0.4.tgz",
++      "integrity": "sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/csstools"
++        },
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/csstools"
++        }
++      ],
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
 +      }
 +    },
 +    "node_modules/@get-bb/plugin-sdk": {
@@ -2105,6 +2384,16 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "node": ">= 0.6"
 +      }
 +    },
++    "node_modules/agent-base": {
++      "version": "7.1.4",
++      "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-7.1.4.tgz",
++      "integrity": "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">= 14"
++      }
++    },
 +    "node_modules/ajv": {
 +      "version": "8.20.0",
 +      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz",
@@ -2414,6 +2703,34 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "node": ">= 8"
 +      }
 +    },
++    "node_modules/cssstyle": {
++      "version": "4.6.0",
++      "resolved": "https://registry.npmjs.org/cssstyle/-/cssstyle-4.6.0.tgz",
++      "integrity": "sha512-2z+rWdzbbSZv6/rhtvzvqeZQHrBaqgogqt85sqFNbabZOuFbCVFb8kPeEtZjiKkbrm395irpNKiYeFeLiQnFPg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@asamuzakjp/css-color": "^3.2.0",
++        "rrweb-cssom": "^0.8.0"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/data-urls": {
++      "version": "5.0.0",
++      "resolved": "https://registry.npmjs.org/data-urls/-/data-urls-5.0.0.tgz",
++      "integrity": "sha512-ZYP5VBHshaDAiVZxjbRVcFJpc+4xGgT0bK3vzy1HLN8jTO975HEbuYzZJcHoQEY5K1a0z8YayJkyVETa08eNTg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "whatwg-mimetype": "^4.0.0",
++        "whatwg-url": "^14.0.0"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
 +    "node_modules/debug": {
 +      "version": "4.4.3",
 +      "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
@@ -2430,6 +2747,13 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +          "optional": true
 +        }
 +      }
++    },
++    "node_modules/decimal.js": {
++      "version": "10.6.0",
++      "resolved": "https://registry.npmjs.org/decimal.js/-/decimal.js-10.6.0.tgz",
++      "integrity": "sha512-YpgQiITW3JXGntzdUmyUR1V812Hn8T1YVXhCu+wO3OpS4eU9l4YdD3qjyiKdV6mvV29zapkMeD390UVEf2lkUg==",
++      "dev": true,
++      "license": "MIT"
 +    },
 +    "node_modules/decompress-response": {
 +      "version": "6.0.0",
@@ -2517,6 +2841,19 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +      "license": "MIT",
 +      "dependencies": {
 +        "once": "^1.4.0"
++      }
++    },
++    "node_modules/entities": {
++      "version": "6.0.1",
++      "resolved": "https://registry.npmjs.org/entities/-/entities-6.0.1.tgz",
++      "integrity": "sha512-aN97NXWF6AWBTahfVOIrB/NShkzi5H7F9r1s9mD3cDj4Ko5f2qhhVoYMibXF7GlLveb/D2ioWay8lxI97Ven3g==",
++      "dev": true,
++      "license": "BSD-2-Clause",
++      "engines": {
++        "node": ">=0.12"
++      },
++      "funding": {
++        "url": "https://github.com/fb55/entities?sponsor=1"
 +      }
 +    },
 +    "node_modules/es-define-property": {
@@ -2903,6 +3240,19 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "node": ">=16.9.0"
 +      }
 +    },
++    "node_modules/html-encoding-sniffer": {
++      "version": "4.0.0",
++      "resolved": "https://registry.npmjs.org/html-encoding-sniffer/-/html-encoding-sniffer-4.0.0.tgz",
++      "integrity": "sha512-Y22oTqIU4uuPgEemfz7NDJz6OeKf12Lsu+QC+s3BVpda64lTiMYCyGwg5ki4vFxkMwQdeZDl2adZoqUgdFuTgQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "whatwg-encoding": "^3.1.1"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
 +    "node_modules/http-errors": {
 +      "version": "2.0.1",
 +      "resolved": "https://registry.npmjs.org/http-errors/-/http-errors-2.0.1.tgz",
@@ -2921,6 +3271,34 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +      "funding": {
 +        "type": "opencollective",
 +        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/http-proxy-agent": {
++      "version": "7.0.2",
++      "resolved": "https://registry.npmjs.org/http-proxy-agent/-/http-proxy-agent-7.0.2.tgz",
++      "integrity": "sha512-T1gkAiYYDWYx3V5Bmyu7HcfcvL7mUrTWiM6yOfa3PIphViJ/gFPbvidQ+veqSOHci/PxBcDabeUNCzpOODJZig==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "agent-base": "^7.1.0",
++        "debug": "^4.3.4"
++      },
++      "engines": {
++        "node": ">= 14"
++      }
++    },
++    "node_modules/https-proxy-agent": {
++      "version": "7.0.6",
++      "resolved": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-7.0.6.tgz",
++      "integrity": "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "agent-base": "^7.1.2",
++        "debug": "4"
++      },
++      "engines": {
++        "node": ">= 14"
 +      }
 +    },
 +    "node_modules/iconv-lite": {
@@ -2991,6 +3369,13 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "node": ">= 0.10"
 +      }
 +    },
++    "node_modules/is-potential-custom-element-name": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/is-potential-custom-element-name/-/is-potential-custom-element-name-1.0.1.tgz",
++      "integrity": "sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==",
++      "dev": true,
++      "license": "MIT"
++    },
 +    "node_modules/is-promise": {
 +      "version": "4.0.0",
 +      "resolved": "https://registry.npmjs.org/is-promise/-/is-promise-4.0.0.tgz",
@@ -3010,6 +3395,46 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +      "license": "MIT",
 +      "funding": {
 +        "url": "https://github.com/sponsors/panva"
++      }
++    },
++    "node_modules/jsdom": {
++      "version": "26.1.0",
++      "resolved": "https://registry.npmjs.org/jsdom/-/jsdom-26.1.0.tgz",
++      "integrity": "sha512-Cvc9WUhxSMEo4McES3P7oK3QaXldCfNWp7pl2NNeiIFlCoLr3kfq9kb1fxftiwk1FLV7CvpvDfonxtzUDeSOPg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "cssstyle": "^4.2.1",
++        "data-urls": "^5.0.0",
++        "decimal.js": "^10.5.0",
++        "html-encoding-sniffer": "^4.0.0",
++        "http-proxy-agent": "^7.0.2",
++        "https-proxy-agent": "^7.0.6",
++        "is-potential-custom-element-name": "^1.0.1",
++        "nwsapi": "^2.2.16",
++        "parse5": "^7.2.1",
++        "rrweb-cssom": "^0.8.0",
++        "saxes": "^6.0.0",
++        "symbol-tree": "^3.2.4",
++        "tough-cookie": "^5.1.1",
++        "w3c-xmlserializer": "^5.0.0",
++        "webidl-conversions": "^7.0.0",
++        "whatwg-encoding": "^3.1.1",
++        "whatwg-mimetype": "^4.0.0",
++        "whatwg-url": "^14.1.1",
++        "ws": "^8.18.0",
++        "xml-name-validator": "^5.0.0"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "canvas": "^3.0.0"
++      },
++      "peerDependenciesMeta": {
++        "canvas": {
++          "optional": true
++        }
 +      }
 +    },
 +    "node_modules/json-schema-to-ts": {
@@ -3310,6 +3735,13 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "url": "https://opencollective.com/parcel"
 +      }
 +    },
++    "node_modules/lru-cache": {
++      "version": "10.4.3",
++      "resolved": "https://registry.npmjs.org/lru-cache/-/lru-cache-10.4.3.tgz",
++      "integrity": "sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==",
++      "dev": true,
++      "license": "ISC"
++    },
 +    "node_modules/luxon": {
 +      "version": "3.7.2",
 +      "resolved": "https://registry.npmjs.org/luxon/-/luxon-3.7.2.tgz",
@@ -3493,6 +3925,13 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "node": ">=10"
 +      }
 +    },
++    "node_modules/nwsapi": {
++      "version": "2.2.28",
++      "resolved": "https://registry.npmjs.org/nwsapi/-/nwsapi-2.2.28.tgz",
++      "integrity": "sha512-IlVB7OS7qrOsVYlpnFIkETjMwT9jwvmocJmmM+GZU/PAB3uGi9Ezd7vcWhWBUnSc0ya4ppmQITOyP1ez9gg8cg==",
++      "dev": true,
++      "license": "MIT"
++    },
 +    "node_modules/object-assign": {
 +      "version": "4.1.1",
 +      "resolved": "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz",
@@ -3618,6 +4057,19 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "@oxlint-tsgolint/linux-x64": "7.0.2006",
 +        "@oxlint-tsgolint/win32-arm64": "7.0.2006",
 +        "@oxlint-tsgolint/win32-x64": "7.0.2006"
++      }
++    },
++    "node_modules/parse5": {
++      "version": "7.3.0",
++      "resolved": "https://registry.npmjs.org/parse5/-/parse5-7.3.0.tgz",
++      "integrity": "sha512-IInvU7fabl34qmi9gY8XOVxhYyMyuH2xUNpb2q8/Y+7552KlejkRvqvD19nMoUW/uQGGbqNpA6Tufu5FL5BZgw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "entities": "^6.0.0"
++      },
++      "funding": {
++        "url": "https://github.com/inikulin/parse5?sponsor=1"
 +      }
 +    },
 +    "node_modules/parseurl": {
@@ -3769,6 +4221,16 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "once": "^1.3.1"
 +      }
 +    },
++    "node_modules/punycode": {
++      "version": "2.3.1",
++      "resolved": "https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz",
++      "integrity": "sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=6"
++      }
++    },
 +    "node_modules/qs": {
 +      "version": "6.17.1",
 +      "resolved": "https://registry.npmjs.org/qs/-/qs-6.17.1.tgz",
@@ -3913,6 +4375,13 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "node": ">= 18"
 +      }
 +    },
++    "node_modules/rrweb-cssom": {
++      "version": "0.8.0",
++      "resolved": "https://registry.npmjs.org/rrweb-cssom/-/rrweb-cssom-0.8.0.tgz",
++      "integrity": "sha512-guoltQEx+9aMf2gDZ0s62EcV8lsXR+0w8915TC3ITdn2YueuNjdAYh/levpU9nFaoChh9RUS5ZdQMrKfVEN9tw==",
++      "dev": true,
++      "license": "MIT"
++    },
 +    "node_modules/safe-buffer": {
 +      "version": "5.2.1",
 +      "resolved": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz",
@@ -3939,6 +4408,19 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +      "resolved": "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz",
 +      "integrity": "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==",
 +      "license": "MIT"
++    },
++    "node_modules/saxes": {
++      "version": "6.0.0",
++      "resolved": "https://registry.npmjs.org/saxes/-/saxes-6.0.0.tgz",
++      "integrity": "sha512-xAg7SOnEhrm5zI3puOOKyy1OMcMlIJZYNJY7xLBwSze0UjhPLnWfj2GF2EpT0jmzaJKIWKHLsaSSajf35bcYnA==",
++      "dev": true,
++      "license": "ISC",
++      "dependencies": {
++        "xmlchars": "^2.2.0"
++      },
++      "engines": {
++        "node": ">=v12.22.7"
++      }
 +    },
 +    "node_modules/semver": {
 +      "version": "7.8.5",
@@ -4204,6 +4686,13 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "node": ">=0.10.0"
 +      }
 +    },
++    "node_modules/symbol-tree": {
++      "version": "3.2.4",
++      "resolved": "https://registry.npmjs.org/symbol-tree/-/symbol-tree-3.2.4.tgz",
++      "integrity": "sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==",
++      "dev": true,
++      "license": "MIT"
++    },
 +    "node_modules/tar-fs": {
 +      "version": "2.1.5",
 +      "resolved": "https://registry.npmjs.org/tar-fs/-/tar-fs-2.1.5.tgz",
@@ -4278,6 +4767,26 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        "node": ">=14.0.0"
 +      }
 +    },
++    "node_modules/tldts": {
++      "version": "6.1.86",
++      "resolved": "https://registry.npmjs.org/tldts/-/tldts-6.1.86.tgz",
++      "integrity": "sha512-WMi/OQ2axVTf/ykqCQgXiIct+mSQDFdH2fkwhPwgEwvJ1kSzZRiinb0zF2Xb8u4+OqPChmyI6MEu4EezNJz+FQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "tldts-core": "^6.1.86"
++      },
++      "bin": {
++        "tldts": "bin/cli.js"
++      }
++    },
++    "node_modules/tldts-core": {
++      "version": "6.1.86",
++      "resolved": "https://registry.npmjs.org/tldts-core/-/tldts-core-6.1.86.tgz",
++      "integrity": "sha512-Je6p7pkk+KMzMv2XXKmAE3McmolOQFdxkKw0R8EYNr7sELW46JqnNeTX8ybPiQgvg1ymCoF8LXs5fzFaZvJPTA==",
++      "dev": true,
++      "license": "MIT"
++    },
 +    "node_modules/toidentifier": {
 +      "version": "1.0.1",
 +      "resolved": "https://registry.npmjs.org/toidentifier/-/toidentifier-1.0.1.tgz",
@@ -4285,6 +4794,32 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +      "license": "MIT",
 +      "engines": {
 +        "node": ">=0.6"
++      }
++    },
++    "node_modules/tough-cookie": {
++      "version": "5.1.2",
++      "resolved": "https://registry.npmjs.org/tough-cookie/-/tough-cookie-5.1.2.tgz",
++      "integrity": "sha512-FVDYdxtnj0G6Qm/DhNPSb8Ju59ULcup3tuJxkFb5K8Bv2pUXILbf0xZWU8PX8Ov19OXljbUyveOFwRMwkXzO+A==",
++      "dev": true,
++      "license": "BSD-3-Clause",
++      "dependencies": {
++        "tldts": "^6.1.32"
++      },
++      "engines": {
++        "node": ">=16"
++      }
++    },
++    "node_modules/tr46": {
++      "version": "5.1.1",
++      "resolved": "https://registry.npmjs.org/tr46/-/tr46-5.1.1.tgz",
++      "integrity": "sha512-hdF5ZgjTqgAntKkklYw0R03MG2x/bSzTtkxmIRw/sTNV8YXsCJ1tfLAX23lhxhHJlEf3CRCOCGGWw3vI3GaSPw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "punycode": "^2.3.1"
++      },
++      "engines": {
++        "node": ">=18"
 +      }
 +    },
 +    "node_modules/ts-algebra": {
@@ -4551,6 +5086,80 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +        }
 +      }
 +    },
++    "node_modules/w3c-xmlserializer": {
++      "version": "5.0.0",
++      "resolved": "https://registry.npmjs.org/w3c-xmlserializer/-/w3c-xmlserializer-5.0.0.tgz",
++      "integrity": "sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "xml-name-validator": "^5.0.0"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/webidl-conversions": {
++      "version": "7.0.0",
++      "resolved": "https://registry.npmjs.org/webidl-conversions/-/webidl-conversions-7.0.0.tgz",
++      "integrity": "sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==",
++      "dev": true,
++      "license": "BSD-2-Clause",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/whatwg-encoding": {
++      "version": "3.1.1",
++      "resolved": "https://registry.npmjs.org/whatwg-encoding/-/whatwg-encoding-3.1.1.tgz",
++      "integrity": "sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==",
++      "deprecated": "Use @exodus/bytes instead for a more spec-conformant and faster implementation",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "iconv-lite": "0.6.3"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/whatwg-encoding/node_modules/iconv-lite": {
++      "version": "0.6.3",
++      "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.6.3.tgz",
++      "integrity": "sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "safer-buffer": ">= 2.1.2 < 3.0.0"
++      },
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/whatwg-mimetype": {
++      "version": "4.0.0",
++      "resolved": "https://registry.npmjs.org/whatwg-mimetype/-/whatwg-mimetype-4.0.0.tgz",
++      "integrity": "sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/whatwg-url": {
++      "version": "14.2.0",
++      "resolved": "https://registry.npmjs.org/whatwg-url/-/whatwg-url-14.2.0.tgz",
++      "integrity": "sha512-De72GdQZzNTUBBChsXueQUnPKDkg/5A5zp7pFDuQAj5UFoENpiACU0wlCvzpAGnTkj++ihpKwKyYewn/XNUbKw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "tr46": "^5.1.0",
++        "webidl-conversions": "^7.0.0"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
 +    "node_modules/which": {
 +      "version": "2.0.2",
 +      "resolved": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
@@ -4589,6 +5198,45 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +      "integrity": "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==",
 +      "license": "ISC"
 +    },
++    "node_modules/ws": {
++      "version": "8.22.2",
++      "resolved": "https://registry.npmjs.org/ws/-/ws-8.22.2.tgz",
++      "integrity": "sha512-/rEZ2ejown2N5gxVTHUu9bVVC7ttu0/Tgzf5hbTOixR3Fs7mbbXgn2DbdbcKgJOmpQMtrIUWivtYuVMnp/W/yA==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=10.0.0"
++      },
++      "peerDependencies": {
++        "bufferutil": "^4.0.1",
++        "utf-8-validate": ">=5.0.2"
++      },
++      "peerDependenciesMeta": {
++        "bufferutil": {
++          "optional": true
++        },
++        "utf-8-validate": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/xml-name-validator": {
++      "version": "5.0.0",
++      "resolved": "https://registry.npmjs.org/xml-name-validator/-/xml-name-validator-5.0.0.tgz",
++      "integrity": "sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/xmlchars": {
++      "version": "2.2.0",
++      "resolved": "https://registry.npmjs.org/xmlchars/-/xmlchars-2.2.0.tgz",
++      "integrity": "sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==",
++      "dev": true,
++      "license": "MIT"
++    },
 +    "node_modules/zod": {
 +      "version": "4.6.7",
 +      "resolved": "https://registry.npmjs.org/zod/-/zod-4.6.7.tgz",
@@ -4610,15 +5258,15 @@ index 0000000000000000000000000000000000000000..4d99e5aa8d91c226b671e69c5007abeb
 +  }
 +}
 diff --git a/package.json b/package.json
-index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..aed123eddc5ccaa07fb26436aa3d2beea40ca8c8 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..f6a2d20f1503d02adba5ce2217cc6874e0ecdb2b 100644
 --- a/package.json
 +++ b/package.json
-@@ -1,16 +1,17 @@
+@@ -1,26 +1,28 @@
  {
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.4+upstream.8b23232",
++  "version": "0.1.0-telemetry.9+upstream.8b23232",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -4638,7 +5286,9 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..aed123eddc5ccaa07fb26436aa3d2bee
      "branding": {
        "icon": "./icons/claude-code.svg"
      },
-@@ -19,8 +20,8 @@
+     "server": "./server.ts",
++    "app": "./app.ts",
+     "host": "./src/host.ts",
      "experimental_providers": [
        {
          "kind": "agent",
@@ -4649,7 +5299,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..aed123eddc5ccaa07fb26436aa3d2bee
        }
      ]
    },
-@@ -28,28 +29,28 @@
+@@ -28,28 +30,29 @@
      "bb-plugin"
    ],
    "scripts": {
@@ -4673,6 +5323,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..aed123eddc5ccaa07fb26436aa3d2bee
      "hono": "4.13.16",
 -    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
 -    "typescript": "npm:@typescript/typescript6@^6.0.2",
++    "jsdom": "26.1.0",
 +    "oxlint": "^1.91.0",
 +    "oxlint-tsgolint": "^7.0.2006",
 +    "typescript": "^5.7.0",
@@ -5084,7 +5735,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..b4fa549888efb2037fa1c5cc88c63cc888fbbdd2
+index 0000000000000000000000000000000000000000..73067ab0e902a607ada9a72ea9b7d938777bfb43
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -5168,7 +5819,7 @@ index 0000000000000000000000000000000000000000..b4fa549888efb2037fa1c5cc88c63cc8
 +
 +
 +def production_file(name):
-+    return (name == "server.ts" or name.startswith("src/")) and name.endswith(".ts") and not name.endswith(".test.ts") and not name.endswith("delta-test-harness.ts")
++    return (name in {"server.ts", "app.ts"} or name.startswith("src/")) and name.endswith(".ts") and not name.endswith(".test.ts") and not name.endswith("delta-test-harness.ts")
 +
 +
 +def generate(upstream, fork, temporary):
@@ -5221,7 +5872,7 @@ index 0000000000000000000000000000000000000000..b4fa549888efb2037fa1c5cc88c63cc8
 +
 +- [telemetry-runtime.patch](telemetry-runtime.patch): production TypeScript,
 +  including request telemetry, cache-write lifetime breakdown, per-session TTL
-+  selection, provider identity, and usage-source changes.
++  selection and its frontend price tooltips, provider identity, and usage-source changes.
 +  {summaries['telemetry-runtime.patch']}.
 +- [upstream-to-telemetry.patch](upstream-to-telemetry.patch): all source changes,
 +  including tests, scripts, documentation, standalone packaging, and lockfile.
@@ -5472,10 +6123,10 @@ index c15b4557cfd2f79d3e292010b49ac0f023ab3d25..00000000000000000000000000000000
 -the live conversation does not wait for reporting or restart because of it.
 diff --git a/skills/claude-code-telemetry/SKILL.md b/skills/claude-code-telemetry/SKILL.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..815c5dec4baba7f76640397355ae2a9bcf608156
+index 0000000000000000000000000000000000000000..fdd0f4d6d3b2cca56642605644797e5e91bc646b
 --- /dev/null
 +++ b/skills/claude-code-telemetry/SKILL.md
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,129 @@
 +---
 +name: claude-code-telemetry
 +description: "Configure or troubleshoot the standalone Claude Code Telemetry provider and request usage."
@@ -5488,7 +6139,11 @@ index 0000000000000000000000000000000000000000..815c5dec4baba7f76640397355ae2a9b
 +
 +Cache lifetime is a per-thread model option, not a global plugin setting.
 +In the new-thread model picker, choose Prompt cache TTL:
-+Automatic (`auto`, the default), 5 minutes (`5m`), or 1 hour (`1h`). CLI:
++Automatic (`auto`, the default), 5 minutes (`5m`), or 1 hour (`1h`). Labels show
++API cache write prices relative to the input token price: 1.25× for 5 minutes,
++2× for 1 hour. Hover or focus either explicit TTL button for the price hint;
++the plugin renders these tooltips independently of native browser titles.
++Cache reads are billed separately. CLI:
 +`bb thread spawn --provider claude-code-telemetry --option promptCacheTtl=1h --prompt "Task"`.
 +SDK callers use `sessionOptions: { promptCacheTtl: "1h" }`. Existing threads can
 +use `bb thread options <id> --set promptCacheTtl=5m`; changes restart Claude
@@ -6443,12 +7098,300 @@ index d879dbc968b9b53ca967cafabdf27a5ef1aeecdc..46bebc44bf665b0febc6f4da309dcd43
    };
  }
  
+diff --git a/src/prompt-cache-tooltips.test.ts b/src/prompt-cache-tooltips.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..5d86b10b7fe83af681164074c91aa98e8ff8ade3
+--- /dev/null
++++ b/src/prompt-cache-tooltips.test.ts
+@@ -0,0 +1,160 @@
++// @vitest-environment jsdom
++import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
++import { promptCacheTtlOption } from "./prompt-cache.js";
++import { mountPromptCacheTooltips } from "./prompt-cache-tooltips.js";
++
++describe("prompt cache price tooltips", () => {
++  let controller: AbortController;
++  let dispose: () => void;
++  let group: HTMLDivElement;
++  let five: HTMLButtonElement;
++  let hour: HTMLButtonElement;
++  let above: HTMLDivElement;
++
++  function over(target: Element, from: EventTarget | null = above) {
++    from?.dispatchEvent(new MouseEvent("pointerout", { bubbles: true, relatedTarget: target }));
++    target.dispatchEvent(new MouseEvent("pointerover", { bubbles: true, relatedTarget: from }));
++  }
++
++  const hint = () => document.querySelector('[role="tooltip"]');
++  const settle = () => vi.advanceTimersByTime(1000);
++
++  beforeEach(() => {
++    vi.useFakeTimers();
++    controller = new AbortController();
++    document.body.replaceChildren();
++    above = document.createElement("div");
++    above.textContent = "Prompt cache TTL";
++    group = document.createElement("div");
++    group.role = "radiogroup";
++    group.setAttribute("aria-label", "Prompt cache TTL");
++    const option = promptCacheTtlOption();
++    if (option.type !== "select") throw new Error("Expected a TTL select");
++    const buttons = option.values.map((value) => {
++      const button = document.createElement("button");
++      button.role = "radio";
++      button.textContent = value.label;
++      button.title = value.description ?? "";
++      group.append(button);
++      return button;
++    });
++    [, five, hour] = buttons;
++    document.body.append(above, group);
++    dispose = mountPromptCacheTooltips(controller.signal);
++  });
++
++  afterEach(() => {
++    dispose();
++    expect(vi.getTimerCount()).toBe(0);
++    document.body.replaceChildren();
++    vi.useRealTimers();
++  });
++
++  it("shows the hour price when entering directly from above, without a prior five-minute hover", () => {
++    over(hour);
++    expect(hint()).toBeNull();
++    settle();
++    expect(hint()?.textContent).toBe("API cache writes: 2× input price.");
++    expect(hour.getAttribute("aria-describedby")).toBe(hint()?.id);
++    expect(hour.hasAttribute("title")).toBe(false);
++  });
++
++  it("replaces the five-minute hint when crossing to the hour button", () => {
++    over(five);
++    settle();
++    expect(hint()?.textContent).toBe("API cache writes: 1.25× input price.");
++    over(hour, five);
++    expect(hint()).toBeNull();
++    settle();
++    expect(document.querySelectorAll('[role="tooltip"]')).toHaveLength(1);
++    expect(hint()?.textContent).toBe("API cache writes: 2× input price.");
++    expect(five.title).toBe("API cache writes: 1.25× input price.");
++  });
++
++  it("cancels the previous pending hover instead of showing a stale price", () => {
++    over(five);
++    over(hour, five);
++    settle();
++    expect(hint()?.textContent).toBe("API cache writes: 2× input price.");
++  });
++
++  it("cancels on exit and can enter the hour button again directly", () => {
++    over(hour);
++    over(above, hour);
++    settle();
++    expect(hint()).toBeNull();
++    over(hour);
++    settle();
++    over(above, hour);
++    expect(hint()).toBeNull();
++    expect(hour.title).toBe("API cache writes: 2× input price.");
++    expect(hour.hasAttribute("aria-describedby")).toBe(false);
++  });
++
++  it("keeps the hint when moving within a button's children", () => {
++    const span = document.createElement("span");
++    span.textContent = hour.textContent;
++    hour.replaceChildren(span);
++    over(hour);
++    settle();
++    over(span, hour);
++    expect(hint()?.textContent).toBe("API cache writes: 2× input price.");
++  });
++
++  it("supports keyboard focus and Escape without losing another accessibility description", () => {
++    hour.setAttribute("aria-describedby", "existing-help");
++    hour.focus();
++    settle();
++    expect(hint()?.textContent).toBe("API cache writes: 2× input price.");
++    expect(hour.getAttribute("aria-describedby")).toContain("existing-help");
++    hour.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
++    expect(hint()).toBeNull();
++    expect(hour.getAttribute("aria-describedby")).toBe("existing-help");
++  });
++
++  it.each([false, true])("cleans up when the menu disappears (hint visible: %s)", async (visible) => {
++    over(hour);
++    if (visible) settle();
++    group.remove();
++    await Promise.resolve();
++    settle();
++    expect(hint()).toBeNull();
++    expect(hour.title).toBe("API cache writes: 2× input price.");
++  });
++
++  it.each([false, true])("cleans up on plugin abort and remount (hint visible: %s)", (visible) => {
++    over(hour);
++    if (visible) settle();
++    controller.abort();
++    settle();
++    expect(hint()).toBeNull();
++    expect(hour.title).toBe("API cache writes: 2× input price.");
++    over(hour);
++    settle();
++    expect(hint()).toBeNull();
++    dispose = mountPromptCacheTooltips(new AbortController().signal);
++    over(hour);
++    settle();
++    expect(document.querySelectorAll('[role="tooltip"]')).toHaveLength(1);
++  });
++
++  it("does not enhance another group's identical labels or unrelated native hints", () => {
++    group.setAttribute("aria-label", "Other option");
++    over(hour);
++    settle();
++    expect(hint()).toBeNull();
++    expect(hour.title).toBe("API cache writes: 2× input price.");
++    group.setAttribute("aria-label", "Prompt cache TTL");
++    over(group.firstElementChild!);
++    settle();
++    expect(hint()).toBeNull();
++    expect(group.firstElementChild?.getAttribute("title")).toBe("Use Claude Code's settings and defaults.");
++  });
++
++  it.each(["scroll", "resize", "blur"])("dismisses on %s", (event) => {
++    over(hour);
++    settle();
++    (event === "scroll" ? document : window).dispatchEvent(new Event(event));
++    expect(hint()).toBeNull();
++  });
++});
+diff --git a/src/prompt-cache-tooltips.ts b/src/prompt-cache-tooltips.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..44f35f8690623e9900aa184db07f2aef21257def
+--- /dev/null
++++ b/src/prompt-cache-tooltips.ts
+@@ -0,0 +1,116 @@
++const GROUP = '[role="radiogroup"][aria-label="Prompt cache TTL"]';
++const LABELS = new Set(["5m · ×1.25", "1h · ×2"]);
++const TOOLTIP_ID = "claude-code-telemetry-cache-tooltip";
++const DELAY_MS = 300;
++
++// BB renders these descriptions as native titles. Render our two price hints
++// explicitly: native tooltip activation can depend on the previous hover target.
++export function mountPromptCacheTooltips(signal: AbortSignal): () => void {
++  let active: HTMLButtonElement | null = null;
++  let title = "";
++  let timer: ReturnType<typeof setTimeout> | undefined;
++  let tooltip: HTMLDivElement | null = null;
++
++  function buttonAt(target: EventTarget | null): HTMLButtonElement | null {
++    if (!(target instanceof Element)) return null;
++    const button = target.closest<HTMLButtonElement>('button[role="radio"]');
++    return button && !button.disabled && button.closest(GROUP)
++      && LABELS.has(button.textContent?.trim() ?? "") ? button : null;
++  }
++
++  function hide() {
++    clearTimeout(timer);
++    timer = undefined;
++    tooltip?.remove();
++    tooltip = null;
++    observer.disconnect();
++    if (active) {
++      if (!active.hasAttribute("title")) active.setAttribute("title", title);
++      const describedBy = (active.getAttribute("aria-describedby") ?? "")
++        .split(/\s+/).filter((id) => id && id !== TOOLTIP_ID);
++      if (describedBy.length) active.setAttribute("aria-describedby", describedBy.join(" "));
++      else active.removeAttribute("aria-describedby");
++    }
++    active = null;
++  }
++
++  function show(button: HTMLButtonElement) {
++    if (button === active) return;
++    hide();
++    const description = button.getAttribute("title");
++    if (!description || !description.startsWith("API cache writes:")) return;
++    active = button;
++    title = description;
++    button.removeAttribute("title");
++    observer.observe(document.body, { childList: true, subtree: true });
++    timer = setTimeout(() => {
++      if (!button.isConnected) { hide(); return; }
++      tooltip = document.createElement("div");
++      tooltip.id = TOOLTIP_ID;
++      tooltip.role = "tooltip";
++      tooltip.dataset.bbPlugin = "claude-code-telemetry";
++      tooltip.textContent = description;
++      Object.assign(tooltip.style, {
++        position: "fixed", zIndex: "2147483647", pointerEvents: "none",
++        maxWidth: "calc(100vw - 16px)", padding: "6px 10px", borderRadius: "6px",
++        border: "1px solid var(--border)", background: "var(--popover)",
++        color: "var(--popover-foreground)", font: "12px/1.4 system-ui, sans-serif",
++        boxShadow: "0 2px 8px #0002", overflowWrap: "anywhere",
++      });
++      document.body.append(tooltip);
++      const anchor = button.getBoundingClientRect();
++      const box = tooltip.getBoundingClientRect();
++      const left = Math.max(8, Math.min(
++        anchor.left + (anchor.width - box.width) / 2, window.innerWidth - box.width - 8,
++      ));
++      const above = anchor.top - box.height - 6;
++      const top = above >= 8 ? above : Math.min(anchor.bottom + 6, window.innerHeight - box.height - 8);
++      tooltip.style.left = `${left}px`;
++      tooltip.style.top = `${Math.max(8, top)}px`;
++      const describedBy = button.getAttribute("aria-describedby");
++      button.setAttribute("aria-describedby", [describedBy, TOOLTIP_ID].filter(Boolean).join(" "));
++    }, DELAY_MS);
++  }
++
++  const observer = new MutationObserver(() => {
++    if (active && !active.isConnected) hide();
++  });
++  const onOver = (event: PointerEvent) => {
++    if (event.pointerType === "touch") return;
++    const button = buttonAt(event.target);
++    if (button) show(button);
++  };
++  const onOut = (event: PointerEvent) => {
++    if (active && buttonAt(event.target) === active && buttonAt(event.relatedTarget) !== active) hide();
++  };
++  const onFocus = (event: FocusEvent) => {
++    const button = buttonAt(event.target);
++    if (button) show(button);
++  };
++  const onBlur = (event: FocusEvent) => { if (event.target === active) hide(); };
++  const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") hide(); };
++  const dispose = () => {
++    hide();
++    document.removeEventListener("pointerover", onOver, true);
++    document.removeEventListener("pointerout", onOut, true);
++    document.removeEventListener("focusin", onFocus, true);
++    document.removeEventListener("focusout", onBlur, true);
++    document.removeEventListener("keydown", onKey, true);
++    document.removeEventListener("scroll", hide, true);
++    window.removeEventListener("resize", hide);
++    window.removeEventListener("blur", hide);
++    signal.removeEventListener("abort", dispose);
++  };
++  if (!signal.aborted) {
++    document.addEventListener("pointerover", onOver, true);
++    document.addEventListener("pointerout", onOut, true);
++    document.addEventListener("focusin", onFocus, true);
++    document.addEventListener("focusout", onBlur, true);
++    document.addEventListener("keydown", onKey, true);
++    document.addEventListener("scroll", hide, true);
++    window.addEventListener("resize", hide);
++    window.addEventListener("blur", hide);
++    signal.addEventListener("abort", dispose, { once: true });
++  }
++  return dispose;
++}
 diff --git a/src/prompt-cache.ts b/src/prompt-cache.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..f39ab6e52f0af7cac82b4d6fb4029388cff5b015
+index 0000000000000000000000000000000000000000..b59eb4f1af0267fc2d7acd30151f2cd90157e04d
 --- /dev/null
 +++ b/src/prompt-cache.ts
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,20 @@
 +import type { AvailableModel } from "@get-bb/plugin-sdk/provider-bridge";
 +import { z } from "zod";
 +
@@ -6461,12 +7404,11 @@ index 0000000000000000000000000000000000000000..f39ab6e52f0af7cac82b4d6fb4029388
 +    id: PROMPT_CACHE_TTL_OPTION_ID,
 +    type: "select",
 +    label: "Prompt cache TTL",
-+    description: "Cache lifetime for this conversation. One-hour cache writes cost more than five-minute writes.",
 +    value: "auto",
 +    values: [
 +      { id: "auto", label: "Automatic", description: "Use Claude Code's settings and defaults." },
-+      { id: "5m", label: "5 minutes" },
-+      { id: "1h", label: "1 hour" },
++      { id: "5m", label: "5m · ×1.25", description: "API cache writes: 1.25× input price." },
++      { id: "1h", label: "1h · ×2", description: "API cache writes: 2× input price." },
 +    ],
 +  };
 +}
@@ -7069,10 +8011,10 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
    );
  }
 diff --git a/tsconfig.json b/tsconfig.json
-index 6acac8aadefa19aa2b9c441ad6e596137492b6c1..e3f217405016a0c688ea69cbc5dd36098e0b9ce9 100644
+index 6acac8aadefa19aa2b9c441ad6e596137492b6c1..1fc24bc81e1371521f688b905906229a254b32a3 100644
 --- a/tsconfig.json
 +++ b/tsconfig.json
-@@ -4,18 +4,19 @@
+@@ -4,18 +4,20 @@
      "target": "ES2022",
      "module": "ESNext",
      "moduleResolution": "bundler",
@@ -7099,6 +8041,7 @@ index 6acac8aadefa19aa2b9c441ad6e596137492b6c1..e3f217405016a0c688ea69cbc5dd3609
 -  "include": ["server.ts", "src", "vitest.config.ts"]
 +  "include": [
 +    "server.ts",
++    "app.ts",
 +    "src",
 +    "vitest.config.ts"
 +  ]

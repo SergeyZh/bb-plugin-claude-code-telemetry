@@ -10,7 +10,11 @@ with `bb plugin config claude-code-telemetry set <key> <value>`.
 
 Cache lifetime is a per-thread model option, not a global plugin setting.
 In the new-thread model picker, choose Prompt cache TTL:
-Automatic (`auto`, the default), 5 minutes (`5m`), or 1 hour (`1h`). CLI:
+Automatic (`auto`, the default), 5 minutes (`5m`), or 1 hour (`1h`). Labels show
+API cache write prices relative to the input token price: 1.25× for 5 minutes,
+2× for 1 hour. Hover or focus either explicit TTL button for the price hint;
+the plugin renders these tooltips independently of native browser titles.
+Cache reads are billed separately. CLI:
 `bb thread spawn --provider claude-code-telemetry --option promptCacheTtl=1h --prompt "Task"`.
 SDK callers use `sessionOptions: { promptCacheTtl: "1h" }`. Existing threads can
 use `bb thread options <id> --set promptCacheTtl=5m`; changes restart Claude

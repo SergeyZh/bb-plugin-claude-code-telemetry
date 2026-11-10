@@ -10,12 +10,11 @@ export function promptCacheTtlOption(): NonNullable<AvailableModel["sessionOptio
     id: PROMPT_CACHE_TTL_OPTION_ID,
     type: "select",
     label: "Prompt cache TTL",
-    description: "Cache lifetime for this conversation. One-hour cache writes cost more than five-minute writes.",
     value: "auto",
     values: [
       { id: "auto", label: "Automatic", description: "Use Claude Code's settings and defaults." },
-      { id: "5m", label: "5 minutes" },
-      { id: "1h", label: "1 hour" },
+      { id: "5m", label: "5m · ×1.25", description: "API cache writes: 1.25× input price." },
+      { id: "1h", label: "1h · ×2", description: "API cache writes: 2× input price." },
     ],
   };
 }

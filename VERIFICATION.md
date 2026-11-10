@@ -244,3 +244,111 @@ and guided sign-in host limitations remain documented in UPSTREAM.md.
 
 No live Claude requests were made, and the installed plugin was not reloaded.
 No changes were pushed.
+
+## Cache TTL price labels, 2026-11-10
+
+Release `0.1.0-telemetry.5+upstream.8b23232` adds API cache write price
+multipliers directly to the existing TTL labels: `5 minutes (write: 1.25× input)`
+and `1 hour (write: 2× input)`. The option description identifies the input
+token price as the reference. TTL values, defaults, and behavior are unchanged.
+The multipliers and supported 5-minute/1-hour lifetimes were checked against
+[Anthropic's prompt caching documentation](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing).
+
+- `npm run typecheck`: passed.
+- `npm test`: 470 passed, 1 opt-in live SDK test skipped.
+- `npm run build`: passed for server and host artifacts; existing SDK pin retained.
+- Installed source confirmed as this checkout, then only
+  `claude-code-telemetry` reloaded. `bb plugin list --json` reports the new
+  version, enabled, running, and zero handler errors.
+- Comparison patches regenerated; generator `--check` and `git diff --check`
+  passed.
+
+No live Claude requests or browser UI checks were made for this label change.
+
+## Compact cache TTL labels, 2026-11-10
+
+Release `0.1.0-telemetry.6+upstream.8b23232` shortens the labels to
+`5m · ×1.25` and `1h · ×2`, and the shared description to
+`API cache writes: × input price.` This is a text-only change.
+
+- Typecheck and server/host build: passed; existing SDK pin retained.
+- Installed source confirmed as this checkout, then only
+  `claude-code-telemetry` reloaded. Plugin inventory confirms the new version,
+  enabled, running, and zero handler errors.
+- Comparison patches regenerated; generator `--check` and `git diff --check`
+  passed.
+
+The earlier passing 470-test suite was not rerun for this text-only revision.
+No live Claude requests or browser UI checks were made.
+
+## Cache TTL button tooltips, 2026-11-10
+
+Release `0.1.0-telemetry.7+upstream.8b23232` moves the price explanation from
+the select option's shared description to each explicit TTL value's description:
+`API cache writes: 1.25× input price.` and `API cache writes: 2× input price.`
+The compact labels remain unchanged. BB's model picker source uses each item's
+description for the button's native `title` tooltip; the shared select description
+is not rendered there.
+
+- Typecheck and server/host build: passed; existing SDK pin retained.
+- Installed source confirmed as this checkout, then only
+  `claude-code-telemetry` reloaded. Plugin inventory confirms the new version,
+  enabled, running, and zero handler errors.
+- Comparison patches regenerated; generator `--check` and `git diff --check`
+  passed.
+
+The earlier passing 470-test suite was not rerun for this text-only revision.
+Tooltip wiring was checked in BB's local source, without a live browser check
+or a Claude request.
+
+## Cache tooltip hover activation, 2026-11-10
+
+Release `0.1.0-telemetry.8+upstream.8b23232` replaces native browser tooltip
+activation for the two explicit TTL price buttons with a small frontend content
+script. Before the change, live DOM inspection and pointer events confirmed
+that direct entry into `1h` reached the correct button with the correct title.
+This alone did not validate native tooltip appearance; the reported difference
+between direct entry and entry from `5m` is handled by removing that dependency.
+
+The script listens for pointer entry and keyboard focus, displays an accessible
+tooltip after 300 ms, suppresses the active native title to avoid duplicates,
+and restores attributes when the hint closes. It only targets these two price
+buttons in the Prompt cache TTL group. Escape, exit, scroll, resize, window blur,
+menu removal, and plugin disposal clear pending/visible hints and restore the
+original attributes. Positioning stays inside the viewport, with the hint above
+the button when space allows. The frontend uses the existing SDK 0.6.104
+content-script API; no SDK repin or runtime dependency was added. JSDOM 26.1.0
+is a development dependency for DOM behavior/lifecycle regression coverage.
+
+- Typecheck and type-aware lint: passed.
+- `npm test`: 484 passed, 1 opt-in live SDK test skipped. Fourteen new DOM
+  regressions cover direct entry with no previous hover, adjacent entry,
+  pending-hint cancellation, repeated entry, child elements, focus/Escape,
+  menu removal, abort/remount cleanup, scope, and viewport changes.
+- Server, host, and new frontend artifacts built successfully. Installed source
+  confirmed as this checkout, then only `claude-code-telemetry` reloaded.
+  Plugin inventory reports the new version, enabled, running, zero handler
+  errors, and a compatible frontend bundle using only `pluginSdkApp`.
+- Live BB desktop browser check: actual pointer movement directly down into
+  `1h` displayed the hour-price tooltip without visiting `5m`; captured and
+  visually inspected the result. Moving horizontally from `5m` to `1h`
+  correctly replaced the price hint. Leaving above and reentering `1h`
+  again displayed the correct hint. No model prompt was sent or thread started.
+- Both comparison patches regenerated; the production comparison now includes
+  the new `app.ts` entry. Generator `--check` and `git diff --check`: passed.
+
+## Release version, 2026-11-11
+
+Raised the package version to `0.1.0-telemetry.9+upstream.8b23232` for the cache
+price labels and reliable hover tooltips. Both root lockfile versions and the
+README/versioning documentation agree. The upstream baseline is unchanged.
+
+- `npm run build`: passed for server, host, and frontend artifacts.
+- Asserted that the package, both lockfile versions, and all three artifact
+  metadata versions equal the release version.
+- Comparison patches regenerated; generator `--check` and `git diff --check`:
+  passed.
+
+No runtime code changed after the preceding successful typecheck, lint,
+484-test suite, and live hover checks, so those checks were not repeated.
+The installed plugin was not reloaded for this version-only step.

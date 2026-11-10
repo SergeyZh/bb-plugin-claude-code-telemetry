@@ -14,11 +14,11 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.4+upstream.8b23232`:
+The current version is `0.1.0-telemetry.9+upstream.8b23232`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.4` is this fork's release revision. Increment it for every release,
+- `telemetry.9` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
 - `upstream.8b23232` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
@@ -27,10 +27,27 @@ The current version is `0.1.0-telemetry.4+upstream.8b23232`:
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.5+upstream.8b23232`. A later upstream import would increment the
+`0.1.0-telemetry.10+upstream.8b23232`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
+
+Local release `telemetry.5` adds API cache write price multipliers to the
+per-session TTL labels: 1.25× input for 5 minutes and 2× input for 1 hour.
+The imported upstream baseline is unchanged.
+
+Local release `telemetry.6` shortens those labels to `5m · ×1.25` and
+`1h · ×2`, with the shared hint `API cache writes: × input price.`
+
+Local release `telemetry.7` moves the price explanation to each TTL value's
+description, which BB displays as a tooltip on the corresponding button.
+
+Local release `telemetry.8` adds a frontend content script for the two cache
+price hints. It renders accessible tooltips on direct hover or keyboard focus,
+without depending on native browser title activation. The SDK pin is unchanged.
+
+Local release `telemetry.9` packages the cache price labels and reliable hover
+tooltips for commit; the imported upstream baseline remains unchanged.
 
 Synced the provider changes through
 [`8b23232`](https://github.com/get-bb/bb/commit/8b232325543ae66d4374a71ee4d05838ad5cd793)

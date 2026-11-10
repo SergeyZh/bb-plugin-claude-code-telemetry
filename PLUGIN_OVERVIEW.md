@@ -14,7 +14,10 @@ Compared with the original provider at
   and completeness. Cache writes include separate 5-minute, 1-hour, and unknown
   lifetime counts when the SDK supplies them.
 - The new-thread model picker offers Prompt cache TTL: Automatic, 5 minutes,
-  or 1 hour. The choice is per thread, survives resume and fork, and is also
+  or 1 hour, with API cache write prices of 1.25× and 2× the input token price.
+  A small frontend content script displays the two price hints on direct hover
+  or keyboard focus, independent of native browser title activation.
+  The choice is per thread, survives resume and fork, and is also
   available through SDK and CLI.
 - A separate Claude Code Telemetry picker entry and settings keep the built-in
   provider available. Existing threads keep their provider; settings are

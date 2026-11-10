@@ -78,7 +78,7 @@ def write_files(directory, files):
 
 
 def production_file(name):
-    return (name == "server.ts" or name.startswith("src/")) and name.endswith(".ts") and not name.endswith(".test.ts") and not name.endswith("delta-test-harness.ts")
+    return (name in {"server.ts", "app.ts"} or name.startswith("src/")) and name.endswith(".ts") and not name.endswith(".test.ts") and not name.endswith("delta-test-harness.ts")
 
 
 def generate(upstream, fork, temporary):
@@ -131,7 +131,7 @@ Source snapshot SHA-256: `{digest(fork)}`.
 
 - [telemetry-runtime.patch](telemetry-runtime.patch): production TypeScript,
   including request telemetry, cache-write lifetime breakdown, per-session TTL
-  selection, provider identity, and usage-source changes.
+  selection and its frontend price tooltips, provider identity, and usage-source changes.
   {summaries['telemetry-runtime.patch']}.
 - [upstream-to-telemetry.patch](upstream-to-telemetry.patch): all source changes,
   including tests, scripts, documentation, standalone packaging, and lockfile.

@@ -3,7 +3,7 @@
 A standalone fork of BB's Claude Code provider, installed alongside it.
 
 - Plugin and provider ID: `claude-code-telemetry`
-- Version: `0.1.0-telemetry.4+upstream.8b23232` (see [versioning](UPSTREAM.md#versioning))
+- Version: `0.1.0-telemetry.9+upstream.8b23232` (see [versioning](UPSTREAM.md#versioning))
 - Picker name: **Claude Code Telemetry**
 - Original provider: `claude-code`, unchanged
 
@@ -127,7 +127,13 @@ When creating a Claude Code Telemetry thread, open the model picker and choose
 **Prompt cache TTL**: **Automatic**, **5 minutes**, or **1 hour**.
 The choice belongs to that thread, not to the provider's global settings.
 Automatic leaves Claude Code's existing configuration and defaults in effect.
-One-hour cache writes cost more than five-minute writes.
+The options show API cache write prices relative to the input token price:
+**5 minutes: 1.25×**, **1 hour: 2×**. These multipliers apply to writes;
+hover over either TTL button for the explanation. Cache reads are billed
+separately. See [Anthropic's prompt caching pricing](https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing).
+The plugin renders these price tooltips on hover or keyboard focus, including
+when entering a button directly from above. It does not rely on native browser
+tooltip activation. Other model-picker controls keep BB's own behavior.
 
 The same option is available through the SDK's `sessionOptions.promptCacheTtl`
 and the CLI:
