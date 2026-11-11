@@ -352,3 +352,40 @@ README/versioning documentation agree. The upstream baseline is unchanged.
 No runtime code changed after the preceding successful typecheck, lint,
 484-test suite, and live hover checks, so those checks were not repeated.
 The installed plugin was not reloaded for this version-only step.
+
+## Task-notification steer sync, 2026-11-11
+
+Imported all provider changes after `8b232325543ae66d4374a71ee4d05838ad5cd793`
+through `4983aef4b62468a719cbe1ccf344c26aeea883b8` (2026-11-11),
+"Hold a steered Claude Code turn open through task-notification results (#7396)".
+The baseline is an ancestor of the target. Compared every provider file in
+both exact archives: only `src/delta-translation.ts` and the bridge regression
+file changed. Their upstream patches were applied without replacing fork files.
+The source checksum uses the generator's `digest()` over all target provider
+files. Upstream package version is `0.1.0`; the fork revision increases once
+from 9 to `0.1.0-telemetry.10+upstream.4983aef`.
+
+- The new upstream regression failed before the runtime fix, reproducing the
+  premature turn completion, and passes in the full suite after the fix.
+- `npm run typecheck`: passed.
+- `npm test`: 485 passed, 1 opt-in live SDK test skipped (33 files passed,
+  1 skipped). Includes the imported task-notification regression and retained
+  bridge, telemetry, cache-lifetime, TTL, and tooltip coverage.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm run build`: passed for server, host, and frontend artifacts on BB 0.49.0.
+  The existing SDK 0.6.104 pin differs from the host SDK 0.6.132; it is retained.
+- Package version, both root lockfile versions, and all three artifact
+  `pluginVersion` fields agree; artifact provider identity is unchanged.
+- Both comparison patches regenerated against the exact target archive;
+  generator `--check` verifies application and every resulting file.
+- `git diff --check`: passed.
+
+No new host, SDK, wire protocol, or runtime dependency is required. The new
+behavior depends on CLI prompt-consumption reports; CLIs that never report
+`user_message_uuids` retain legacy completion behavior. Existing host limitations
+for Bash descriptions and guided sign-in and external pooled catalog requirements
+remain as documented in UPSTREAM.md. Upstream's separate failed-turn-with-pending-
+steer limitation remains: such a turn can later finish as completed.
+
+No live Claude requests were made. The installed plugin was not reloaded,
+no automation was created, and no changes were pushed.

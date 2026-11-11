@@ -3,7 +3,7 @@
 A standalone fork of BB's Claude Code provider, installed alongside it.
 
 - Plugin and provider ID: `claude-code-telemetry`
-- Version: `0.1.0-telemetry.9+upstream.8b23232` (see [versioning](UPSTREAM.md#versioning))
+- Version: `0.1.0-telemetry.10+upstream.4983aef` (see [versioning](UPSTREAM.md#versioning))
 - Picker name: **Claude Code Telemetry**
 - Original provider: `claude-code`, unchanged
 
@@ -18,7 +18,7 @@ as the built-in provider. It adds a separate picker entry and plugin settings;
 existing threads keep their provider, and the built-in provider stays available.
 
 This comparison is against the original provider at
-[`8b23232` (2026-11-10)](https://github.com/get-bb/bb/tree/8b232325543ae66d4374a71ee4d05838ad5cd793/plugins/provider-claude-code),
+[`4983aef` (2026-11-11)](https://github.com/get-bb/bb/tree/4983aef4b62468a719cbe1ccf344c26aeea883b8/plugins/provider-claude-code),
 the latest upstream provider revision imported into this fork.
 
 | Capability | Original provider at this revision | Claude Code Telemetry |
@@ -112,7 +112,9 @@ Disabling this plugin does not disable the built-in provider.
 
 Session forks stream transcript reads and writes and run in a worker, isolating
 out-of-memory failures. Failed Bash commands retain their reported exit code.
-Background tasks settle when the Claude SDK stream ends. Usage and account
+Background tasks settle when the Claude SDK stream ends. Task-notification
+results keep the turn open while an accepted steer is still queued, once the
+CLI has reported prompt consumption. Usage and account
 metadata report the Max 20x tier as Ultra.
 
 The `commandDescriptionsEnabled` setting defaults to `false`. Enable it to

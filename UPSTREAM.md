@@ -14,20 +14,20 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.9+upstream.8b23232`:
+The current version is `0.1.0-telemetry.10+upstream.4983aef`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.9` is this fork's release revision. Increment it for every release,
+- `telemetry.10` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.8b23232` identifies the latest fully imported upstream baseline.
+- `upstream.4983aef` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.10+upstream.8b23232`. A later upstream import would increment the
+`0.1.0-telemetry.11+upstream.4983aef`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
@@ -154,3 +154,29 @@ legacy completion behavior when `user_message_uuids` is absent.
 Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 TTL selection, standalone packaging, and extra regression coverage are preserved.
 Existing Bash-description and guided sign-in host limitations still apply.
+
+## Task-notification steer sync, 2026-11-11
+
+Synced all provider changes after `8b23232` through
+[`4983aef`](https://github.com/get-bb/bb/commit/4983aef4b62468a719cbe1ccf344c26aeea883b8)
+(2026-11-11), "Hold a steered Claude Code turn open through task-notification results (#7396)".
+Non-human results no longer clear pending prompt bookkeeping. Once the CLI
+has reported prompt consumption, a task-notification result keeps the BB turn
+open until the queued steer runs. Older CLIs that never report consumption
+retain legacy completion behavior. The upstream bridge regression is included.
+
+Exact baseline and target archives differ only in the delta translator and
+that bridge test; both provider changes are fully imported. Upstream package
+version remains `0.1.0`; the fork revision increments once from 9 to 10.
+The target source checksum covers every provider file using the comparison
+generator's `digest()`.
+
+No new host, SDK, wire protocol, or runtime dependency is required. The SDK
+pin remains 0.6.104, and existing Bash-description, guided sign-in, and pooled
+catalog compatibility limitations above still apply. The upstream limitation
+where a failed turn with a pending steer can later finish as completed remains
+unfixed by this change.
+
+Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
+TTL selection and tooltips, standalone packaging, and fork regression tests
+are preserved. No live requests, plugin reload, or push were performed.
