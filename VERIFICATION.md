@@ -389,3 +389,43 @@ steer limitation remains: such a turn can later finish as completed.
 
 No live Claude requests were made. The installed plugin was not reloaded,
 no automation was created, and no changes were pushed.
+
+## Session, permission, MCP probe, and skill sync, 2026-11-17
+
+Imported `399434f`, `29c6888`, `583b443`, and `9a261b5`, oldest first, through
+`9a261b58e9e59f73701ff9f32ec90672901ce550`. Initial checkout was clean at the
+pinned `9abaf58c3badd95337c8733d30bc11aeedbb87a1`, with the expected imported
+baseline `4983aef4b62468a719cbe1ccf344c26aeea883b8`. GitHub confirms baseline
+ancestry and the complete ordered provider history through the target.
+
+Every provider file from all five exact archives was compared; each change
+matches the corresponding commit's provider file list. Patches were applied
+in order with the test provider ID adapted to `claude-code-telemetry`, without
+replacing fork files. Upstream package version remains `0.1.0`; the release is
+`0.1.0-telemetry.11+upstream.9a261b5`. The source checksum uses the comparison
+generator's `digest()` over every target provider file.
+
+- `npm run typecheck`: passed.
+- `npm test`: 491 passed, 1 opt-in live SDK test skipped (34 files passed,
+  1 skipped). Includes startup-failure identity, empty hook-denial reason,
+  three MCP isolation/managed-policy cases, and embedded/trailing skill
+  regressions. Existing telemetry, cache-lifetime, TTL, tooltip, and bridge
+  coverage is retained.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm run build`: passed for server, host, and frontend artifacts on BB 0.49.0.
+  The existing SDK 0.6.104 pin differs from the host SDK 0.6.132; it is retained.
+- Package version, both root lockfile versions, and all three artifact
+  `pluginVersion` fields agree; artifact plugin identity is unchanged.
+- Both comparison patches regenerated against the exact target archive;
+  generator `--check` verifies patch application and every resulting file.
+- `git diff --check`: passed.
+
+No new host, SDK, wire protocol, CLI upgrade, or dependency is required.
+Agent SDK 0.3.318 supports strict MCP configuration. Enterprise managed MCP
+configuration retains policy-selected servers, since the CLI rejects combining
+it with strict MCP configuration. Existing host and pooled catalog limitations
+remain documented in UPSTREAM.md. This change prevents new empty denial
+messages but does not repair previously damaged transcripts.
+
+No live Claude requests were made. The installed plugin was not reloaded,
+no automation was created, and no changes were pushed.

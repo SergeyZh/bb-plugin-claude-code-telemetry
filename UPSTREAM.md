@@ -14,20 +14,20 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.10+upstream.4983aef`:
+The current version is `0.1.0-telemetry.11+upstream.9a261b5`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.10` is this fork's release revision. Increment it for every release,
+- `telemetry.11` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.4983aef` identifies the latest fully imported upstream baseline.
+- `upstream.9a261b5` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.11+upstream.4983aef`. A later upstream import would increment the
+`0.1.0-telemetry.12+upstream.9a261b5`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
@@ -180,3 +180,46 @@ unfixed by this change.
 Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 TTL selection and tooltips, standalone packaging, and fork regression tests
 are preserved. No live requests, plugin reload, or push were performed.
+
+## Session, permission, MCP probe, and skill sync, 2026-11-17
+
+Imported all four provider commits after `4983aef` through
+[`9a261b5`](https://github.com/get-bb/bb/commit/9a261b58e9e59f73701ff9f32ec90672901ce550),
+oldest first (all dated 2026-11-16):
+
+- [`399434f`](https://github.com/get-bb/bb/commit/399434ffe7c0c4b2c3fa48725086c4e1eb83d51a),
+  "Claude Code: adopt a session id only after system/init announces the session (#7430)":
+  gate bridge identity adoption, context probes, and SDK session ID capture on
+  `system/init`, preserving the saved session after a startup failure.
+- [`29c6888`](https://github.com/get-bb/bb/commit/29c688876af3f7a0ece75e509c0e02af3990a932),
+  "Claude Code: never auto-deny a tool call with an empty message (#7424)":
+  trim the hook reason and fall back to the policy message when it is blank.
+  Existing transcripts containing empty error results are not repaired.
+- [`583b443`](https://github.com/get-bb/bb/commit/583b44356b0576ce0ca5cbaf0842cdde573f627b),
+  "Stop Claude metadata probes from connecting to user MCP servers (#7447)":
+  restrict initialization/account/usage and context probes to explicit MCP
+  servers, retaining the dynamic BB bridge for context accounting. When an
+  enterprise `managed-mcp.json` exists, omit strict configuration because the
+  CLI rejects that combination; enterprise policy retains MCP selection.
+- [`9a261b5`](https://github.com/get-bb/bb/commit/9a261b58e9e59f73701ff9f32ec90672901ce550),
+  "Claude Code: keep a mid-sentence skill's name when it is hoisted to a command (#7642)":
+  keep an embedded or trailing skill name in the sentence while hoisting its
+  slash command; a leading skill token is still removed.
+
+Compared every provider file across the exact baseline, intermediate, and
+target archives. Each ordered change matches its commit's provider file list;
+all upstream regressions are included, with provider IDs adapted to this fork.
+The target package version is `0.1.0`; this release increments the fork revision
+once from 10 to 11. The full imported SHA is
+`9a261b58e9e59f73701ff9f32ec90672901ce550`; the generator checksum covers every
+provider file from its exact archive.
+
+No new BB host, Plugin SDK, wire protocol, CLI upgrade, or runtime dependency
+is required. The installed Agent SDK 0.3.318 already supports `strictMcpConfig`.
+The BB SDK remains pinned to 0.6.104. Existing Bash-description, guided sign-in,
+and pooled catalog requirements above still apply. MCP isolation deliberately
+excludes user MCP tools from isolated context usage except under managed policy.
+
+Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
+TTL selection and tooltips, standalone packaging, and fork regressions are
+preserved. No live requests, plugin reload, automation creation, or push occurred.

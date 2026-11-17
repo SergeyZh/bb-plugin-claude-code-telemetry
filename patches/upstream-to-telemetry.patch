@@ -175,7 +175,7 @@ index 0000000000000000000000000000000000000000..2d6c97c2ceb3913ec3af0128ea6684c0
 +OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 +SOFTWARE.
 diff --git a/PLUGIN_OVERVIEW.md b/PLUGIN_OVERVIEW.md
-index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..ad75f4fe6e801fc063829c9e8ef9243288b2823a 100644
+index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..956be6f0834ef20610289bb729c88350ede39bd8 100644
 --- a/PLUGIN_OVERVIEW.md
 +++ b/PLUGIN_OVERVIEW.md
 @@ -1,23 +1,56 @@
@@ -194,7 +194,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..ad75f4fe6e801fc063829c9e8ef92432
 -  from your home directory and project.
 -- Health, usage, and install status for Claude Code on each host, with an install or update action.
 +Compared with the original provider at
-+[ac2829b (2026-11-06)](https://github.com/get-bb/bb/tree/ac2829b9a66004c32d2f4b04e01b9176222b2af1/plugins/provider-claude-code):
++[9a261b5 (2026-11-16)](https://github.com/get-bb/bb/tree/9a261b58e9e59f73701ff9f32ec90672901ce550/plugins/provider-claude-code):
  
 -## Settings
 +- Usage is reported for observed main-agent requests, with message-ID
@@ -253,7 +253,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..ad75f4fe6e801fc063829c9e8ef92432
 +subject to the account's plan and billing.
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..f3f84c33f4111a9bd9faddaeb9e5ab85a6b147a4
+index 0000000000000000000000000000000000000000..361aeb4b84783dbec00281caa205b13b5723a503
 --- /dev/null
 +++ b/README.md
 @@ -0,0 +1,217 @@
@@ -262,7 +262,7 @@ index 0000000000000000000000000000000000000000..f3f84c33f4111a9bd9faddaeb9e5ab85
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.10+upstream.4983aef` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.11+upstream.9a261b5` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -277,7 +277,7 @@ index 0000000000000000000000000000000000000000..f3f84c33f4111a9bd9faddaeb9e5ab85
 +existing threads keep their provider, and the built-in provider stays available.
 +
 +This comparison is against the original provider at
-+[`4983aef` (2026-11-11)](https://github.com/get-bb/bb/tree/4983aef4b62468a719cbe1ccf344c26aeea883b8/plugins/provider-claude-code),
++[`9a261b5` (2026-11-16)](https://github.com/get-bb/bb/tree/9a261b58e9e59f73701ff9f32ec90672901ce550/plugins/provider-claude-code),
 +the latest upstream provider revision imported into this fork.
 +
 +| Capability | Original provider at this revision | Claude Code Telemetry |
@@ -476,10 +476,10 @@ index 0000000000000000000000000000000000000000..f3f84c33f4111a9bd9faddaeb9e5ab85
 +```
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..b444e485de3e04585540b82bd9f7a44c2ada65f1
+index 0000000000000000000000000000000000000000..77a9f08bbb2c5a113841664b11685c35deac63b5
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,225 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -496,20 +496,20 @@ index 0000000000000000000000000000000000000000..b444e485de3e04585540b82bd9f7a44c
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.10+upstream.4983aef`:
++The current version is `0.1.0-telemetry.11+upstream.9a261b5`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.10` is this fork's release revision. Increment it for every release,
++- `telemetry.11` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-+- `upstream.4983aef` identifies the latest fully imported upstream baseline.
++- `upstream.9a261b5` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
 +  import date below and in the comparison-patch generator.
 +
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.11+upstream.4983aef`. A later upstream import would increment the
++`0.1.0-telemetry.12+upstream.9a261b5`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
@@ -662,12 +662,55 @@ index 0000000000000000000000000000000000000000..b444e485de3e04585540b82bd9f7a44c
 +Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 +TTL selection and tooltips, standalone packaging, and fork regression tests
 +are preserved. No live requests, plugin reload, or push were performed.
++
++## Session, permission, MCP probe, and skill sync, 2026-11-17
++
++Imported all four provider commits after `4983aef` through
++[`9a261b5`](https://github.com/get-bb/bb/commit/9a261b58e9e59f73701ff9f32ec90672901ce550),
++oldest first (all dated 2026-11-16):
++
++- [`399434f`](https://github.com/get-bb/bb/commit/399434ffe7c0c4b2c3fa48725086c4e1eb83d51a),
++  "Claude Code: adopt a session id only after system/init announces the session (#7430)":
++  gate bridge identity adoption, context probes, and SDK session ID capture on
++  `system/init`, preserving the saved session after a startup failure.
++- [`29c6888`](https://github.com/get-bb/bb/commit/29c688876af3f7a0ece75e509c0e02af3990a932),
++  "Claude Code: never auto-deny a tool call with an empty message (#7424)":
++  trim the hook reason and fall back to the policy message when it is blank.
++  Existing transcripts containing empty error results are not repaired.
++- [`583b443`](https://github.com/get-bb/bb/commit/583b44356b0576ce0ca5cbaf0842cdde573f627b),
++  "Stop Claude metadata probes from connecting to user MCP servers (#7447)":
++  restrict initialization/account/usage and context probes to explicit MCP
++  servers, retaining the dynamic BB bridge for context accounting. When an
++  enterprise `managed-mcp.json` exists, omit strict configuration because the
++  CLI rejects that combination; enterprise policy retains MCP selection.
++- [`9a261b5`](https://github.com/get-bb/bb/commit/9a261b58e9e59f73701ff9f32ec90672901ce550),
++  "Claude Code: keep a mid-sentence skill's name when it is hoisted to a command (#7642)":
++  keep an embedded or trailing skill name in the sentence while hoisting its
++  slash command; a leading skill token is still removed.
++
++Compared every provider file across the exact baseline, intermediate, and
++target archives. Each ordered change matches its commit's provider file list;
++all upstream regressions are included, with provider IDs adapted to this fork.
++The target package version is `0.1.0`; this release increments the fork revision
++once from 10 to 11. The full imported SHA is
++`9a261b58e9e59f73701ff9f32ec90672901ce550`; the generator checksum covers every
++provider file from its exact archive.
++
++No new BB host, Plugin SDK, wire protocol, CLI upgrade, or runtime dependency
++is required. The installed Agent SDK 0.3.318 already supports `strictMcpConfig`.
++The BB SDK remains pinned to 0.6.104. Existing Bash-description, guided sign-in,
++and pooled catalog requirements above still apply. MCP isolation deliberately
++excludes user MCP tools from isolated context usage except under managed policy.
++
++Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
++TTL selection and tooltips, standalone packaging, and fork regressions are
++preserved. No live requests, plugin reload, automation creation, or push occurred.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..abeb78cbf7496353df50f744aef7b28e1417fffb
+index 0000000000000000000000000000000000000000..19482b9c2fbb0d13a07fe7c04cbfb6950237bccd
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,391 @@
+@@ -0,0 +1,431 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -1059,6 +1102,46 @@ index 0000000000000000000000000000000000000000..abeb78cbf7496353df50f744aef7b28e
 +
 +No live Claude requests were made. The installed plugin was not reloaded,
 +no automation was created, and no changes were pushed.
++
++## Session, permission, MCP probe, and skill sync, 2026-11-17
++
++Imported `399434f`, `29c6888`, `583b443`, and `9a261b5`, oldest first, through
++`9a261b58e9e59f73701ff9f32ec90672901ce550`. Initial checkout was clean at the
++pinned `9abaf58c3badd95337c8733d30bc11aeedbb87a1`, with the expected imported
++baseline `4983aef4b62468a719cbe1ccf344c26aeea883b8`. GitHub confirms baseline
++ancestry and the complete ordered provider history through the target.
++
++Every provider file from all five exact archives was compared; each change
++matches the corresponding commit's provider file list. Patches were applied
++in order with the test provider ID adapted to `claude-code-telemetry`, without
++replacing fork files. Upstream package version remains `0.1.0`; the release is
++`0.1.0-telemetry.11+upstream.9a261b5`. The source checksum uses the comparison
++generator's `digest()` over every target provider file.
++
++- `npm run typecheck`: passed.
++- `npm test`: 491 passed, 1 opt-in live SDK test skipped (34 files passed,
++  1 skipped). Includes startup-failure identity, empty hook-denial reason,
++  three MCP isolation/managed-policy cases, and embedded/trailing skill
++  regressions. Existing telemetry, cache-lifetime, TTL, tooltip, and bridge
++  coverage is retained.
++- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
++- `npm run build`: passed for server, host, and frontend artifacts on BB 0.49.0.
++  The existing SDK 0.6.104 pin differs from the host SDK 0.6.132; it is retained.
++- Package version, both root lockfile versions, and all three artifact
++  `pluginVersion` fields agree; artifact plugin identity is unchanged.
++- Both comparison patches regenerated against the exact target archive;
++  generator `--check` verifies patch application and every resulting file.
++- `git diff --check`: passed.
++
++No new host, SDK, wire protocol, CLI upgrade, or dependency is required.
++Agent SDK 0.3.318 supports strict MCP configuration. Enterprise managed MCP
++configuration retains policy-selected servers, since the CLI rejects combining
++it with strict MCP configuration. Existing host and pooled catalog limitations
++remain documented in UPSTREAM.md. This change prevents new empty denial
++messages but does not repair previously damaged transcripts.
++
++No live Claude requests were made. The installed plugin was not reloaded,
++no automation was created, and no changes were pushed.
 diff --git a/app.ts b/app.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7beb5bab3a
@@ -1076,19 +1159,19 @@ index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7b
 +});
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..e1dc068362c45757f21bacbd2b1567e50f8ac189
+index 0000000000000000000000000000000000000000..3b588eb949a0880f929a20480dd768aefb03d69c
 --- /dev/null
 +++ b/package-lock.json
 @@ -0,0 +1,4242 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.10+upstream.4983aef",
++  "version": "0.1.0-telemetry.11+upstream.9a261b5",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.10+upstream.4983aef",
++      "version": "0.1.0-telemetry.11+upstream.9a261b5",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -5323,7 +5406,7 @@ index 0000000000000000000000000000000000000000..e1dc068362c45757f21bacbd2b1567e5
 +  }
 +}
 diff --git a/package.json b/package.json
-index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..aeb451e00276be690974f94215ac1623727d277c 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..e71db89fb82f943a9439ab33ddd76c9447a3abbb 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,26 +1,28 @@
@@ -5331,7 +5414,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..aeb451e00276be690974f94215ac1623
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.10+upstream.4983aef",
++  "version": "0.1.0-telemetry.11+upstream.9a261b5",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -5800,7 +5883,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..92f6aaeaaaa904c7795b180381296ab7fc66d4c5
+index 0000000000000000000000000000000000000000..a13cf8742eaf8d10017af791b858ae2daaa2e57f
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -5816,8 +5899,8 @@ index 0000000000000000000000000000000000000000..92f6aaeaaaa904c7795b180381296ab7
 +import urllib.request
 +
 +
-+UPSTREAM_COMMIT = "4983aef4b62468a719cbe1ccf344c26aeea883b8"
-+UPSTREAM_SOURCE_SHA256 = "76e21beab4d4ba26ec1d81df7c6729dd1a11c81be0f68f4292230660f5accac3"
++UPSTREAM_COMMIT = "9a261b58e9e59f73701ff9f32ec90672901ce550"
++UPSTREAM_SOURCE_SHA256 = "ed9029c6d44450e784f1866f2e7a4f11780ade04c6becd050cb9724713bde3e3"
 +ROOT = Path(__file__).resolve().parents[1]
 +GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 +
@@ -6359,7 +6442,7 @@ index 16a30b869f43e95ccc91fe0cdf27fb77e39a14a3..7d8568b5424c79ef1c3fbfb493fa42de
    "turn/completed",
  ];
 diff --git a/src/bridge/__tests__/bridge.test.ts b/src/bridge/__tests__/bridge.test.ts
-index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de73045aaa 100644
+index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af6ccd0c0e 100644
 --- a/src/bridge/__tests__/bridge.test.ts
 +++ b/src/bridge/__tests__/bridge.test.ts
 @@ -233,7 +233,7 @@ function getLatestQueryCall(): ClaudeQueryCall {
@@ -6371,7 +6454,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
      (event) => event.type === "turn/completed" && event.status === "failed",
    );
  }
-@@ -816,7 +816,7 @@ describe("bridge", () => {
+@@ -836,7 +836,7 @@ describe("bridge", () => {
            await vi.waitFor(() => {
              const events = assembleCapturedThreadEvents(
                bridge.messages,
@@ -6380,7 +6463,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
              );
              expect(
                events
-@@ -837,7 +837,7 @@ describe("bridge", () => {
+@@ -857,7 +857,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const events = assembleCapturedThreadEvents(
              bridge.messages,
@@ -6389,7 +6472,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
            );
            if (delayed) {
              const usage = events
-@@ -890,7 +890,7 @@ describe("bridge", () => {
+@@ -910,7 +910,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const events = assembleCapturedThreadEvents(
              bridge.messages,
@@ -6398,7 +6481,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
            );
            const usage = events
              .filter(
-@@ -917,7 +917,7 @@ describe("bridge", () => {
+@@ -937,7 +937,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const usageEvents = assembleCapturedThreadEvents(
              bridge.messages,
@@ -6407,16 +6490,16 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
            ).filter(
              (event) => event.type === "thread/contextWindowUsage/updated",
            );
-@@ -1009,7 +1009,7 @@ describe("bridge", () => {
-       expect(reports[0].close).toHaveBeenCalledOnce();
-       expect(reports).toHaveLength(2);
+@@ -1031,7 +1031,7 @@ describe("bridge", () => {
+       expect(reports[1].close).toHaveBeenCalledOnce();
+       expect(reports).toHaveLength(3);
        expect(
 -        assembleCapturedThreadEvents(bridge.messages, "claude-code").filter(
 +        assembleCapturedThreadEvents(bridge.messages, "claude-code-telemetry").filter(
            (event) => event.type === "turn/completed",
          ),
        ).toHaveLength(2);
-@@ -1047,7 +1047,7 @@ describe("bridge", () => {
+@@ -1069,7 +1069,7 @@ describe("bridge", () => {
      });
      const threadId = "thread-provider-commands";
      const providerCommandStates = () =>
@@ -6425,7 +6508,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
          (event) =>
            event.type === "thread/extensionState/updated" &&
            event.kind === "bb/provider-commands"
-@@ -1231,6 +1231,79 @@ describe("bridge", () => {
+@@ -1253,6 +1253,79 @@ describe("bridge", () => {
      }
    });
  
@@ -6505,7 +6588,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
    it("lists models with each request's contributed environment", async () => {
      const bridge = createBridgeJsonRpcTestHarness(handleLine);
      queryMock.mockImplementation(() => ({
-@@ -1330,6 +1403,7 @@ describe("bridge", () => {
+@@ -1352,6 +1425,7 @@ describe("bridge", () => {
            permissionEscalation: "ask",
            instructions: "test",
            envVars: { CLAUDE_CONFIG_DIR: projectConfigDir },
@@ -6513,7 +6596,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
            providerOptions: {
              workflowsEnabled: false,
            },
-@@ -1351,7 +1425,7 @@ describe("bridge", () => {
+@@ -1373,7 +1447,7 @@ describe("bridge", () => {
        expect(forkedTranscript).not.toContain("discarded follow-up");
        expect(queryMock).toHaveBeenLastCalledWith(
          expect.objectContaining({
@@ -6522,7 +6605,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
          }),
        );
      } finally {
-@@ -5501,7 +5575,7 @@ describe("bridge", () => {
+@@ -5616,7 +5690,7 @@ describe("bridge", () => {
        await bridge.flushWork();
  
        expect(
@@ -6531,7 +6614,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
            (event) => {
              const item =
                event.type === "item/started" ||
-@@ -5969,7 +6043,7 @@ describe("bridge", () => {
+@@ -6084,7 +6158,7 @@ describe("bridge", () => {
  
          expect(bridge.hasResponse(2)).toBe(false);
          expect(
@@ -6540,7 +6623,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
              (event) => event.type === "turn/started",
            ),
          ).toBe(false);
-@@ -5982,7 +6056,7 @@ describe("bridge", () => {
+@@ -6097,7 +6171,7 @@ describe("bridge", () => {
  
          const events = assembleCapturedThreadEvents(
            bridge.messages,
@@ -6549,7 +6632,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
          );
          const started = events.find((event) => event.type === "turn/started");
          expect(started).toBeDefined();
-@@ -6017,7 +6091,7 @@ describe("bridge", () => {
+@@ -6132,7 +6206,7 @@ describe("bridge", () => {
            await bridge.waitForResponse(3);
            const steered = assembleCapturedThreadEvents(
              bridge.messages,
@@ -6558,7 +6641,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
            );
            expect(
              steered.filter((event) => event.type === "turn/started"),
-@@ -6035,7 +6109,7 @@ describe("bridge", () => {
+@@ -6150,7 +6224,7 @@ describe("bridge", () => {
          await stopBridgeThread({ bridge, queries, threadId });
          const stopped = assembleCapturedThreadEvents(
            bridge.messages,
@@ -6567,7 +6650,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
          );
          expect(stopped).toContainEqual(
            expect.objectContaining({
-@@ -6136,7 +6210,7 @@ describe("bridge", () => {
+@@ -6251,7 +6325,7 @@ describe("bridge", () => {
      function turnEvents(bridge: BridgeJsonRpcTestHarness) {
        const events = assembleCapturedThreadEvents(
          bridge.messages,
@@ -6576,7 +6659,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
        );
        return {
          completed: events.filter((event) => event.type === "turn/completed"),
-@@ -6813,7 +6887,7 @@ describe("canonical model context-window hint", () => {
+@@ -6928,7 +7002,7 @@ describe("canonical model context-window hint", () => {
  
        const contextWindowEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -6585,7 +6668,7 @@ index af894fa62f59a28b9e93e7e2e6cd258d1bc394c0..e8dd404172c2f84cd73ed9cc2c76b5de
        ).filter(
          (
            event,
-@@ -6829,7 +6903,7 @@ describe("canonical model context-window hint", () => {
+@@ -6944,7 +7018,7 @@ describe("canonical model context-window hint", () => {
  
        const tokenUsageEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -6608,7 +6691,7 @@ index ea9d97ca9561bb3e2c875ed2135d62dc624fdbb8..c9aceb3e30f71749b1050a09256dbd16
        cwd: workspaceDir,
        promptInput: [{ type: "text", text: "say hello", mentions: [] }],
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index 96d1b8d801290c096934cd451d94fda76c243c43..4c7ad80a936a5b98f0d1c001aa8c3b95f78698ab 100644
+index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74382718be 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
 @@ -448,6 +448,26 @@ function resolvePendingSessionWork(
@@ -6646,7 +6729,7 @@ index 96d1b8d801290c096934cd451d94fda76c243c43..4c7ad80a936a5b98f0d1c001aa8c3b95
      },
    };
  }
-@@ -2601,6 +2622,7 @@ async function runTurnInput(
+@@ -2607,6 +2628,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);

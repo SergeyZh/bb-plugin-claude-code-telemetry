@@ -1,8 +1,8 @@
 # Upstream comparison patches
 
-Base: [get-bb/bb@4983aef4b62468a719cbe1ccf344c26aeea883b8](https://github.com/get-bb/bb/tree/4983aef4b62468a719cbe1ccf344c26aeea883b8/plugins/provider-claude-code).
-Target: this fork's source snapshot, version `0.1.0-telemetry.10+upstream.4983aef`.
-Source snapshot SHA-256: `4f9179f4fd9305d27d9442ba87bb0cef32e6c3c8af5a88d4592ff387640527a7`.
+Base: [get-bb/bb@9a261b58e9e59f73701ff9f32ec90672901ce550](https://github.com/get-bb/bb/tree/9a261b58e9e59f73701ff9f32ec90672901ce550/plugins/provider-claude-code).
+Target: this fork's source snapshot, version `0.1.0-telemetry.11+upstream.9a261b5`.
+Source snapshot SHA-256: `2643840f74a2901637d34d0646b1edc8b55a6e8cf6f3803b0a62c1b74f7b6d4d`.
 
 - [telemetry-runtime.patch](telemetry-runtime.patch): production TypeScript,
   including request telemetry, cache-write lifetime breakdown, per-session TTL
@@ -10,7 +10,7 @@ Source snapshot SHA-256: `4f9179f4fd9305d27d9442ba87bb0cef32e6c3c8af5a88d4592ff3
   12 files changed, 358 insertions(+), 27 deletions(-).
 - [upstream-to-telemetry.patch](upstream-to-telemetry.patch): all source changes,
   including tests, scripts, documentation, standalone packaging, and lockfile.
-  49 files changed, 6932 insertions(+), 219 deletions(-).
+  49 files changed, 7015 insertions(+), 219 deletions(-).
 
 Both patches use paths relative to the original provider package. From a BB
 repository checkout at the pinned base, run:
