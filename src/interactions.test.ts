@@ -52,6 +52,22 @@ function createClaudeUserQuestionPayload(): UserQuestionPendingInteractionPayloa
   };
 }
 
+it("keeps fallback question headers well formed at an emoji boundary", () => {
+  const payload = createClaudeUserQuestionPayload();
+  const question = payload.questions[0]!;
+  delete question.shortLabel;
+  question.prompt = "x".repeat(11) + "😀 continue?";
+  expect(buildClaudeInteractiveResponse({
+    payload,
+    resolution: {
+      kind: "user_answer",
+      answers: { [question.id]: { selected: [], freeText: "yes" } },
+    },
+  }, [])).toMatchObject({
+    updatedInput: { questions: [{ header: "x".repeat(11) }] },
+  });
+});
+
 interface InvalidClaudeUserQuestionAnswerCase {
   expectedMessage: string;
   name: string;

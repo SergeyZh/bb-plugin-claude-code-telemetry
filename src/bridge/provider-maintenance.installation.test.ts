@@ -6,17 +6,17 @@ const state = vi.hoisted(() => ({
   compatibilityOnly: false,
 }));
 
-vi.mock("@get-bb/plugin-sdk/provider-bridge", async (importOriginal) => ({
+vi.mock("./maintenance-compat.js", async (importOriginal) => ({
   ...(await importOriginal<
-    typeof import("@get-bb/plugin-sdk/provider-bridge")
+    typeof import("./maintenance-compat.js")
   >()),
-  experimental_resolveExecutablePath: async () => "/test/claude",
-  experimental_probeNpmGlobalPackage: async () => {
+  resolveExecutablePath: async () => "/test/claude",
+  probeNpmGlobalPackage: async () => {
     if (state.compatibilityOnly)
       throw new Error("Update discovery ran during compatibility validation");
     return { npmBin: null, npmGlobalPackageVersion: null };
   },
-  experimental_commandOutput: async (_command: string, args: string[]) => {
+  commandOutput: async (_command: string, args: string[]) => {
     if (state.compatibilityOnly && args[0] !== "--version")
       throw new Error("Update discovery ran during compatibility validation");
     if (args[0] === "view") return state.tags;
@@ -36,7 +36,10 @@ describe("Claude Code installation status", () => {
   it("checks the local installation without npm or doctor probes", async () => {
     state.compatibilityOnly = true;
     try {
-      const status = await getClaudeProviderInstallationStatus(false);
+      const status = await getClaudeProviderInstallationStatus(
+        process.env,
+        false,
+      );
       expect(status).toMatchObject({
         installed: true,
         currentVersion: "2.1.274",
@@ -66,7 +69,10 @@ describe("Claude Code installation status", () => {
       state.tags = output;
       state.channel = channel;
 
-      const status = await getClaudeProviderInstallationStatus();
+      const status = await getClaudeProviderInstallationStatus(
+        process.env,
+        true,
+      );
 
       expect(status.latestVersion).toBe(latestVersion);
       expect(status.needsUpdate).toBe(needsUpdate);
@@ -85,7 +91,7 @@ describe("Claude Code installation status", () => {
     state.tags = output;
     state.channel = "latest";
 
-    const status = await getClaudeProviderInstallationStatus();
+    const status = await getClaudeProviderInstallationStatus(process.env, true);
 
     expect(status.latestVersion).toBeNull();
     expect(status.needsUpdate).toBe(false);

@@ -5,7 +5,7 @@ provider and uses the same native login and CLI.
 ## Differences from the built-in provider
 
 Compared with the original provider at
-[9a261b5 (2026-11-16)](https://github.com/get-bb/bb/tree/9a261b58e9e59f73701ff9f32ec90672901ce550/plugins/provider-claude-code):
+[d9bcc98 (2026-11-19)](https://github.com/get-bb/bb/tree/d9bcc98cac2b924e4c667e435d721a602e63e4c4/plugins/provider-claude-code):
 
 - Usage is reported for observed main-agent requests, with message-ID
   deduplication, instead of only a final turn aggregate. Unobserved usage is
@@ -54,3 +54,10 @@ account or API access. TTL selection requires Claude Code 2.1.242 or later.
 Displaying imported Bash descriptions needs BB support for SDK 0.6.117's
 description field; BB 0.48.1 / SDK 0.6.104 ignores it. Claude usage remains
 subject to the account's plan and billing.
+
+Withdrawn approval cards require a BB host with the upstream #7797 runtime,
+daemon, server, and projection changes (host-daemon protocol 269 or newer).
+Contributed environment variables on health, installation, and command-list
+requests require the upstream #7722 host changes (protocol 270 or newer).
+Older hosts remain accepted, but cannot provide those host-side behaviors.
+The provider bundles the needed helper backports and retains SDK 0.6.104.

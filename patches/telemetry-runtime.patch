@@ -52,10 +52,38 @@ index 12a77d3b090bcc905a4d8e7b7667f2b1d025a8e8..7a259d86a84728e8bea245a6d88b8590
        passthrough: ["BB_CLAUDE_CODE_EXECUTABLE", "CLAUDE_CODE_OAUTH_TOKEN"],
      },
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74382718be 100644
+index c9f7042288ce01d75af7a376ea08ea710b6f4cd2..7397f094c50ba72864759486b3ab0b18807934d5 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
-@@ -448,6 +448,26 @@ function resolvePendingSessionWork(
+@@ -13,7 +13,6 @@ import {
+   type ThreadDelta,
+   BRIDGE_INBOUND_REQUEST_METHODS,
+   BRIDGE_JSON_RPC_ERRORS,
+-  BRIDGE_NOTIFICATION_METHODS,
+   PROVIDER_BRIDGE_PROTOCOL_VERSION,
+   THREAD_DELTA_GRAMMAR_V3,
+   THREAD_DELTA_NOTIFICATION_METHOD,
+@@ -27,13 +26,16 @@ import {
+   decodeBridgeJsonRpcResponse,
+   runBridgeRequest,
+   shouldAutoDenyInteractiveRequest,
+-  experimental_buildProviderCliEnv as buildProviderCliEnv,
+   type BridgeToolCallRequest,
+-  type UnansweredInteractionCause,
+   experimental_defineProviderBridge,
++} from "@get-bb/plugin-sdk/provider-bridge";
++import {
++  BRIDGE_NOTIFICATION_METHODS,
++  buildProviderCliEnv,
++  type UnansweredInteractionCause,
+   experimental_unansweredInteractionErrorMessage,
+   experimental_unansweredInteractionWarning,
+-} from "@get-bb/plugin-sdk/provider-bridge";
++} from "./sdk-compat.js";
+ import { randomUUID } from "node:crypto";
+ import { join as joinPath, resolve as resolvePath } from "node:path";
+ import { isDeepStrictEqual } from "node:util";
+@@ -452,6 +454,26 @@ function resolvePendingSessionWork(
    resolvePendingInteractiveRequests(threadSession, message);
  }
  
@@ -82,7 +110,7 @@ index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74
  function applyChromeSetting(
    attachment: ThreadAttachment,
    enabled: boolean | undefined,
-@@ -1081,6 +1101,7 @@ function toSessionConstructionConfig(
+@@ -1087,6 +1109,7 @@ function toSessionConstructionConfig(
        permissionScope: params.permissionScope,
        plugins: params.plugins,
        sandboxEnabled: params.sandboxEnabled,
@@ -90,7 +118,7 @@ index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74
      },
    };
  }
-@@ -2607,6 +2628,7 @@ async function runTurnInput(
+@@ -2677,6 +2700,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);
@@ -99,7 +127,7 @@ index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74
      applyContextWindowSetting(attachment, params.disable1MContext);
      applyArtifactSetting(attachment, params.artifactsEnabled);
 diff --git a/src/bridge/commands.ts b/src/bridge/commands.ts
-index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..294f2c8667b8d73b07bcdbe156c31a62f42ac5e3 100644
+index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab75090f630 100644
 --- a/src/bridge/commands.ts
 +++ b/src/bridge/commands.ts
 @@ -21,6 +21,7 @@ import {
@@ -126,6 +154,326 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..294f2c8667b8d73b07bcdbe156c31a62
    threadId: z.string(),
    providerThreadId: z.string().nullable(),
    input: z.array(z.unknown()),
+@@ -108,6 +111,9 @@ export const claudeTurnSteerParamsSchema = claudeTurnStartParamsSchema
+   .omit({ config: true })
+   .extend({ expectedTurnId: z.string() });
+ 
++// SDK 0.6.163 accepts contributed env on sessionless requests; keep older hosts valid.
++const sessionlessEnvVarsSchema = z.record(z.string(), z.string()).optional();
++
+ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
+   z.object({
+     method: z.literal("initialize"),
+@@ -119,23 +125,23 @@ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
+   }),
+   z.object({
+     method: z.literal("commands/list"),
+-    params: commandListParamsSchema,
++    params: commandListParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("provider/health"),
+-    params: providerMaintenanceParamsSchema,
++    params: providerMaintenanceParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("provider/usage"),
+-    params: providerMaintenanceParamsSchema,
++    params: providerMaintenanceParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("provider/installation/status"),
+-    params: providerInstallationStatusParamsSchema,
++    params: providerInstallationStatusParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("provider/installation/run"),
+-    params: providerInstallationRunParamsSchema,
++    params: providerInstallationRunParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("thread/start"),
+diff --git a/src/bridge/maintenance-compat.ts b/src/bridge/maintenance-compat.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..7faa38abb71ae79b2573f15a7ac071732ccfc2a9
+--- /dev/null
++++ b/src/bridge/maintenance-compat.ts
+@@ -0,0 +1,113 @@
++// Backported from get-bb/bb at d9bcc98cac2b924e4c667e435d721a602e63e4c4.
++// Keep SDK 0.6.104 standalone compatibility until these helpers are published.
++import {
++  experimental_hostToolchain as hostToolchain,
++  experimental_execHostFile as execHostFile,
++} from "@get-bb/plugin-sdk/process";
++import {
++  experimental_versionFrom as versionFrom,
++  experimental_npmCommand as npmCommand,
++} from "@get-bb/plugin-sdk/provider-bridge";
++import path from "node:path";
++import { z } from "zod";
++const CLI_PROBE_TIMEOUT_MS = 5_000;
++const INSTALLATION_CHECK_TIMEOUT_MS = 15_000;
++
++export async function resolveExecutablePath(
++  command: string,
++  env?: NodeJS.ProcessEnv,
++): Promise<string | null> {
++  return hostToolchain.resolve(command, env === undefined ? {} : { env });
++}
++
++export async function commandOutput(
++  command: string,
++  args: readonly string[],
++  env?: NodeJS.ProcessEnv,
++): Promise<string | null> {
++  try {
++    const { stdout, stderr } = await execHostFile(command, [...args], {
++      cwd: process.cwd(),
++      env: env ?? process.env,
++      maxBuffer: 1024 * 1024,
++      timeout: INSTALLATION_CHECK_TIMEOUT_MS,
++    });
++    return `${stdout}\n${stderr}`.trim();
++  } catch {
++    return null;
++  }
++}
++
++export async function readCliVersion(
++  command: string,
++  env?: NodeJS.ProcessEnv,
++): Promise<string | null> {
++  try {
++    const { stdout, stderr } = await execHostFile(command, ["--version"], {
++      cwd: process.cwd(),
++      env: env ?? process.env,
++      maxBuffer: 1024 * 1024,
++      timeout: CLI_PROBE_TIMEOUT_MS,
++    });
++    return versionFrom(`${stdout}\n${stderr}`);
++  } catch {
++    return null;
++  }
++}
++
++export interface NpmGlobalPackageProbe {
++  npmBin: string | null;
++  npmGlobalPackageVersion: string | null;
++}
++
++export async function probeNpmGlobalPackage(
++  npmPackage: string,
++  env?: NodeJS.ProcessEnv,
++): Promise<NpmGlobalPackageProbe> {
++  const npm = npmCommand();
++  const [prefixOutput, listOutput] = await Promise.all([
++    commandOutput(npm, ["prefix", "-g"], env),
++    commandOutput(npm, ["list", "-g", npmPackage, "--depth=0", "--json"], env),
++  ]);
++  const npmPrefix = firstLine(prefixOutput);
++  return {
++    npmBin:
++      npmPrefix === null
++        ? null
++        : process.platform === "win32"
++          ? npmPrefix
++          : path.join(npmPrefix, "bin"),
++    npmGlobalPackageVersion: npmGlobalPackageVersion(listOutput, npmPackage),
++  };
++}
++
++function firstLine(value: string | null): string | null {
++  return (
++    value
++      ?.split(/\r?\n/u)
++      .map((line) => line.trim())
++      .find(Boolean) ?? null
++  );
++}
++
++function npmGlobalPackageVersion(
++  value: string | null,
++  npmPackage: string,
++): string | null {
++  if (value === null) return null;
++  try {
++    const parsed = z
++      .object({
++        dependencies: z
++          .record(z.string(), z.object({ version: z.string().min(1) }))
++          .default({}),
++      })
++      .safeParse(JSON.parse(value));
++    return parsed.success
++      ? (parsed.data.dependencies[npmPackage]?.version ?? null)
++      : null;
++  } catch {
++    return null;
++  }
++}
++
+diff --git a/src/bridge/provider-commands.ts b/src/bridge/provider-commands.ts
+index 1f014b194f47a97d00e0a6d59cb8efb2ea2f17ba..dc0f3311f917a00709a1adef3a73c12269abe694 100644
+--- a/src/bridge/provider-commands.ts
++++ b/src/bridge/provider-commands.ts
+@@ -1,7 +1,7 @@
+ import { z } from "zod";
+ import { probeClaudeInitialization } from "./initialization-probe.js";
+ import { isClaudeSkillPluginName } from "./skill-plugins.js";
+-import { experimental_sliceUtf16Head as sliceUtf16Head } from "@get-bb/plugin-sdk/host";
++import { sliceUtf16Head } from "../utf16.js";
+ 
+ export const PROVIDER_COMMANDS_STATE_KIND = "bb/provider-commands";
+ 
+diff --git a/src/bridge/provider-maintenance.ts b/src/bridge/provider-maintenance.ts
+index b68306ae78d556d40a6039e64e914b1e0c7f87ac..d2905a7d1305844162cd5414197a1f92763db87b 100644
+--- a/src/bridge/provider-maintenance.ts
++++ b/src/bridge/provider-maintenance.ts
+@@ -1,3 +1,9 @@
++import {
++  commandOutput,
++  probeNpmGlobalPackage,
++  readCliVersion,
++  resolveExecutablePath,
++} from "./maintenance-compat.js";
+ import type { AccountInfo } from "@anthropic-ai/claude-agent-sdk";
+ import fs from "node:fs/promises";
+ import os from "node:os";
+@@ -10,16 +16,12 @@ import {
+   type ProviderUsageResult,
+   type ProviderUsageWindow,
+   experimental_clampPercent as clampPercent,
+-  experimental_commandOutput as commandOutput,
+   experimental_compareVersions as compareVersions,
+   experimental_downloadedInstallerCommand as downloadedInstallerCommand,
+   experimental_formatCommand as formatCommand,
+   experimental_installationVerification as installationVerification,
+   experimental_npmCommand as npmCommand,
+   experimental_npmGlobalInstallSource as npmGlobalInstallSource,
+-  experimental_probeNpmGlobalPackage as probeNpmGlobalPackage,
+-  experimental_readCliVersion as readCliVersion,
+-  experimental_resolveExecutablePath as resolveExecutablePath,
+   experimental_versionFrom as versionFrom,
+ } from "@get-bb/plugin-sdk/provider-bridge";
+ import { z } from "zod";
+@@ -350,7 +352,7 @@ export async function getClaudeProviderHealth(
+     return isSignedIn(account)
+       ? healthResult("ready", {
+           ...accountFields(
+-            profileAccount(account, await readAccountProfile(process.env)),
++            profileAccount(account, await readAccountProfile(env)),
+           ),
+           installedVersion: version,
+         })
+diff --git a/src/bridge/sdk-compat.ts b/src/bridge/sdk-compat.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..37a56fa36defd0ad3c6c1f477cfe378d68f815d2
+--- /dev/null
++++ b/src/bridge/sdk-compat.ts
+@@ -0,0 +1,103 @@
++// Backported from get-bb/bb at d9bcc98cac2b924e4c667e435d721a602e63e4c4.
++// Keep SDK 0.6.104 standalone compatibility until these helpers are published.
++import {
++  buildShellEnvOverrides,
++  withoutBridgeRuntimeEnv,
++  BRIDGE_NOTIFICATION_METHODS as sdkNotificationMethods,
++} from "@get-bb/plugin-sdk/provider-bridge";
++import type { ThreadDelta } from "@get-bb/plugin-sdk/provider-bridge";
++
++export type UnansweredInteractionCause =
++  | { kind: "unshowable-request"; detail: string }
++  | { kind: "runtime-error"; message: string }
++  | { kind: "unreadable-resolution" }
++  | { kind: "unmappable-answer"; detail: string }
++  | { kind: "withdrawn"; detail: string };
++
++export type UnansweredInteractionAnswer =
++  | { kind: "error" }
++  | { kind: "value"; value: string };
++
++export interface UnansweredInteractionWarningArgs {
++  cause: UnansweredInteractionCause;
++  answer: UnansweredInteractionAnswer;
++}
++
++export const UNANSWERED_INTERACTION_WARNING_SUMMARY =
++  "bb answered the agent without you";
++
++function sentence(text: string): string {
++  return text.trim().replace(/[.\s]+$/u, "");
++}
++
++function causeText(cause: UnansweredInteractionCause): string {
++  switch (cause.kind) {
++    case "unshowable-request":
++      return `it could not show the question: ${sentence(cause.detail)}`;
++    case "runtime-error":
++      return `it stopped waiting for your answer: ${sentence(cause.message)}`;
++    case "unreadable-resolution":
++      return "it could not read the answer it received";
++    case "unmappable-answer":
++      return `your answer did not fit the question: ${sentence(cause.detail)}`;
++    case "withdrawn":
++      return `it withdrew the question: ${sentence(cause.detail)}`;
++  }
++}
++
++function agentCauseText(cause: UnansweredInteractionCause): string {
++  switch (cause.kind) {
++    case "unshowable-request":
++      return `bb could not show the question (${sentence(cause.detail)})`;
++    case "runtime-error":
++      return `bb stopped waiting for the answer (${sentence(cause.message)})`;
++    case "unreadable-resolution":
++      return "bb could not read the answer it received";
++    case "unmappable-answer":
++      return `the answer did not fit the question (${sentence(cause.detail)})`;
++    case "withdrawn":
++      return `bb withdrew the question (${sentence(cause.detail)})`;
++  }
++}
++
++export function experimental_unansweredInteractionErrorMessage(
++  cause: UnansweredInteractionCause,
++): string {
++  return `The user did not answer: ${agentCauseText(cause)}.`;
++}
++
++export function experimental_unansweredInteractionWarning(
++  args: UnansweredInteractionWarningArgs,
++): Extract<ThreadDelta, { kind: "provider.warning" }> {
++  const answer =
++    args.answer.kind === "error"
++      ? "an error"
++      : JSON.stringify(args.answer.value);
++  return {
++    kind: "provider.warning",
++    summary: UNANSWERED_INTERACTION_WARNING_SUMMARY,
++    details: `bb answered the agent with ${answer} because ${causeText(args.cause)}.`,
++    vouchedTurn: true,
++  };
++}
++
++export function buildProviderCliEnv(
++  envVars: Readonly<Record<string, string>> | undefined,
++): NodeJS.ProcessEnv {
++  const inherited = withoutBridgeRuntimeEnv(process.env);
++  const overrides = buildShellEnvOverrides(envVars);
++  if (process.platform === "win32") {
++    const overridden = new Set(
++      Object.keys(overrides).map((name) => name.toUpperCase()),
++    );
++    for (const name of Object.keys(inherited)) {
++      if (overridden.has(name.toUpperCase())) delete inherited[name];
++    }
++  }
++  return { ...inherited, ...overrides };
++}
++
++export const BRIDGE_NOTIFICATION_METHODS = {
++  ...sdkNotificationMethods,
++  requestCancelled: "notifications/cancelled",
++} as const;
 diff --git a/src/bridge/session-options.ts b/src/bridge/session-options.ts
 index 9c2ab273dadfa77563a3f9b1d3447c252087066e..cdd85dba88cc8082a4556e0c6abb1c8d2a12a207 100644
 --- a/src/bridge/session-options.ts
@@ -272,6 +620,19 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
        deltas.push(...withMirror(state, [{ kind: "session.ended" }]));
      }
      deltas.push(
+diff --git a/src/interactions.ts b/src/interactions.ts
+index 8e15a6ba93c0c57611e96435d29a85bed8f040de..4ddbde32bff98fe08810892e5bff240a29d7decb 100644
+--- a/src/interactions.ts
++++ b/src/interactions.ts
+@@ -41,7 +41,7 @@ import {
+   getClaudeFileEditPath,
+   parseClaudeBashCommand,
+ } from "./tool-classification.js";
+-import { experimental_sliceUtf16Head as sliceUtf16Head } from "@get-bb/plugin-sdk/host";
++import { sliceUtf16Head } from "./utf16.js";
+ 
+ interface ClaudeSessionRulesArgs {
+   permissions: PendingInteractionGrantedPermissionProfile;
 diff --git a/src/model-list.ts b/src/model-list.ts
 index d879dbc968b9b53ca967cafabdf27a5ef1aeecdc..46bebc44bf665b0febc6f4da309dcd434f405106 100644
 --- a/src/model-list.ts
@@ -680,3 +1041,29 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
      },
    );
  }
+diff --git a/src/utf16.ts b/src/utf16.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a022093f7749dbcc3c8697976385b7ffbde25e9
+--- /dev/null
++++ b/src/utf16.ts
+@@ -0,0 +1,20 @@
++// Backported from get-bb/bb at d9bcc98cac2b924e4c667e435d721a602e63e4c4.
++// Keep SDK 0.6.104 standalone compatibility until these helpers are published.
++function isHighSurrogateAt(value: string, index: number): boolean {
++  const code = value.charCodeAt(index);
++  return code >= 0xd800 && code <= 0xdbff;
++}
++
++function isLowSurrogateAt(value: string, index: number): boolean {
++  const code = value.charCodeAt(index);
++  return code >= 0xdc00 && code <= 0xdfff;
++}
++
++export function sliceUtf16Head(value: string, maxChars: number): string {
++  let end = Math.min(value.length, Math.max(0, maxChars));
++  if (isHighSurrogateAt(value, end - 1) && isLowSurrogateAt(value, end)) {
++    end -= 1;
++  }
++  return value.slice(0, end);
++}
++

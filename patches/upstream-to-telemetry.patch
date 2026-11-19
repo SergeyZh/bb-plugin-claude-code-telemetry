@@ -175,10 +175,10 @@ index 0000000000000000000000000000000000000000..2d6c97c2ceb3913ec3af0128ea6684c0
 +OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 +SOFTWARE.
 diff --git a/PLUGIN_OVERVIEW.md b/PLUGIN_OVERVIEW.md
-index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..956be6f0834ef20610289bb729c88350ede39bd8 100644
+index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..11563dbfb05e507a4bdbad36d63dfe23ea1b4905 100644
 --- a/PLUGIN_OVERVIEW.md
 +++ b/PLUGIN_OVERVIEW.md
-@@ -1,23 +1,56 @@
+@@ -1,23 +1,63 @@
 -Start a thread, pick Claude Code, and let it work in your repository from bb. The plugin drives the Claude Code CLI on the host machine. It streams the agent's work into the bb timeline.
 +Inspect Claude usage per observed request and choose a cache lifetime for each
 +thread. This experimental fork installs alongside BB's built-in Claude Code
@@ -194,7 +194,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..956be6f0834ef20610289bb729c88350
 -  from your home directory and project.
 -- Health, usage, and install status for Claude Code on each host, with an install or update action.
 +Compared with the original provider at
-+[9a261b5 (2026-11-16)](https://github.com/get-bb/bb/tree/9a261b58e9e59f73701ff9f32ec90672901ce550/plugins/provider-claude-code):
++[d9bcc98 (2026-11-19)](https://github.com/get-bb/bb/tree/d9bcc98cac2b924e4c667e435d721a602e63e4c4/plugins/provider-claude-code):
  
 -## Settings
 +- Usage is reported for observed main-agent requests, with message-ID
@@ -251,18 +251,25 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..956be6f0834ef20610289bb729c88350
 +Displaying imported Bash descriptions needs BB support for SDK 0.6.117's
 +description field; BB 0.48.1 / SDK 0.6.104 ignores it. Claude usage remains
 +subject to the account's plan and billing.
++
++Withdrawn approval cards require a BB host with the upstream #7797 runtime,
++daemon, server, and projection changes (host-daemon protocol 269 or newer).
++Contributed environment variables on health, installation, and command-list
++requests require the upstream #7722 host changes (protocol 270 or newer).
++Older hosts remain accepted, but cannot provide those host-side behaviors.
++The provider bundles the needed helper backports and retains SDK 0.6.104.
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..361aeb4b84783dbec00281caa205b13b5723a503
+index 0000000000000000000000000000000000000000..2d749f3108a92562f93eaba7e9d4574a06e9e020
 --- /dev/null
 +++ b/README.md
-@@ -0,0 +1,217 @@
+@@ -0,0 +1,228 @@
 +# Claude Code Telemetry for BB
 +
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.11+upstream.9a261b5` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.12+upstream.d9bcc98` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -277,7 +284,7 @@ index 0000000000000000000000000000000000000000..361aeb4b84783dbec00281caa205b13b
 +existing threads keep their provider, and the built-in provider stays available.
 +
 +This comparison is against the original provider at
-+[`9a261b5` (2026-11-16)](https://github.com/get-bb/bb/tree/9a261b58e9e59f73701ff9f32ec90672901ce550/plugins/provider-claude-code),
++[`d9bcc98` (2026-11-19)](https://github.com/get-bb/bb/tree/d9bcc98cac2b924e4c667e435d721a602e63e4c4/plugins/provider-claude-code),
 +the latest upstream provider revision imported into this fork.
 +
 +| Capability | Original provider at this revision | Claude Code Telemetry |
@@ -346,6 +353,12 @@ index 0000000000000000000000000000000000000000..361aeb4b84783dbec00281caa205b13b
 +  selector requires Claude Code 2.1.242 or later. Displaying imported Bash
 +  descriptions requires BB support for SDK 0.6.117's description field; BB
 +  0.48.1 / SDK 0.6.104 ignores that field.
++- **New host features need the matching BB update.** Closing withdrawn approval
++  cards requires upstream #7797 across runtime, daemon, server, and projection
++  (host-daemon protocol 269 or newer). Contributed environment variables on
++  health, installation, and command-list requests require #7722 (protocol 270
++  or newer). This provider accepts older requests and bundles the required
++  helper backports while retaining SDK 0.6.104.
 +- **Upstream maintenance is manual.** This is a standalone fork.
 +  Updating the built-in provider does not update this plugin. Fixes to BB's
 +  core or daemon require updating BB itself. The tested versions and live-check
@@ -374,7 +387,12 @@ index 0000000000000000000000000000000000000000..361aeb4b84783dbec00281caa205b13b
 +Background tasks settle when the Claude SDK stream ends. Task-notification
 +results keep the turn open while an accepted steer is still queued, once the
 +CLI has reported prompt consumption. Usage and account
-+metadata report the Max 20x tier as Ultra.
++metadata report the Max 20x tier as Ultra. Recognized profile plan metadata
++corrects stale Pro/Max SDK labels. Failures while asking a question now emit a
++warning and tell Claude that the user did not answer. Withdrawn questions send
++`notifications/cancelled`; closing their cards requires the host update above.
++CLI sessions, catalogs, and maintenance probes use the request's environment.
++Command descriptions and fallback question headers avoid splitting emoji.
 +
 +The `commandDescriptionsEnabled` setting defaults to `false`. Enable it to
 +include Claude's short Bash descriptions in command events. Displaying these
@@ -476,10 +494,10 @@ index 0000000000000000000000000000000000000000..361aeb4b84783dbec00281caa205b13b
 +```
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..77a9f08bbb2c5a113841664b11685c35deac63b5
+index 0000000000000000000000000000000000000000..992e3722c37447dd722acebbf5edd24eaa0468e2
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,225 @@
+@@ -0,0 +1,299 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -496,20 +514,20 @@ index 0000000000000000000000000000000000000000..77a9f08bbb2c5a113841664b11685c35
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.11+upstream.9a261b5`:
++The current version is `0.1.0-telemetry.12+upstream.d9bcc98`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.11` is this fork's release revision. Increment it for every release,
++- `telemetry.12` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-+- `upstream.9a261b5` identifies the latest fully imported upstream baseline.
++- `upstream.d9bcc98` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
 +  import date below and in the comparison-patch generator.
 +
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.12+upstream.9a261b5`. A later upstream import would increment the
++`0.1.0-telemetry.13+upstream.d9bcc98`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
@@ -705,12 +723,86 @@ index 0000000000000000000000000000000000000000..77a9f08bbb2c5a113841664b11685c35
 +Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 +TTL selection and tooltips, standalone packaging, and fork regressions are
 +preserved. No live requests, plugin reload, automation creation, or push occurred.
++
++## Account, unanswered interaction, withdrawal, text, and environment sync, 2026-11-19
++
++Imported all five provider commits after `9a261b5`, oldest first, through
++[`d9bcc98`](https://github.com/get-bb/bb/commit/d9bcc98cac2b924e4c667e435d721a602e63e4c4):
++
++- [`a55b383`](https://github.com/get-bb/bb/commit/a55b383aeb92756b0a025db186ad5ac05c7ce68d)
++  (2026-11-18), "Fix stale Claude plan badges after a Max-to-Pro downgrade (#7776)":
++  prefer recognized Pro/Max organization metadata from the matching selected
++  profile over stale first-party SDK plan metadata; preserve unknown plans,
++  mismatched accounts, and the fork's Ultra regression.
++- [`bc674ed`](https://github.com/get-bb/bb/commit/bc674ed48df7dda66ae80da60b147a9e77eb770f)
++  (2026-11-18), "Never report a failure as the user's answer to an agent (#7723)":
++  emit a provider warning and a precise non-user-answer denial for unshowable
++  questions, runtime errors, unreadable resolutions, and unmappable answers.
++  Policy auto-denials and stopped-turn teardown retain their existing behavior.
++- [`6b779c8`](https://github.com/get-bb/bb/commit/6b779c869ba8b39b394faeabfb1473ba8cb34b6d)
++  (2026-11-18), "Close approval cards the agent withdraws (#7797)":
++  send `notifications/cancelled` when Claude aborts a permission/question request
++  or its session closes, is replaced, or ends its stream. Includes the upstream
++  permission and user-question withdrawal regressions.
++- [`343b5e8`](https://github.com/get-bb/bb/commit/343b5e8321dbae2bf25b4928321fbef3954611c6)
++  (2026-11-18), "Never cut text mid-emoji before agents or notifications (#7796)":
++  use surrogate-safe cuts for command metadata and fallback question headers.
++  The broader provider-boundary JSON serialization fix belongs to BB itself.
++- [`d9bcc98`](https://github.com/get-bb/bb/commit/d9bcc98cac2b924e4c667e435d721a602e63e4c4)
++  (2026-11-19), "Build every provider CLI's environment with one builder (#7722)":
++  use one environment builder for sessions, catalogs, and maintenance, pass
++  contributed environment through command discovery and its memoization key,
++  and resolve skill configuration from the thread environment. Usage still
++  receives the machine environment from the upstream host, rather than pooled
++  routing credentials. Health also reads its profile from its explicit probe
++  environment, correcting an upstream leftover `process.env` read.
++
++Every provider file from all six exact archives was compared; the changed file
++sets match each commit's provider file list. GitHub confirms baseline ancestry
++and the complete provider history. Patches were applied in order without
++replacing fork files. The target upstream package version is `0.1.0`; this
++release increments the fork revision once from 11 to
++`0.1.0-telemetry.12+upstream.d9bcc98`. The full imported baseline is
++`d9bcc98cac2b924e4c667e435d721a602e63e4c4`. Its 97 provider files have generator
++`digest()` SHA-256 `1b851551c3f0ca79affdbe919b1c19a64db7635361472921a188cd5b27130822`.
++
++### SDK and host compatibility
++
++The new upstream APIs require SDK 0.6.159 (unanswered interaction helpers),
++0.6.161 (request cancellation and UTF-16 slicing), and 0.6.163 (CLI environment
++builder and environment-aware maintenance helpers). On this import date npm
++returned 404 for 0.6.163 and reported 0.6.157 as latest. The standalone SDK pin
++remains 0.6.104; no dependency is silently repinned. Small helper backports from
++the exact target live in `src/bridge/sdk-compat.ts`,
++`src/bridge/maintenance-compat.ts`, and `src/utf16.ts`. They use existing public
++SDK process primitives, environment filtering, version parsing, and types.
++Optional `envVars` validation is added to sessionless request schemas while
++accepting older requests without the field. No private workspace dependency
++is introduced. The existing spawn helper already defaults `windowsHide` to
++true, so removing the redundant option preserves its behavior.
++
++Closing withdrawn approval cards requires the upstream #7797 runtime, daemon,
++server, and projection changes: host-daemon protocol 269 or newer. This import
++emits the cancellation notification; it does not update BB core. An older host
++can still leave those cards pending. Forwarding contributed environment on
++health, installation, and command-list requests requires upstream #7722 host
++support (protocol 270 or newer). Older hosts remain accepted and fall back to
++the bridge environment for absent request variables. Safe provider-boundary
++JSON serialization from #7796 also requires its BB runtime update. The local
++provider's surrogate-safe cuts do not depend on that update. Existing Bash
++command-description, guided sign-in, and pooled catalog requirements above
++still apply. No new Claude CLI or Agent SDK dependency is required.
++
++Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
++TTL selection and tooltips, standalone packaging, and extra regressions are
++preserved. No live requests, plugin reload, automation creation, push, or worker
++agents were used.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..19482b9c2fbb0d13a07fe7c04cbfb6950237bccd
+index 0000000000000000000000000000000000000000..a6943369074bec93fa6ef6cea1b975d20d4f4437
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,431 @@
+@@ -0,0 +1,489 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -1142,6 +1234,64 @@ index 0000000000000000000000000000000000000000..19482b9c2fbb0d13a07fe7c04cbfb695
 +
 +No live Claude requests were made. The installed plugin was not reloaded,
 +no automation was created, and no changes were pushed.
++
++## Account, unanswered interaction, withdrawal, text, and environment sync, 2026-11-19
++
++Imported `a55b383`, `bc674ed`, `6b779c8`, `343b5e8`, and `d9bcc98`, oldest
++first, through `d9bcc98cac2b924e4c667e435d721a602e63e4c4`. Before editing, the
++checkout was clean at the dispatched HEAD
++`da6d3c6ef4bcd7a599f452e200468903c1fd54e1`, and `UPSTREAM_COMMIT` matched
++`9a261b58e9e59f73701ff9f32ec90672901ce550`. GitHub confirmed ancestry and the
++complete ordered provider history. Every provider file from all six exact
++archives was compared; changed file sets match each commit's provider file
++list. All ordered provider patches applied without replacing fork files.
++
++The target package version remains `0.1.0`; the release increments the fork
++revision once to `0.1.0-telemetry.12+upstream.d9bcc98`. The pinned checksum is
++the generator's `digest()` over all 97 provider files from the exact target
++archive. README and plugin overview baseline links are updated.
++
++- `npm run typecheck`: passed.
++- `npm test`: 511 passed, 1 opt-in live SDK test skipped (35 files passed,
++  1 skipped). The upstream account downgrade, failure-denial, withdrawal,
++  and environment-aware command memoization regressions are included.
++  Additional standalone coverage checks inherited/contributed env filtering,
++  Windows case-insensitive overrides (simulated), optional sessionless env
++  validation, actual child-process env and PATH/version probes, profile/email
++  attribution and Ultra preservation, warning deltas for failed questions,
++  and emoji boundaries in command metadata and fallback question headers.
++  Existing bridge conformance, telemetry, cache-lifetime, TTL, tooltip, and
++  public SDK import coverage remains in the passing suite.
++- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
++- `npm run build`: passed for server, host, and frontend artifacts on BB 0.49.0.
++  Build reports SDK pin 0.6.104 versus host SDK 0.6.132; the pin is retained.
++- Package version, both root lockfile versions, and all three artifact
++  `pluginVersion` fields agree. Every artifact retains plugin identity
++  `claude-code-telemetry`.
++- Both source comparison patches regenerated against the exact target archive;
++  generator `--check` verifies application and every resulting file.
++- `git diff --check`: passed.
++
++SDK 0.6.163 is not published to npm on this import date (version lookup returns
++404; latest is 0.6.157). Instead of repinning to unavailable or host-incompatible
++SDK APIs, the required small upstream helpers are backported with existing
++public SDK process primitives. The profile read in health also follows its
++explicit env rather than the upstream leftover `process.env`. No runtime or
++development dependencies changed.
++
++Provider-side import is complete. Host-side approval withdrawal needs upstream
++#7797 runtime/daemon/server/projection support (host-daemon protocol >=269).
++Contributed env on sessionless health/installation/command discovery needs
++upstream #7722 host support (protocol >=270). Older requests are accepted;
++older hosts cannot supply those new host-side behaviors. Upstream #7796's
++provider-boundary JSON serialization also requires its BB runtime update.
++The local safe cuts work independently. Existing Bash-description, guided
++sign-in, and pooled catalog requirements remain documented in UPSTREAM.md.
++No live Windows console validation was performed; only its environment merge
++branch was simulated in automated tests.
++
++No live Claude requests were made. The installed plugin was not reloaded,
++no automation or worker agent was created, and no changes were pushed.
 diff --git a/app.ts b/app.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7beb5bab3a
@@ -1159,19 +1309,19 @@ index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7b
 +});
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..3b588eb949a0880f929a20480dd768aefb03d69c
+index 0000000000000000000000000000000000000000..5bff8410941945d89e5b6857d46f04ece831908e
 --- /dev/null
 +++ b/package-lock.json
 @@ -0,0 +1,4242 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.11+upstream.9a261b5",
++  "version": "0.1.0-telemetry.12+upstream.d9bcc98",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.11+upstream.9a261b5",
++      "version": "0.1.0-telemetry.12+upstream.d9bcc98",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -5406,7 +5556,7 @@ index 0000000000000000000000000000000000000000..3b588eb949a0880f929a20480dd768ae
 +  }
 +}
 diff --git a/package.json b/package.json
-index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..e71db89fb82f943a9439ab33ddd76c9447a3abbb 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..46a959d78346a710b7658a98123ddae12e02e349 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,26 +1,28 @@
@@ -5414,7 +5564,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..e71db89fb82f943a9439ab33ddd76c94
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.11+upstream.9a261b5",
++  "version": "0.1.0-telemetry.12+upstream.d9bcc98",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -5883,7 +6033,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..a13cf8742eaf8d10017af791b858ae2daaa2e57f
+index 0000000000000000000000000000000000000000..3591a8cfce4afb6b90d1f9aab76628b61b6f9369
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -5899,8 +6049,8 @@ index 0000000000000000000000000000000000000000..a13cf8742eaf8d10017af791b858ae2d
 +import urllib.request
 +
 +
-+UPSTREAM_COMMIT = "9a261b58e9e59f73701ff9f32ec90672901ce550"
-+UPSTREAM_SOURCE_SHA256 = "ed9029c6d44450e784f1866f2e7a4f11780ade04c6becd050cb9724713bde3e3"
++UPSTREAM_COMMIT = "d9bcc98cac2b924e4c667e435d721a602e63e4c4"
++UPSTREAM_SOURCE_SHA256 = "1b851551c3f0ca79affdbe919b1c19a64db7635361472921a188cd5b27130822"
 +ROOT = Path(__file__).resolve().parents[1]
 +GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 +
@@ -6442,10 +6592,23 @@ index 16a30b869f43e95ccc91fe0cdf27fb77e39a14a3..7d8568b5424c79ef1c3fbfb493fa42de
    "turn/completed",
  ];
 diff --git a/src/bridge/__tests__/bridge.test.ts b/src/bridge/__tests__/bridge.test.ts
-index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af6ccd0c0e 100644
+index 736e9ce7db7a92b19b63ece36d03afdfb01bfa1c..56d58eda73bd7142980c5d756510b3e36584d044 100644
 --- a/src/bridge/__tests__/bridge.test.ts
 +++ b/src/bridge/__tests__/bridge.test.ts
-@@ -233,7 +233,7 @@ function getLatestQueryCall(): ClaudeQueryCall {
+@@ -1,3 +1,4 @@
++import { BRIDGE_NOTIFICATION_METHODS } from "../sdk-compat.js";
+ import {
+   chmodSync,
+   mkdirSync,
+@@ -20,7 +21,6 @@ import type {
+ import {
+   BRIDGE_INBOUND_REQUEST_METHODS,
+   BRIDGE_JSON_RPC_ERRORS,
+-  BRIDGE_NOTIFICATION_METHODS,
+   type JsonValue,
+   type RuntimePermissionPolicy,
+   type RuntimePermissionScope,
+@@ -234,7 +234,7 @@ function getLatestQueryCall(): ClaudeQueryCall {
  }
  
  function getFailedTurns(messages: BridgeJsonRpcOutputMessage[]) {
@@ -6454,7 +6617,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
      (event) => event.type === "turn/completed" && event.status === "failed",
    );
  }
-@@ -836,7 +836,7 @@ describe("bridge", () => {
+@@ -837,7 +837,7 @@ describe("bridge", () => {
            await vi.waitFor(() => {
              const events = assembleCapturedThreadEvents(
                bridge.messages,
@@ -6463,7 +6626,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
              );
              expect(
                events
-@@ -857,7 +857,7 @@ describe("bridge", () => {
+@@ -858,7 +858,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const events = assembleCapturedThreadEvents(
              bridge.messages,
@@ -6472,7 +6635,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
            );
            if (delayed) {
              const usage = events
-@@ -910,7 +910,7 @@ describe("bridge", () => {
+@@ -911,7 +911,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const events = assembleCapturedThreadEvents(
              bridge.messages,
@@ -6481,7 +6644,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
            );
            const usage = events
              .filter(
-@@ -937,7 +937,7 @@ describe("bridge", () => {
+@@ -938,7 +938,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const usageEvents = assembleCapturedThreadEvents(
              bridge.messages,
@@ -6490,7 +6653,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
            ).filter(
              (event) => event.type === "thread/contextWindowUsage/updated",
            );
-@@ -1031,7 +1031,7 @@ describe("bridge", () => {
+@@ -1032,7 +1032,7 @@ describe("bridge", () => {
        expect(reports[1].close).toHaveBeenCalledOnce();
        expect(reports).toHaveLength(3);
        expect(
@@ -6499,7 +6662,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
            (event) => event.type === "turn/completed",
          ),
        ).toHaveLength(2);
-@@ -1069,7 +1069,7 @@ describe("bridge", () => {
+@@ -1070,7 +1070,7 @@ describe("bridge", () => {
      });
      const threadId = "thread-provider-commands";
      const providerCommandStates = () =>
@@ -6508,7 +6671,28 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
          (event) =>
            event.type === "thread/extensionState/updated" &&
            event.kind === "bb/provider-commands"
-@@ -1253,6 +1253,79 @@ describe("bridge", () => {
+@@ -1201,7 +1201,7 @@ describe("bridge", () => {
+ 
+     try {
+       bridge.sendRequest(1, "commands/list", {
+-        envVars: {},
++        envVars: { BB_COMMAND_PROBE_MARKER: "contributed-command-env" },
+         cwd: "/tmp/commands-project",
+       });
+       const response = await bridge.waitForResponse(1);
+@@ -1211,7 +1211,10 @@ describe("bridge", () => {
+       });
+       expect(queryMock).toHaveBeenCalledWith({
+         prompt: expect.anything(),
+-        options: expect.objectContaining({ cwd: "/tmp/commands-project" }),
++        options: expect.objectContaining({
++          cwd: "/tmp/commands-project",
++          env: expect.objectContaining({ BB_COMMAND_PROBE_MARKER: "contributed-command-env" }),
++        }),
+       });
+       expect(close).toHaveBeenCalledOnce();
+     } finally {
+@@ -1257,6 +1260,79 @@ describe("bridge", () => {
      }
    });
  
@@ -6588,7 +6772,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
    it("lists models with each request's contributed environment", async () => {
      const bridge = createBridgeJsonRpcTestHarness(handleLine);
      queryMock.mockImplementation(() => ({
-@@ -1352,6 +1425,7 @@ describe("bridge", () => {
+@@ -1356,6 +1432,7 @@ describe("bridge", () => {
            permissionEscalation: "ask",
            instructions: "test",
            envVars: { CLAUDE_CONFIG_DIR: projectConfigDir },
@@ -6596,7 +6780,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
            providerOptions: {
              workflowsEnabled: false,
            },
-@@ -1373,7 +1447,7 @@ describe("bridge", () => {
+@@ -1377,7 +1454,7 @@ describe("bridge", () => {
        expect(forkedTranscript).not.toContain("discarded follow-up");
        expect(queryMock).toHaveBeenLastCalledWith(
          expect.objectContaining({
@@ -6605,7 +6789,87 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
          }),
        );
      } finally {
-@@ -5616,7 +5690,7 @@ describe("bridge", () => {
+@@ -3513,6 +3590,15 @@ describe("bridge", () => {
+         bridge.messages.some((message) => isApprovalInteraction(message)),
+       ).toBe(false);
+ 
++      expect(bridge.messages).toContainEqual(expect.objectContaining({
++        params: expect.objectContaining({
++          deltas: expect.arrayContaining([expect.objectContaining({
++            kind: "provider.warning",
++            summary: "bb answered the agent without you",
++          })]),
++        }),
++      }));
++
+       await stopBridgeThread({ bridge, queries, threadId });
+     } finally {
+       bridge.restore();
+@@ -3659,6 +3745,15 @@ describe("bridge", () => {
+         bridge.messages.some((message) => isUserQuestionInteraction(message)),
+       ).toBe(false);
+ 
++      expect(bridge.messages).toContainEqual(expect.objectContaining({
++        params: expect.objectContaining({
++          deltas: expect.arrayContaining([expect.objectContaining({
++            kind: "provider.warning",
++            summary: "bb answered the agent without you",
++          })]),
++        }),
++      }));
++
+       await stopBridgeThread({ bridge, queries, threadId });
+     } finally {
+       bridge.restore();
+@@ -3701,6 +3796,15 @@ describe("bridge", () => {
+         toolUseID,
+       });
+ 
++      expect(bridge.messages).toContainEqual(expect.objectContaining({
++        params: expect.objectContaining({
++          deltas: expect.arrayContaining([expect.objectContaining({
++            kind: "provider.warning",
++            summary: "bb answered the agent without you",
++          })]),
++        }),
++      }));
++
+       await stopBridgeThread({ bridge, queries, threadId });
+     } finally {
+       bridge.restore();
+@@ -3741,6 +3845,15 @@ describe("bridge", () => {
+         toolUseID,
+       });
+ 
++      expect(bridge.messages).toContainEqual(expect.objectContaining({
++        params: expect.objectContaining({
++          deltas: expect.arrayContaining([expect.objectContaining({
++            kind: "provider.warning",
++            summary: "bb answered the agent without you",
++          })]),
++        }),
++      }));
++
+       await stopBridgeThread({ bridge, queries, threadId });
+     } finally {
+       bridge.restore();
+@@ -3783,6 +3896,15 @@ describe("bridge", () => {
+         toolUseID,
+       });
+ 
++      expect(bridge.messages).toContainEqual(expect.objectContaining({
++        params: expect.objectContaining({
++          deltas: expect.arrayContaining([expect.objectContaining({
++            kind: "provider.warning",
++            summary: "bb answered the agent without you",
++          })]),
++        }),
++      }));
++
+       await stopBridgeThread({ bridge, queries, threadId });
+     } finally {
+       bridge.restore();
+@@ -5706,7 +5828,7 @@ describe("bridge", () => {
        await bridge.flushWork();
  
        expect(
@@ -6614,7 +6878,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
            (event) => {
              const item =
                event.type === "item/started" ||
-@@ -6084,7 +6158,7 @@ describe("bridge", () => {
+@@ -6174,7 +6296,7 @@ describe("bridge", () => {
  
          expect(bridge.hasResponse(2)).toBe(false);
          expect(
@@ -6623,7 +6887,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
              (event) => event.type === "turn/started",
            ),
          ).toBe(false);
-@@ -6097,7 +6171,7 @@ describe("bridge", () => {
+@@ -6187,7 +6309,7 @@ describe("bridge", () => {
  
          const events = assembleCapturedThreadEvents(
            bridge.messages,
@@ -6632,7 +6896,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
          );
          const started = events.find((event) => event.type === "turn/started");
          expect(started).toBeDefined();
-@@ -6132,7 +6206,7 @@ describe("bridge", () => {
+@@ -6222,7 +6344,7 @@ describe("bridge", () => {
            await bridge.waitForResponse(3);
            const steered = assembleCapturedThreadEvents(
              bridge.messages,
@@ -6641,7 +6905,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
            );
            expect(
              steered.filter((event) => event.type === "turn/started"),
-@@ -6150,7 +6224,7 @@ describe("bridge", () => {
+@@ -6240,7 +6362,7 @@ describe("bridge", () => {
          await stopBridgeThread({ bridge, queries, threadId });
          const stopped = assembleCapturedThreadEvents(
            bridge.messages,
@@ -6650,7 +6914,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
          );
          expect(stopped).toContainEqual(
            expect.objectContaining({
-@@ -6251,7 +6325,7 @@ describe("bridge", () => {
+@@ -6341,7 +6463,7 @@ describe("bridge", () => {
      function turnEvents(bridge: BridgeJsonRpcTestHarness) {
        const events = assembleCapturedThreadEvents(
          bridge.messages,
@@ -6659,7 +6923,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
        );
        return {
          completed: events.filter((event) => event.type === "turn/completed"),
-@@ -6928,7 +7002,7 @@ describe("canonical model context-window hint", () => {
+@@ -7018,7 +7140,7 @@ describe("canonical model context-window hint", () => {
  
        const contextWindowEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -6668,7 +6932,7 @@ index b9481b25e1299ab01e30604240621431efbc557f..a4b4652083164bc7fe0e0e88250eb5af
        ).filter(
          (
            event,
-@@ -6944,7 +7018,7 @@ describe("canonical model context-window hint", () => {
+@@ -7034,7 +7156,7 @@ describe("canonical model context-window hint", () => {
  
        const tokenUsageEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -6691,10 +6955,38 @@ index ea9d97ca9561bb3e2c875ed2135d62dc624fdbb8..c9aceb3e30f71749b1050a09256dbd16
        cwd: workspaceDir,
        promptInput: [{ type: "text", text: "say hello", mentions: [] }],
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74382718be 100644
+index c9f7042288ce01d75af7a376ea08ea710b6f4cd2..7397f094c50ba72864759486b3ab0b18807934d5 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
-@@ -448,6 +448,26 @@ function resolvePendingSessionWork(
+@@ -13,7 +13,6 @@ import {
+   type ThreadDelta,
+   BRIDGE_INBOUND_REQUEST_METHODS,
+   BRIDGE_JSON_RPC_ERRORS,
+-  BRIDGE_NOTIFICATION_METHODS,
+   PROVIDER_BRIDGE_PROTOCOL_VERSION,
+   THREAD_DELTA_GRAMMAR_V3,
+   THREAD_DELTA_NOTIFICATION_METHOD,
+@@ -27,13 +26,16 @@ import {
+   decodeBridgeJsonRpcResponse,
+   runBridgeRequest,
+   shouldAutoDenyInteractiveRequest,
+-  experimental_buildProviderCliEnv as buildProviderCliEnv,
+   type BridgeToolCallRequest,
+-  type UnansweredInteractionCause,
+   experimental_defineProviderBridge,
++} from "@get-bb/plugin-sdk/provider-bridge";
++import {
++  BRIDGE_NOTIFICATION_METHODS,
++  buildProviderCliEnv,
++  type UnansweredInteractionCause,
+   experimental_unansweredInteractionErrorMessage,
+   experimental_unansweredInteractionWarning,
+-} from "@get-bb/plugin-sdk/provider-bridge";
++} from "./sdk-compat.js";
+ import { randomUUID } from "node:crypto";
+ import { join as joinPath, resolve as resolvePath } from "node:path";
+ import { isDeepStrictEqual } from "node:util";
+@@ -452,6 +454,26 @@ function resolvePendingSessionWork(
    resolvePendingInteractiveRequests(threadSession, message);
  }
  
@@ -6721,7 +7013,7 @@ index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74
  function applyChromeSetting(
    attachment: ThreadAttachment,
    enabled: boolean | undefined,
-@@ -1081,6 +1101,7 @@ function toSessionConstructionConfig(
+@@ -1087,6 +1109,7 @@ function toSessionConstructionConfig(
        permissionScope: params.permissionScope,
        plugins: params.plugins,
        sandboxEnabled: params.sandboxEnabled,
@@ -6729,7 +7021,7 @@ index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74
      },
    };
  }
-@@ -2607,6 +2628,7 @@ async function runTurnInput(
+@@ -2677,6 +2700,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);
@@ -6738,7 +7030,7 @@ index 493ef008c829a20e479c7fd56a560e4054d84a25..4ddebded687bad95603a137cc8eb3d74
      applyContextWindowSetting(attachment, params.disable1MContext);
      applyArtifactSetting(attachment, params.artifactsEnabled);
 diff --git a/src/bridge/commands.ts b/src/bridge/commands.ts
-index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..294f2c8667b8d73b07bcdbe156c31a62f42ac5e3 100644
+index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab75090f630 100644
 --- a/src/bridge/commands.ts
 +++ b/src/bridge/commands.ts
 @@ -21,6 +21,7 @@ import {
@@ -6765,6 +7057,278 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..294f2c8667b8d73b07bcdbe156c31a62
    threadId: z.string(),
    providerThreadId: z.string().nullable(),
    input: z.array(z.unknown()),
+@@ -108,6 +111,9 @@ export const claudeTurnSteerParamsSchema = claudeTurnStartParamsSchema
+   .omit({ config: true })
+   .extend({ expectedTurnId: z.string() });
+ 
++// SDK 0.6.163 accepts contributed env on sessionless requests; keep older hosts valid.
++const sessionlessEnvVarsSchema = z.record(z.string(), z.string()).optional();
++
+ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
+   z.object({
+     method: z.literal("initialize"),
+@@ -119,23 +125,23 @@ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
+   }),
+   z.object({
+     method: z.literal("commands/list"),
+-    params: commandListParamsSchema,
++    params: commandListParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("provider/health"),
+-    params: providerMaintenanceParamsSchema,
++    params: providerMaintenanceParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("provider/usage"),
+-    params: providerMaintenanceParamsSchema,
++    params: providerMaintenanceParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("provider/installation/status"),
+-    params: providerInstallationStatusParamsSchema,
++    params: providerInstallationStatusParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("provider/installation/run"),
+-    params: providerInstallationRunParamsSchema,
++    params: providerInstallationRunParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
+   }),
+   z.object({
+     method: z.literal("thread/start"),
+diff --git a/src/bridge/maintenance-compat.ts b/src/bridge/maintenance-compat.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..7faa38abb71ae79b2573f15a7ac071732ccfc2a9
+--- /dev/null
++++ b/src/bridge/maintenance-compat.ts
+@@ -0,0 +1,113 @@
++// Backported from get-bb/bb at d9bcc98cac2b924e4c667e435d721a602e63e4c4.
++// Keep SDK 0.6.104 standalone compatibility until these helpers are published.
++import {
++  experimental_hostToolchain as hostToolchain,
++  experimental_execHostFile as execHostFile,
++} from "@get-bb/plugin-sdk/process";
++import {
++  experimental_versionFrom as versionFrom,
++  experimental_npmCommand as npmCommand,
++} from "@get-bb/plugin-sdk/provider-bridge";
++import path from "node:path";
++import { z } from "zod";
++const CLI_PROBE_TIMEOUT_MS = 5_000;
++const INSTALLATION_CHECK_TIMEOUT_MS = 15_000;
++
++export async function resolveExecutablePath(
++  command: string,
++  env?: NodeJS.ProcessEnv,
++): Promise<string | null> {
++  return hostToolchain.resolve(command, env === undefined ? {} : { env });
++}
++
++export async function commandOutput(
++  command: string,
++  args: readonly string[],
++  env?: NodeJS.ProcessEnv,
++): Promise<string | null> {
++  try {
++    const { stdout, stderr } = await execHostFile(command, [...args], {
++      cwd: process.cwd(),
++      env: env ?? process.env,
++      maxBuffer: 1024 * 1024,
++      timeout: INSTALLATION_CHECK_TIMEOUT_MS,
++    });
++    return `${stdout}\n${stderr}`.trim();
++  } catch {
++    return null;
++  }
++}
++
++export async function readCliVersion(
++  command: string,
++  env?: NodeJS.ProcessEnv,
++): Promise<string | null> {
++  try {
++    const { stdout, stderr } = await execHostFile(command, ["--version"], {
++      cwd: process.cwd(),
++      env: env ?? process.env,
++      maxBuffer: 1024 * 1024,
++      timeout: CLI_PROBE_TIMEOUT_MS,
++    });
++    return versionFrom(`${stdout}\n${stderr}`);
++  } catch {
++    return null;
++  }
++}
++
++export interface NpmGlobalPackageProbe {
++  npmBin: string | null;
++  npmGlobalPackageVersion: string | null;
++}
++
++export async function probeNpmGlobalPackage(
++  npmPackage: string,
++  env?: NodeJS.ProcessEnv,
++): Promise<NpmGlobalPackageProbe> {
++  const npm = npmCommand();
++  const [prefixOutput, listOutput] = await Promise.all([
++    commandOutput(npm, ["prefix", "-g"], env),
++    commandOutput(npm, ["list", "-g", npmPackage, "--depth=0", "--json"], env),
++  ]);
++  const npmPrefix = firstLine(prefixOutput);
++  return {
++    npmBin:
++      npmPrefix === null
++        ? null
++        : process.platform === "win32"
++          ? npmPrefix
++          : path.join(npmPrefix, "bin"),
++    npmGlobalPackageVersion: npmGlobalPackageVersion(listOutput, npmPackage),
++  };
++}
++
++function firstLine(value: string | null): string | null {
++  return (
++    value
++      ?.split(/\r?\n/u)
++      .map((line) => line.trim())
++      .find(Boolean) ?? null
++  );
++}
++
++function npmGlobalPackageVersion(
++  value: string | null,
++  npmPackage: string,
++): string | null {
++  if (value === null) return null;
++  try {
++    const parsed = z
++      .object({
++        dependencies: z
++          .record(z.string(), z.object({ version: z.string().min(1) }))
++          .default({}),
++      })
++      .safeParse(JSON.parse(value));
++    return parsed.success
++      ? (parsed.data.dependencies[npmPackage]?.version ?? null)
++      : null;
++  } catch {
++    return null;
++  }
++}
++
+diff --git a/src/bridge/provider-commands.ts b/src/bridge/provider-commands.ts
+index 1f014b194f47a97d00e0a6d59cb8efb2ea2f17ba..dc0f3311f917a00709a1adef3a73c12269abe694 100644
+--- a/src/bridge/provider-commands.ts
++++ b/src/bridge/provider-commands.ts
+@@ -1,7 +1,7 @@
+ import { z } from "zod";
+ import { probeClaudeInitialization } from "./initialization-probe.js";
+ import { isClaudeSkillPluginName } from "./skill-plugins.js";
+-import { experimental_sliceUtf16Head as sliceUtf16Head } from "@get-bb/plugin-sdk/host";
++import { sliceUtf16Head } from "../utf16.js";
+ 
+ export const PROVIDER_COMMANDS_STATE_KIND = "bb/provider-commands";
+ 
+diff --git a/src/bridge/provider-maintenance.account.test.ts b/src/bridge/provider-maintenance.account.test.ts
+index 036aa0a2c6d844911698fc96007de8d35e112966..73df41e2ac57e4b76940dbe175f5f8200360b2ca 100644
+--- a/src/bridge/provider-maintenance.account.test.ts
++++ b/src/bridge/provider-maintenance.account.test.ts
+@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
+     "rate_limits_available" | "rate_limits"
+   >,
+   files: [] as string[],
++  profile: { organizationType: "claude_pro" } as { organizationType?: string; emailAddress?: string },
+ }));
+ 
+ vi.mock("./initialization-probe.js", () => ({
+@@ -28,7 +29,7 @@ vi.mock("node:fs/promises", () => ({
+         JSON.stringify({
+           oauthAccount: {
+             accountUuid: "4f6c1d2e-8a9b-4c3d-9e1f-2a3b4c5d6e7f",
+-            organizationType: "claude_pro",
++            ...state.profile,
+             organizationRateLimitTier: "default_claude_ai",
+           },
+         }),
+@@ -37,12 +38,12 @@ vi.mock("node:fs/promises", () => ({
+   },
+ }));
+ 
+-vi.mock("@get-bb/plugin-sdk/provider-bridge", async (importOriginal) => ({
++vi.mock("./maintenance-compat.js", async (importOriginal) => ({
+   ...(await importOriginal<
+-    typeof import("@get-bb/plugin-sdk/provider-bridge")
++    typeof import("./maintenance-compat.js")
+   >()),
+-  experimental_resolveExecutablePath: () => Promise.resolve("/test/claude"),
+-  experimental_readCliVersion: () => Promise.resolve("2.1.317"),
++  resolveExecutablePath: () => Promise.resolve("/test/claude"),
++  readCliVersion: () => Promise.resolve("2.1.317"),
+ }));
+ 
+ import {
+@@ -70,6 +71,7 @@ beforeEach(() => {
+     },
+   };
+   state.files = [];
++  state.profile = { organizationType: "claude_pro" };
+ });
+ 
+ afterEach(() => {
+@@ -102,6 +104,27 @@ describe("Claude Code account status", () => {
+     expect(state.files).toEqual([path.join(profile, ".claude.json")]);
+   });
+ 
++  it.each([
++    ["Claude Ultra", "claude_pro", undefined, "Ultra"],
++    ["max", "claude_max", undefined, "Max"],
++    ["max", "unknown", undefined, "Max"],
++    ["max", undefined, undefined, "Max"],
++    ["max", "claude_pro", "other@example.com", "Max"],
++    ["max", "claude_pro", "CLAUDE@example.com", "Pro"],
++  ])("keeps profile/account attribution for %s / %s / %s", async (subscriptionType, organizationType, emailAddress, planLabel) => {
++    state.account = { ...signedIn, subscriptionType };
++    state.profile = { organizationType, emailAddress };
++    expect(await getClaudeProviderUsage(process.env)).toMatchObject({ usage: { planLabel } });
++    expect(await getClaudeProviderHealth(process.env)).toMatchObject({ health: { planLabel } });
++  });
++
++  it("uses the explicit profile for health as well as usage", async () => {
++    const env = { ...process.env, CLAUDE_CONFIG_DIR: path.resolve("/profiles/contributed") };
++    await getClaudeProviderHealth(env);
++    await getClaudeProviderUsage(env);
++    expect(state.files).toEqual(Array(2).fill(path.join(env.CLAUDE_CONFIG_DIR, ".claude.json")));
++  });
++
+   it.each([
+     ["Claude Code has no usable login", signedOut, true],
+     ["plan limits do not apply to the login", signedIn, false],
+diff --git a/src/bridge/provider-maintenance.installation.test.ts b/src/bridge/provider-maintenance.installation.test.ts
+index 64ee75b4cdd14470d0ea4e040436b3d9785a2295..fa1fe97ff4edc07e18b2fd3a0f6ad2926e77839a 100644
+--- a/src/bridge/provider-maintenance.installation.test.ts
++++ b/src/bridge/provider-maintenance.installation.test.ts
+@@ -6,17 +6,17 @@ const state = vi.hoisted(() => ({
+   compatibilityOnly: false,
+ }));
+ 
+-vi.mock("@get-bb/plugin-sdk/provider-bridge", async (importOriginal) => ({
++vi.mock("./maintenance-compat.js", async (importOriginal) => ({
+   ...(await importOriginal<
+-    typeof import("@get-bb/plugin-sdk/provider-bridge")
++    typeof import("./maintenance-compat.js")
+   >()),
+-  experimental_resolveExecutablePath: async () => "/test/claude",
+-  experimental_probeNpmGlobalPackage: async () => {
++  resolveExecutablePath: async () => "/test/claude",
++  probeNpmGlobalPackage: async () => {
+     if (state.compatibilityOnly)
+       throw new Error("Update discovery ran during compatibility validation");
+     return { npmBin: null, npmGlobalPackageVersion: null };
+   },
+-  experimental_commandOutput: async (_command: string, args: string[]) => {
++  commandOutput: async (_command: string, args: string[]) => {
+     if (state.compatibilityOnly && args[0] !== "--version")
+       throw new Error("Update discovery ran during compatibility validation");
+     if (args[0] === "view") return state.tags;
 diff --git a/src/bridge/provider-maintenance.test.ts b/src/bridge/provider-maintenance.test.ts
 index fb3609b580bd0b471ab35ee2c9f500ae51e2daad..bd3334967d09097ef5fd723bcbe1c86d2e5eb93a 100644
 --- a/src/bridge/provider-maintenance.test.ts
@@ -6793,6 +7357,257 @@ index fb3609b580bd0b471ab35ee2c9f500ae51e2daad..bd3334967d09097ef5fd723bcbe1c86d
    it("normalizes aggregate and unique model-scoped usage windows", () => {
      const account = {
        email: "claude@example.com",
+diff --git a/src/bridge/provider-maintenance.ts b/src/bridge/provider-maintenance.ts
+index b68306ae78d556d40a6039e64e914b1e0c7f87ac..d2905a7d1305844162cd5414197a1f92763db87b 100644
+--- a/src/bridge/provider-maintenance.ts
++++ b/src/bridge/provider-maintenance.ts
+@@ -1,3 +1,9 @@
++import {
++  commandOutput,
++  probeNpmGlobalPackage,
++  readCliVersion,
++  resolveExecutablePath,
++} from "./maintenance-compat.js";
+ import type { AccountInfo } from "@anthropic-ai/claude-agent-sdk";
+ import fs from "node:fs/promises";
+ import os from "node:os";
+@@ -10,16 +16,12 @@ import {
+   type ProviderUsageResult,
+   type ProviderUsageWindow,
+   experimental_clampPercent as clampPercent,
+-  experimental_commandOutput as commandOutput,
+   experimental_compareVersions as compareVersions,
+   experimental_downloadedInstallerCommand as downloadedInstallerCommand,
+   experimental_formatCommand as formatCommand,
+   experimental_installationVerification as installationVerification,
+   experimental_npmCommand as npmCommand,
+   experimental_npmGlobalInstallSource as npmGlobalInstallSource,
+-  experimental_probeNpmGlobalPackage as probeNpmGlobalPackage,
+-  experimental_readCliVersion as readCliVersion,
+-  experimental_resolveExecutablePath as resolveExecutablePath,
+   experimental_versionFrom as versionFrom,
+ } from "@get-bb/plugin-sdk/provider-bridge";
+ import { z } from "zod";
+@@ -350,7 +352,7 @@ export async function getClaudeProviderHealth(
+     return isSignedIn(account)
+       ? healthResult("ready", {
+           ...accountFields(
+-            profileAccount(account, await readAccountProfile(process.env)),
++            profileAccount(account, await readAccountProfile(env)),
+           ),
+           installedVersion: version,
+         })
+diff --git a/src/bridge/sdk-compat.test.ts b/src/bridge/sdk-compat.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..34895fee66b363bf671d0f113667528829b90507
+--- /dev/null
++++ b/src/bridge/sdk-compat.test.ts
+@@ -0,0 +1,96 @@
++import { afterEach, describe, expect, it, vi } from "vitest";
++import { mkdtemp, rm, writeFile } from "node:fs/promises";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
++import { buildProviderCliEnv } from "./sdk-compat.js";
++import { commandOutput, readCliVersion, resolveExecutablePath } from "./maintenance-compat.js";
++import { decodeClaudeCodeJsonRpcRequest } from "./commands.js";
++import { sliceUtf16Head } from "../utf16.js";
++import { toProviderCommandsState } from "./provider-commands.js";
++
++afterEach(() => {
++  vi.unstubAllEnvs();
++  vi.restoreAllMocks();
++});
++
++describe("standalone SDK backports", () => {
++  it("keeps contributed and thread env while removing bridge runtime env", () => {
++    vi.stubEnv("ELECTRON_RUN_AS_NODE", "1");
++    vi.stubEnv("BB_PROVIDER_BRIDGE_RECORD_DIR", "/tmp/recording");
++    vi.stubEnv("BB_TEST_INHERITED", "inherited");
++    const env = buildProviderCliEnv({
++      BB_THREAD_ID: "thread-test",
++      BB_TEST_INHERITED: "override",
++      BB_PLUGIN_MARKER: "contributed",
++      "invalid-name": "ignored",
++    });
++    expect(env).toMatchObject({
++      BB_THREAD_ID: "thread-test",
++      BB_TEST_INHERITED: "override",
++      BB_PLUGIN_MARKER: "contributed",
++    });
++    expect(env.ELECTRON_RUN_AS_NODE).toBeUndefined();
++    expect(env.BB_PROVIDER_BRIDGE_RECORD_DIR).toBeUndefined();
++    expect(env["invalid-name"]).toBeUndefined();
++    expect(process.env.BB_TEST_INHERITED).toBe("inherited");
++  });
++
++  it("replaces inherited Windows env names regardless of case", () => {
++    const platform = Object.getOwnPropertyDescriptor(process, "platform")!;
++    Object.defineProperty(process, "platform", { value: "win32" });
++    try {
++    vi.stubEnv("Bb_Mixed_Name", "inherited");
++    const env = buildProviderCliEnv({ BB_MIXED_NAME: "override" });
++    expect(env.BB_MIXED_NAME).toBe("override");
++    expect(env.Bb_Mixed_Name).toBeUndefined();
++    } finally {
++      Object.defineProperty(process, "platform", platform);
++    }
++  });
++
++  it.each([
++    "commands/list",
++    "provider/health",
++    "provider/usage",
++    "provider/installation/status",
++    "provider/installation/run",
++  ])("accepts optional env and rejects invalid env on %s", (method) => {
++    const params = { cwd: "/tmp", providerId: "claude-code-telemetry", action: "update" };
++    const decode = (extra: object) => decodeClaudeCodeJsonRpcRequest({
++      jsonrpc: "2.0", id: 1, method, params: { ...params, ...extra },
++    });
++    expect(decode({}).kind).toBe("request");
++    const withEnv = decode({ envVars: { CLAUDE_CONFIG_DIR: "/profile" } });
++    expect(withEnv).toMatchObject({
++      kind: "request", request: { params: { envVars: { CLAUDE_CONFIG_DIR: "/profile" } } },
++    });
++    expect(decode({ envVars: { CLAUDE_CONFIG_DIR: 42 } }).kind).toBe("invalid_params");
++  });
++
++  it("passes an explicit env to actual child probes without changing process.env", async () => {
++    vi.stubEnv("BB_PROBE_MARKER", "inherited");
++    const env = { ...process.env, BB_PROBE_MARKER: "contributed" };
++    expect(await commandOutput(process.execPath, ["-e", "process.stdout.write(process.env.BB_PROBE_MARKER)"], env)).toBe("contributed");
++    expect(process.env.BB_PROBE_MARKER).toBe("inherited");
++  });
++
++  it.skipIf(process.platform === "win32")("resolves and versions a CLI from the explicit PATH", async () => {
++    const directory = await mkdtemp(join(tmpdir(), "claude-env-probe-"));
++    try {
++      const executable = join(directory, "bb-env-test-cli");
++      await writeFile(executable, `#!${process.execPath}\nprocess.stdout.write(process.env.BB_PROBE_VERSION);\n`, { mode: 0o755 });
++      const env = { ...process.env, PATH: directory, BB_PROBE_VERSION: "9.9.9" };
++      expect(await resolveExecutablePath("bb-env-test-cli", env)).toBe(executable);
++      expect(await readCliVersion("bb-env-test-cli", env)).toBe("9.9.9");
++    } finally {
++      await rm(directory, { recursive: true, force: true });
++    }
++  });
++
++  it("does not split emoji in question headers or command descriptions", () => {
++    expect(sliceUtf16Head("x".repeat(11) + "😀tail", 12)).toBe("x".repeat(11));
++    expect(sliceUtf16Head("😀", 2)).toBe("😀");
++    const state = toProviderCommandsState([{ name: "emoji", description: "x".repeat(298) + "😀tail", argumentHint: "" }]);
++    expect(state.commands[0]?.description).toBe("x".repeat(298) + "…");
++  });
++});
+diff --git a/src/bridge/sdk-compat.ts b/src/bridge/sdk-compat.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..37a56fa36defd0ad3c6c1f477cfe378d68f815d2
+--- /dev/null
++++ b/src/bridge/sdk-compat.ts
+@@ -0,0 +1,103 @@
++// Backported from get-bb/bb at d9bcc98cac2b924e4c667e435d721a602e63e4c4.
++// Keep SDK 0.6.104 standalone compatibility until these helpers are published.
++import {
++  buildShellEnvOverrides,
++  withoutBridgeRuntimeEnv,
++  BRIDGE_NOTIFICATION_METHODS as sdkNotificationMethods,
++} from "@get-bb/plugin-sdk/provider-bridge";
++import type { ThreadDelta } from "@get-bb/plugin-sdk/provider-bridge";
++
++export type UnansweredInteractionCause =
++  | { kind: "unshowable-request"; detail: string }
++  | { kind: "runtime-error"; message: string }
++  | { kind: "unreadable-resolution" }
++  | { kind: "unmappable-answer"; detail: string }
++  | { kind: "withdrawn"; detail: string };
++
++export type UnansweredInteractionAnswer =
++  | { kind: "error" }
++  | { kind: "value"; value: string };
++
++export interface UnansweredInteractionWarningArgs {
++  cause: UnansweredInteractionCause;
++  answer: UnansweredInteractionAnswer;
++}
++
++export const UNANSWERED_INTERACTION_WARNING_SUMMARY =
++  "bb answered the agent without you";
++
++function sentence(text: string): string {
++  return text.trim().replace(/[.\s]+$/u, "");
++}
++
++function causeText(cause: UnansweredInteractionCause): string {
++  switch (cause.kind) {
++    case "unshowable-request":
++      return `it could not show the question: ${sentence(cause.detail)}`;
++    case "runtime-error":
++      return `it stopped waiting for your answer: ${sentence(cause.message)}`;
++    case "unreadable-resolution":
++      return "it could not read the answer it received";
++    case "unmappable-answer":
++      return `your answer did not fit the question: ${sentence(cause.detail)}`;
++    case "withdrawn":
++      return `it withdrew the question: ${sentence(cause.detail)}`;
++  }
++}
++
++function agentCauseText(cause: UnansweredInteractionCause): string {
++  switch (cause.kind) {
++    case "unshowable-request":
++      return `bb could not show the question (${sentence(cause.detail)})`;
++    case "runtime-error":
++      return `bb stopped waiting for the answer (${sentence(cause.message)})`;
++    case "unreadable-resolution":
++      return "bb could not read the answer it received";
++    case "unmappable-answer":
++      return `the answer did not fit the question (${sentence(cause.detail)})`;
++    case "withdrawn":
++      return `bb withdrew the question (${sentence(cause.detail)})`;
++  }
++}
++
++export function experimental_unansweredInteractionErrorMessage(
++  cause: UnansweredInteractionCause,
++): string {
++  return `The user did not answer: ${agentCauseText(cause)}.`;
++}
++
++export function experimental_unansweredInteractionWarning(
++  args: UnansweredInteractionWarningArgs,
++): Extract<ThreadDelta, { kind: "provider.warning" }> {
++  const answer =
++    args.answer.kind === "error"
++      ? "an error"
++      : JSON.stringify(args.answer.value);
++  return {
++    kind: "provider.warning",
++    summary: UNANSWERED_INTERACTION_WARNING_SUMMARY,
++    details: `bb answered the agent with ${answer} because ${causeText(args.cause)}.`,
++    vouchedTurn: true,
++  };
++}
++
++export function buildProviderCliEnv(
++  envVars: Readonly<Record<string, string>> | undefined,
++): NodeJS.ProcessEnv {
++  const inherited = withoutBridgeRuntimeEnv(process.env);
++  const overrides = buildShellEnvOverrides(envVars);
++  if (process.platform === "win32") {
++    const overridden = new Set(
++      Object.keys(overrides).map((name) => name.toUpperCase()),
++    );
++    for (const name of Object.keys(inherited)) {
++      if (overridden.has(name.toUpperCase())) delete inherited[name];
++    }
++  }
++  return { ...inherited, ...overrides };
++}
++
++export const BRIDGE_NOTIFICATION_METHODS = {
++  ...sdkNotificationMethods,
++  requestCancelled: "notifications/cancelled",
++} as const;
 diff --git a/src/bridge/session-options.ts b/src/bridge/session-options.ts
 index 9c2ab273dadfa77563a3f9b1d3447c252087066e..cdd85dba88cc8082a4556e0c6abb1c8d2a12a207 100644
 --- a/src/bridge/session-options.ts
@@ -7163,6 +7978,46 @@ index 639f261a2e925f910b1dca49dcca7f4f86c97048..dbcbc9da814f90ca280b12fc3892e865
        threadId: "bb-thread-1",
      });
  
+diff --git a/src/interactions.test.ts b/src/interactions.test.ts
+index bdff313a0cb8a5e663dce3d8a85ebbb28329fc8f..50d8169522bdb21882701fb24818aeeebab87124 100644
+--- a/src/interactions.test.ts
++++ b/src/interactions.test.ts
+@@ -52,6 +52,22 @@ function createClaudeUserQuestionPayload(): UserQuestionPendingInteractionPayloa
+   };
+ }
+ 
++it("keeps fallback question headers well formed at an emoji boundary", () => {
++  const payload = createClaudeUserQuestionPayload();
++  const question = payload.questions[0]!;
++  delete question.shortLabel;
++  question.prompt = "x".repeat(11) + "😀 continue?";
++  expect(buildClaudeInteractiveResponse({
++    payload,
++    resolution: {
++      kind: "user_answer",
++      answers: { [question.id]: { selected: [], freeText: "yes" } },
++    },
++  }, [])).toMatchObject({
++    updatedInput: { questions: [{ header: "x".repeat(11) }] },
++  });
++});
++
+ interface InvalidClaudeUserQuestionAnswerCase {
+   expectedMessage: string;
+   name: string;
+diff --git a/src/interactions.ts b/src/interactions.ts
+index 8e15a6ba93c0c57611e96435d29a85bed8f040de..4ddbde32bff98fe08810892e5bff240a29d7decb 100644
+--- a/src/interactions.ts
++++ b/src/interactions.ts
+@@ -41,7 +41,7 @@ import {
+   getClaudeFileEditPath,
+   parseClaudeBashCommand,
+ } from "./tool-classification.js";
+-import { experimental_sliceUtf16Head as sliceUtf16Head } from "@get-bb/plugin-sdk/host";
++import { sliceUtf16Head } from "./utf16.js";
+ 
+ interface ClaudeSessionRulesArgs {
+   permissions: PendingInteractionGrantedPermissionProfile;
 diff --git a/src/live-smoke.test.ts b/src/live-smoke.test.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..e67f799e3243ddd82c0f033f34d67485b932822a
@@ -8158,6 +9013,32 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
      },
    );
  }
+diff --git a/src/utf16.ts b/src/utf16.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a022093f7749dbcc3c8697976385b7ffbde25e9
+--- /dev/null
++++ b/src/utf16.ts
+@@ -0,0 +1,20 @@
++// Backported from get-bb/bb at d9bcc98cac2b924e4c667e435d721a602e63e4c4.
++// Keep SDK 0.6.104 standalone compatibility until these helpers are published.
++function isHighSurrogateAt(value: string, index: number): boolean {
++  const code = value.charCodeAt(index);
++  return code >= 0xd800 && code <= 0xdbff;
++}
++
++function isLowSurrogateAt(value: string, index: number): boolean {
++  const code = value.charCodeAt(index);
++  return code >= 0xdc00 && code <= 0xdfff;
++}
++
++export function sliceUtf16Head(value: string, maxChars: number): string {
++  let end = Math.min(value.length, Math.max(0, maxChars));
++  if (isHighSurrogateAt(value, end - 1) && isLowSurrogateAt(value, end)) {
++    end -= 1;
++  }
++  return value.slice(0, end);
++}
++
 diff --git a/tsconfig.json b/tsconfig.json
 index 6acac8aadefa19aa2b9c441ad6e596137492b6c1..1fc24bc81e1371521f688b905906229a254b32a3 100644
 --- a/tsconfig.json

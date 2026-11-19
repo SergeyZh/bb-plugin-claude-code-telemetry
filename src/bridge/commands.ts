@@ -111,6 +111,9 @@ export const claudeTurnSteerParamsSchema = claudeTurnStartParamsSchema
   .omit({ config: true })
   .extend({ expectedTurnId: z.string() });
 
+// SDK 0.6.163 accepts contributed env on sessionless requests; keep older hosts valid.
+const sessionlessEnvVarsSchema = z.record(z.string(), z.string()).optional();
+
 const claudeCodeCommandSchema = z.discriminatedUnion("method", [
   z.object({
     method: z.literal("initialize"),
@@ -122,23 +125,23 @@ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
   }),
   z.object({
     method: z.literal("commands/list"),
-    params: commandListParamsSchema,
+    params: commandListParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
   }),
   z.object({
     method: z.literal("provider/health"),
-    params: providerMaintenanceParamsSchema,
+    params: providerMaintenanceParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
   }),
   z.object({
     method: z.literal("provider/usage"),
-    params: providerMaintenanceParamsSchema,
+    params: providerMaintenanceParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
   }),
   z.object({
     method: z.literal("provider/installation/status"),
-    params: providerInstallationStatusParamsSchema,
+    params: providerInstallationStatusParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
   }),
   z.object({
     method: z.literal("provider/installation/run"),
-    params: providerInstallationRunParamsSchema,
+    params: providerInstallationRunParamsSchema.extend({ envVars: sessionlessEnvVarsSchema }),
   }),
   z.object({
     method: z.literal("thread/start"),

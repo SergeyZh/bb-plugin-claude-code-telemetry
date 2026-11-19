@@ -3,7 +3,7 @@
 A standalone fork of BB's Claude Code provider, installed alongside it.
 
 - Plugin and provider ID: `claude-code-telemetry`
-- Version: `0.1.0-telemetry.11+upstream.9a261b5` (see [versioning](UPSTREAM.md#versioning))
+- Version: `0.1.0-telemetry.12+upstream.d9bcc98` (see [versioning](UPSTREAM.md#versioning))
 - Picker name: **Claude Code Telemetry**
 - Original provider: `claude-code`, unchanged
 
@@ -18,7 +18,7 @@ as the built-in provider. It adds a separate picker entry and plugin settings;
 existing threads keep their provider, and the built-in provider stays available.
 
 This comparison is against the original provider at
-[`9a261b5` (2026-11-16)](https://github.com/get-bb/bb/tree/9a261b58e9e59f73701ff9f32ec90672901ce550/plugins/provider-claude-code),
+[`d9bcc98` (2026-11-19)](https://github.com/get-bb/bb/tree/d9bcc98cac2b924e4c667e435d721a602e63e4c4/plugins/provider-claude-code),
 the latest upstream provider revision imported into this fork.
 
 | Capability | Original provider at this revision | Claude Code Telemetry |
@@ -87,6 +87,12 @@ upstream copies and verifies that the resulting source files match this fork.
   selector requires Claude Code 2.1.242 or later. Displaying imported Bash
   descriptions requires BB support for SDK 0.6.117's description field; BB
   0.48.1 / SDK 0.6.104 ignores that field.
+- **New host features need the matching BB update.** Closing withdrawn approval
+  cards requires upstream #7797 across runtime, daemon, server, and projection
+  (host-daemon protocol 269 or newer). Contributed environment variables on
+  health, installation, and command-list requests require #7722 (protocol 270
+  or newer). This provider accepts older requests and bundles the required
+  helper backports while retaining SDK 0.6.104.
 - **Upstream maintenance is manual.** This is a standalone fork.
   Updating the built-in provider does not update this plugin. Fixes to BB's
   core or daemon require updating BB itself. The tested versions and live-check
@@ -115,7 +121,12 @@ out-of-memory failures. Failed Bash commands retain their reported exit code.
 Background tasks settle when the Claude SDK stream ends. Task-notification
 results keep the turn open while an accepted steer is still queued, once the
 CLI has reported prompt consumption. Usage and account
-metadata report the Max 20x tier as Ultra.
+metadata report the Max 20x tier as Ultra. Recognized profile plan metadata
+corrects stale Pro/Max SDK labels. Failures while asking a question now emit a
+warning and tell Claude that the user did not answer. Withdrawn questions send
+`notifications/cancelled`; closing their cards requires the host update above.
+CLI sessions, catalogs, and maintenance probes use the request's environment.
+Command descriptions and fallback question headers avoid splitting emoji.
 
 The `commandDescriptionsEnabled` setting defaults to `false`. Enable it to
 include Claude's short Bash descriptions in command events. Displaying these

@@ -14,20 +14,20 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.11+upstream.9a261b5`:
+The current version is `0.1.0-telemetry.12+upstream.d9bcc98`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.11` is this fork's release revision. Increment it for every release,
+- `telemetry.12` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.9a261b5` identifies the latest fully imported upstream baseline.
+- `upstream.d9bcc98` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.12+upstream.9a261b5`. A later upstream import would increment the
+`0.1.0-telemetry.13+upstream.d9bcc98`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
@@ -223,3 +223,77 @@ excludes user MCP tools from isolated context usage except under managed policy.
 Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 TTL selection and tooltips, standalone packaging, and fork regressions are
 preserved. No live requests, plugin reload, automation creation, or push occurred.
+
+## Account, unanswered interaction, withdrawal, text, and environment sync, 2026-11-19
+
+Imported all five provider commits after `9a261b5`, oldest first, through
+[`d9bcc98`](https://github.com/get-bb/bb/commit/d9bcc98cac2b924e4c667e435d721a602e63e4c4):
+
+- [`a55b383`](https://github.com/get-bb/bb/commit/a55b383aeb92756b0a025db186ad5ac05c7ce68d)
+  (2026-11-18), "Fix stale Claude plan badges after a Max-to-Pro downgrade (#7776)":
+  prefer recognized Pro/Max organization metadata from the matching selected
+  profile over stale first-party SDK plan metadata; preserve unknown plans,
+  mismatched accounts, and the fork's Ultra regression.
+- [`bc674ed`](https://github.com/get-bb/bb/commit/bc674ed48df7dda66ae80da60b147a9e77eb770f)
+  (2026-11-18), "Never report a failure as the user's answer to an agent (#7723)":
+  emit a provider warning and a precise non-user-answer denial for unshowable
+  questions, runtime errors, unreadable resolutions, and unmappable answers.
+  Policy auto-denials and stopped-turn teardown retain their existing behavior.
+- [`6b779c8`](https://github.com/get-bb/bb/commit/6b779c869ba8b39b394faeabfb1473ba8cb34b6d)
+  (2026-11-18), "Close approval cards the agent withdraws (#7797)":
+  send `notifications/cancelled` when Claude aborts a permission/question request
+  or its session closes, is replaced, or ends its stream. Includes the upstream
+  permission and user-question withdrawal regressions.
+- [`343b5e8`](https://github.com/get-bb/bb/commit/343b5e8321dbae2bf25b4928321fbef3954611c6)
+  (2026-11-18), "Never cut text mid-emoji before agents or notifications (#7796)":
+  use surrogate-safe cuts for command metadata and fallback question headers.
+  The broader provider-boundary JSON serialization fix belongs to BB itself.
+- [`d9bcc98`](https://github.com/get-bb/bb/commit/d9bcc98cac2b924e4c667e435d721a602e63e4c4)
+  (2026-11-19), "Build every provider CLI's environment with one builder (#7722)":
+  use one environment builder for sessions, catalogs, and maintenance, pass
+  contributed environment through command discovery and its memoization key,
+  and resolve skill configuration from the thread environment. Usage still
+  receives the machine environment from the upstream host, rather than pooled
+  routing credentials. Health also reads its profile from its explicit probe
+  environment, correcting an upstream leftover `process.env` read.
+
+Every provider file from all six exact archives was compared; the changed file
+sets match each commit's provider file list. GitHub confirms baseline ancestry
+and the complete provider history. Patches were applied in order without
+replacing fork files. The target upstream package version is `0.1.0`; this
+release increments the fork revision once from 11 to
+`0.1.0-telemetry.12+upstream.d9bcc98`. The full imported baseline is
+`d9bcc98cac2b924e4c667e435d721a602e63e4c4`. Its 97 provider files have generator
+`digest()` SHA-256 `1b851551c3f0ca79affdbe919b1c19a64db7635361472921a188cd5b27130822`.
+
+### SDK and host compatibility
+
+The new upstream APIs require SDK 0.6.159 (unanswered interaction helpers),
+0.6.161 (request cancellation and UTF-16 slicing), and 0.6.163 (CLI environment
+builder and environment-aware maintenance helpers). On this import date npm
+returned 404 for 0.6.163 and reported 0.6.157 as latest. The standalone SDK pin
+remains 0.6.104; no dependency is silently repinned. Small helper backports from
+the exact target live in `src/bridge/sdk-compat.ts`,
+`src/bridge/maintenance-compat.ts`, and `src/utf16.ts`. They use existing public
+SDK process primitives, environment filtering, version parsing, and types.
+Optional `envVars` validation is added to sessionless request schemas while
+accepting older requests without the field. No private workspace dependency
+is introduced. The existing spawn helper already defaults `windowsHide` to
+true, so removing the redundant option preserves its behavior.
+
+Closing withdrawn approval cards requires the upstream #7797 runtime, daemon,
+server, and projection changes: host-daemon protocol 269 or newer. This import
+emits the cancellation notification; it does not update BB core. An older host
+can still leave those cards pending. Forwarding contributed environment on
+health, installation, and command-list requests requires upstream #7722 host
+support (protocol 270 or newer). Older hosts remain accepted and fall back to
+the bridge environment for absent request variables. Safe provider-boundary
+JSON serialization from #7796 also requires its BB runtime update. The local
+provider's surrogate-safe cuts do not depend on that update. Existing Bash
+command-description, guided sign-in, and pooled catalog requirements above
+still apply. No new Claude CLI or Agent SDK dependency is required.
+
+Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
+TTL selection and tooltips, standalone packaging, and extra regressions are
+preserved. No live requests, plugin reload, automation creation, push, or worker
+agents were used.

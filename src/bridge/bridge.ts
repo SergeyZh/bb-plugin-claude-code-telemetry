@@ -13,7 +13,6 @@ import {
   type ThreadDelta,
   BRIDGE_INBOUND_REQUEST_METHODS,
   BRIDGE_JSON_RPC_ERRORS,
-  BRIDGE_NOTIFICATION_METHODS,
   PROVIDER_BRIDGE_PROTOCOL_VERSION,
   THREAD_DELTA_GRAMMAR_V3,
   THREAD_DELTA_NOTIFICATION_METHOD,
@@ -27,10 +26,16 @@ import {
   decodeBridgeJsonRpcResponse,
   runBridgeRequest,
   shouldAutoDenyInteractiveRequest,
-  withoutBridgeRuntimeEnv,
   type BridgeToolCallRequest,
   experimental_defineProviderBridge,
 } from "@get-bb/plugin-sdk/provider-bridge";
+import {
+  BRIDGE_NOTIFICATION_METHODS,
+  buildProviderCliEnv,
+  type UnansweredInteractionCause,
+  experimental_unansweredInteractionErrorMessage,
+  experimental_unansweredInteractionWarning,
+} from "./sdk-compat.js";
 import { randomUUID } from "node:crypto";
 import { join as joinPath, resolve as resolvePath } from "node:path";
 import { isDeepStrictEqual } from "node:util";
@@ -70,6 +75,7 @@ import {
 import {
   PROVIDER_COMMANDS_STATE_KIND,
   createClaudeCodeBridgeCommandListMemo,
+  listClaudeCodeBridgeCommands,
   toProviderCommandsState,
 } from "./provider-commands.js";
 import {
@@ -888,6 +894,8 @@ async function applyLiveSessionSettings(
 
 const PROVIDER_CATALOG_MEMO_TTL_MS = 2 * 60_000;
 const listCommandsMemoized = createClaudeCodeBridgeCommandListMemo({
+  list: (cwd, envVars) =>
+    listClaudeCodeBridgeCommands(cwd, buildSessionEnv(envVars)),
   ttlMs: PROVIDER_CATALOG_MEMO_TTL_MS,
 });
 const listModelsMemoized = createClaudeCodeBridgeModelListMemo({
@@ -1797,12 +1805,27 @@ function findSessionByPendingInteractiveRequest(
   return undefined;
 }
 
+function withdrawInteractiveRequest(
+  threadSession: ThreadSession,
+  requestId: string | number,
+): boolean {
+  if (!threadSession.pendingInteractiveRequests.delete(requestId)) {
+    return false;
+  }
+  send({
+    jsonrpc: "2.0",
+    method: BRIDGE_NOTIFICATION_METHODS.requestCancelled,
+    params: { requestId },
+  });
+  return true;
+}
+
 function resolvePendingInteractiveRequests(
   threadSession: ThreadSession,
   message: string,
 ): void {
   for (const [requestId, pending] of threadSession.pendingInteractiveRequests) {
-    threadSession.pendingInteractiveRequests.delete(requestId);
+    withdrawInteractiveRequest(threadSession, requestId);
     pending.resolve({
       behavior: "deny",
       interrupt: true,
@@ -1824,11 +1847,10 @@ async function closeClaudeThreadSession(
 }
 
 function buildSessionEnv(
-  envOverrides: Record<string, string>,
+  envVars: Readonly<Record<string, string>>,
 ): NodeJS.ProcessEnv {
   const sessionEnv: NodeJS.ProcessEnv = {
-    ...withoutBridgeRuntimeEnv(process.env),
-    ...envOverrides,
+    ...buildProviderCliEnv(envVars),
     CLAUDE_CODE_ENTRYPOINT: "cli",
   };
   delete sessionEnv.CLAUDE_AGENT_SDK_CLIENT_APP;
@@ -1927,21 +1949,30 @@ function buildUserQuestionRequestParams(
 function decodePendingInteractiveResponse(
   pending: PendingInteractiveRequest,
   result: unknown,
-): ClaudeInteractiveResponse | null {
+):
+  | { response: ClaudeInteractiveResponse }
+  | { unanswered: UnansweredInteractionCause } {
   const outcome = claudeInteractionOutcomeSchema.safeParse({
     payload: pending.payload,
     resolution: result,
   });
   if (!outcome.success) {
-    return null;
+    return { unanswered: { kind: "unreadable-resolution" } };
   }
   try {
-    return buildClaudeInteractiveResponse(
-      outcome.data,
-      pending.kind === "permission_request" ? pending.suggestedRules : [],
-    );
-  } catch {
-    return null;
+    return {
+      response: buildClaudeInteractiveResponse(
+        outcome.data,
+        pending.kind === "permission_request" ? pending.suggestedRules : [],
+      ),
+    };
+  } catch (error) {
+    return {
+      unanswered: {
+        kind: "unmappable-answer",
+        detail: error instanceof Error ? error.message : String(error),
+      },
+    };
   }
 }
 
@@ -1998,6 +2029,24 @@ function buildInteractivePermissionResult(
   }
 }
 
+function denyWithoutUser(
+  threadId: string,
+  toolUseId: string,
+  cause: UnansweredInteractionCause,
+): PermissionResult {
+  sendThreadDeltas(threadId, [
+    experimental_unansweredInteractionWarning({
+      cause,
+      answer: { kind: "error" },
+    }),
+  ]);
+  return {
+    behavior: "deny",
+    message: experimental_unansweredInteractionErrorMessage(cause),
+    toolUseID: toolUseId,
+  };
+}
+
 function createForwardInteractiveRequest(
   threadIdRef: ThreadIdRef,
 ): (args: ForwardInteractiveRequestArgs) => Promise<PermissionResult> {
@@ -2019,11 +2068,12 @@ function createForwardInteractiveRequest(
       try {
         params = buildInteractiveRequestParams(args);
       } catch (error) {
-        resolve({
-          behavior: "deny",
-          message: error instanceof Error ? error.message : String(error),
-          toolUseID: args.toolUseId,
-        });
+        resolve(
+          denyWithoutUser(args.threadId, args.toolUseId, {
+            kind: "unshowable-request",
+            detail: error instanceof Error ? error.message : String(error),
+          }),
+        );
         return;
       }
 
@@ -2035,7 +2085,7 @@ function createForwardInteractiveRequest(
       };
 
       const onAbort = (): void => {
-        if (!threadSession.pendingInteractiveRequests.delete(requestId)) {
+        if (!withdrawInteractiveRequest(threadSession, requestId)) {
           return;
         }
         finish({
@@ -2099,7 +2149,7 @@ function createForwardUserQuestionRequest(
       };
 
       const onAbort = (): void => {
-        if (!threadSession.pendingInteractiveRequests.delete(requestId)) {
+        if (!withdrawInteractiveRequest(threadSession, requestId)) {
           return;
         }
         finish({
@@ -2185,11 +2235,10 @@ function createCanUseTool(threadIdRef: ThreadIdRef): CanUseTool {
     if (toolName === CLAUDE_USER_QUESTION_TOOL_NAME) {
       const parsedInput = claudeUserQuestionInputSchema.safeParse(input);
       if (!parsedInput.success) {
-        return {
-          behavior: "deny",
-          message: "Invalid AskUserQuestion input",
-          toolUseID: options.toolUseID,
-        };
+        return denyWithoutUser(threadIdRef.current, options.toolUseID, {
+          kind: "unshowable-request",
+          detail: "the AskUserQuestion input is invalid",
+        });
       }
       return forwardUserQuestionRequest({
         threadId: threadIdRef.current,
@@ -2203,11 +2252,10 @@ function createCanUseTool(threadIdRef: ThreadIdRef): CanUseTool {
 
     if (toolName === CLAUDE_EXIT_PLAN_MODE_TOOL_NAME) {
       if (!claudeExitPlanModeInputSchema.safeParse(input).success) {
-        return {
-          behavior: "deny",
-          message: "Invalid ExitPlanMode input",
-          toolUseID: options.toolUseID,
-        };
+        return denyWithoutUser(threadIdRef.current, options.toolUseID, {
+          kind: "unshowable-request",
+          detail: "the ExitPlanMode input is invalid",
+        });
       }
       return forwardInteractiveRequest({
         threadId: threadIdRef.current,
@@ -2349,7 +2397,13 @@ async function handleRequest(request: ClaudeCodeJsonRpcRequest): Promise<void> {
       break;
     case "commands/list":
       try {
-        sendResult(request.id, await listCommandsMemoized(request.params.cwd));
+        sendResult(
+          request.id,
+          await listCommandsMemoized(
+            request.params.cwd,
+            request.params.envVars ?? {},
+          ),
+        );
       } catch (error) {
         if (error instanceof MissingClaudeCliError) {
           sendError(
@@ -2363,21 +2417,37 @@ async function handleRequest(request: ClaudeCodeJsonRpcRequest): Promise<void> {
       }
       break;
     case "provider/health":
-      sendResult(request.id, await getClaudeProviderHealth());
+      sendResult(
+        request.id,
+        await getClaudeProviderHealth(
+          buildSessionEnv(request.params.envVars ?? {}),
+        ),
+      );
       break;
     case "provider/usage":
-      sendResult(request.id, await getClaudeProviderUsage());
+      sendResult(
+        request.id,
+        await getClaudeProviderUsage(
+          buildSessionEnv(request.params.envVars ?? {}),
+        ),
+      );
       break;
     case "provider/installation/status":
       sendResult(
         request.id,
-        await getClaudeProviderInstallationStatus(request.params.checkUpdates),
+        await getClaudeProviderInstallationStatus(
+          buildSessionEnv(request.params.envVars ?? {}),
+          request.params.checkUpdates,
+        ),
       );
       break;
     case "provider/installation/run":
       sendResult(
         request.id,
-        await getClaudeProviderInstallationRun(request.params.action),
+        await getClaudeProviderInstallationRun(
+          buildSessionEnv(request.params.envVars ?? {}),
+          request.params.action,
+        ),
       );
       break;
     case "thread/start":
@@ -2597,7 +2667,9 @@ async function toClaudeSessionParams(
             roots: configuredSkillRoots,
             cwd: params.cwd,
             pluginsRoot: requireSkillPluginsRoot(),
-            claudeDir: claudeSkillsConfigDirectory(),
+            claudeDir: claudeSkillsConfigDirectory(
+              buildSessionEnv(params.options.envVars ?? {}),
+            ),
           }),
         );
   return buildClaudeSessionParams({
@@ -2868,27 +2940,25 @@ function handleParsedMessage(parsed: unknown): void {
   if (response && threadSession) {
     const pending = threadSession.pendingInteractiveRequests.get(response.id)!;
     threadSession.pendingInteractiveRequests.delete(response.id);
+    const threadId = threadSession.attachment.threadIdRef.current;
     if ("error" in response) {
-      pending.resolve({
-        behavior: "deny",
-        message: response.error.message ?? "Interactive request failed",
-        toolUseID: pending.itemId,
-      });
+      pending.resolve(
+        denyWithoutUser(threadId, pending.itemId, {
+          kind: "runtime-error",
+          message: response.error.message ?? "the interaction failed",
+        }),
+      );
       return;
     }
 
-    const interactiveResponse = decodePendingInteractiveResponse(
-      pending,
-      response.result,
-    );
-    if (interactiveResponse === null) {
-      pending.resolve({
-        behavior: "deny",
-        message: "Invalid interactive response payload",
-        toolUseID: pending.itemId,
-      });
+    const decoded = decodePendingInteractiveResponse(pending, response.result);
+    if ("unanswered" in decoded) {
+      pending.resolve(
+        denyWithoutUser(threadId, pending.itemId, decoded.unanswered),
+      );
       return;
     }
+    const interactiveResponse = decoded.response;
     if (
       pending.kind === "permission_request" &&
       pending.toolName !== CLAUDE_BASH_TOOL_NAME &&

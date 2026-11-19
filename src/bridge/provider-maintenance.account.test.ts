@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
     "rate_limits_available" | "rate_limits"
   >,
   files: [] as string[],
+  profile: { organizationType: "claude_pro" } as { organizationType?: string; emailAddress?: string },
 }));
 
 vi.mock("./initialization-probe.js", () => ({
@@ -28,6 +29,8 @@ vi.mock("node:fs/promises", () => ({
         JSON.stringify({
           oauthAccount: {
             accountUuid: "4f6c1d2e-8a9b-4c3d-9e1f-2a3b4c5d6e7f",
+            ...state.profile,
+            organizationRateLimitTier: "default_claude_ai",
           },
         }),
       );
@@ -35,12 +38,12 @@ vi.mock("node:fs/promises", () => ({
   },
 }));
 
-vi.mock("@get-bb/plugin-sdk/provider-bridge", async (importOriginal) => ({
+vi.mock("./maintenance-compat.js", async (importOriginal) => ({
   ...(await importOriginal<
-    typeof import("@get-bb/plugin-sdk/provider-bridge")
+    typeof import("./maintenance-compat.js")
   >()),
-  experimental_resolveExecutablePath: () => Promise.resolve("/test/claude"),
-  experimental_readCliVersion: () => Promise.resolve("2.1.317"),
+  resolveExecutablePath: () => Promise.resolve("/test/claude"),
+  readCliVersion: () => Promise.resolve("2.1.317"),
 }));
 
 import {
@@ -50,7 +53,7 @@ import {
 
 const signedIn: AccountInfo = {
   email: "claude@example.com",
-  subscriptionType: "Claude Ultra",
+  subscriptionType: "max",
   apiProvider: "firstParty",
 };
 const signedOut: AccountInfo = {
@@ -68,6 +71,7 @@ beforeEach(() => {
     },
   };
   state.files = [];
+  state.profile = { organizationType: "claude_pro" };
 });
 
 afterEach(() => {
@@ -79,13 +83,13 @@ describe("Claude Code account status", () => {
     const profile = path.resolve("/profiles/work");
     vi.stubEnv("CLAUDE_CONFIG_DIR", profile);
 
-    expect(await getClaudeProviderUsage()).toEqual({
+    expect(await getClaudeProviderUsage(process.env)).toEqual({
       supported: true,
       usage: {
         status: "ok",
         accountEmail: "claude@example.com",
-        planLabel: "Ultra",
-        plan: { id: "ultra", multiplier: null },
+        planLabel: "Pro",
+        plan: { id: "pro", multiplier: null },
         windows: [
           {
             kind: "five-hour",
@@ -101,6 +105,27 @@ describe("Claude Code account status", () => {
   });
 
   it.each([
+    ["Claude Ultra", "claude_pro", undefined, "Ultra"],
+    ["max", "claude_max", undefined, "Max"],
+    ["max", "unknown", undefined, "Max"],
+    ["max", undefined, undefined, "Max"],
+    ["max", "claude_pro", "other@example.com", "Max"],
+    ["max", "claude_pro", "CLAUDE@example.com", "Pro"],
+  ])("keeps profile/account attribution for %s / %s / %s", async (subscriptionType, organizationType, emailAddress, planLabel) => {
+    state.account = { ...signedIn, subscriptionType };
+    state.profile = { organizationType, emailAddress };
+    expect(await getClaudeProviderUsage(process.env)).toMatchObject({ usage: { planLabel } });
+    expect(await getClaudeProviderHealth(process.env)).toMatchObject({ health: { planLabel } });
+  });
+
+  it("uses the explicit profile for health as well as usage", async () => {
+    const env = { ...process.env, CLAUDE_CONFIG_DIR: path.resolve("/profiles/contributed") };
+    await getClaudeProviderHealth(env);
+    await getClaudeProviderUsage(env);
+    expect(state.files).toEqual(Array(2).fill(path.join(env.CLAUDE_CONFIG_DIR, ".claude.json")));
+  });
+
+  it.each([
     ["Claude Code has no usable login", signedOut, true],
     ["plan limits do not apply to the login", signedIn, false],
   ])(
@@ -112,7 +137,7 @@ describe("Claude Code account status", () => {
         rate_limits: null,
       };
 
-      expect(await getClaudeProviderUsage()).toEqual({
+      expect(await getClaudeProviderUsage(process.env)).toEqual({
         supported: true,
         usage: { status: "unauthenticated" },
       });
@@ -120,16 +145,16 @@ describe("Claude Code account status", () => {
   );
 
   it("reports health from the account Claude Code signs in with", async () => {
-    expect(await getClaudeProviderHealth()).toMatchObject({
+    expect(await getClaudeProviderHealth(process.env)).toMatchObject({
       health: {
         status: "ready",
         accountEmail: "claude@example.com",
-        planLabel: "Ultra",
+        planLabel: "Pro",
       },
     });
 
     state.account = signedOut;
-    expect(await getClaudeProviderHealth()).toMatchObject({
+    expect(await getClaudeProviderHealth(process.env)).toMatchObject({
       health: { status: "unauthenticated", accountEmail: null },
     });
   });

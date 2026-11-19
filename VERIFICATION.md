@@ -429,3 +429,61 @@ messages but does not repair previously damaged transcripts.
 
 No live Claude requests were made. The installed plugin was not reloaded,
 no automation was created, and no changes were pushed.
+
+## Account, unanswered interaction, withdrawal, text, and environment sync, 2026-11-19
+
+Imported `a55b383`, `bc674ed`, `6b779c8`, `343b5e8`, and `d9bcc98`, oldest
+first, through `d9bcc98cac2b924e4c667e435d721a602e63e4c4`. Before editing, the
+checkout was clean at the dispatched HEAD
+`da6d3c6ef4bcd7a599f452e200468903c1fd54e1`, and `UPSTREAM_COMMIT` matched
+`9a261b58e9e59f73701ff9f32ec90672901ce550`. GitHub confirmed ancestry and the
+complete ordered provider history. Every provider file from all six exact
+archives was compared; changed file sets match each commit's provider file
+list. All ordered provider patches applied without replacing fork files.
+
+The target package version remains `0.1.0`; the release increments the fork
+revision once to `0.1.0-telemetry.12+upstream.d9bcc98`. The pinned checksum is
+the generator's `digest()` over all 97 provider files from the exact target
+archive. README and plugin overview baseline links are updated.
+
+- `npm run typecheck`: passed.
+- `npm test`: 511 passed, 1 opt-in live SDK test skipped (35 files passed,
+  1 skipped). The upstream account downgrade, failure-denial, withdrawal,
+  and environment-aware command memoization regressions are included.
+  Additional standalone coverage checks inherited/contributed env filtering,
+  Windows case-insensitive overrides (simulated), optional sessionless env
+  validation, actual child-process env and PATH/version probes, profile/email
+  attribution and Ultra preservation, warning deltas for failed questions,
+  and emoji boundaries in command metadata and fallback question headers.
+  Existing bridge conformance, telemetry, cache-lifetime, TTL, tooltip, and
+  public SDK import coverage remains in the passing suite.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm run build`: passed for server, host, and frontend artifacts on BB 0.49.0.
+  Build reports SDK pin 0.6.104 versus host SDK 0.6.132; the pin is retained.
+- Package version, both root lockfile versions, and all three artifact
+  `pluginVersion` fields agree. Every artifact retains plugin identity
+  `claude-code-telemetry`.
+- Both source comparison patches regenerated against the exact target archive;
+  generator `--check` verifies application and every resulting file.
+- `git diff --check`: passed.
+
+SDK 0.6.163 is not published to npm on this import date (version lookup returns
+404; latest is 0.6.157). Instead of repinning to unavailable or host-incompatible
+SDK APIs, the required small upstream helpers are backported with existing
+public SDK process primitives. The profile read in health also follows its
+explicit env rather than the upstream leftover `process.env`. No runtime or
+development dependencies changed.
+
+Provider-side import is complete. Host-side approval withdrawal needs upstream
+#7797 runtime/daemon/server/projection support (host-daemon protocol >=269).
+Contributed env on sessionless health/installation/command discovery needs
+upstream #7722 host support (protocol >=270). Older requests are accepted;
+older hosts cannot supply those new host-side behaviors. Upstream #7796's
+provider-boundary JSON serialization also requires its BB runtime update.
+The local safe cuts work independently. Existing Bash-description, guided
+sign-in, and pooled catalog requirements remain documented in UPSTREAM.md.
+No live Windows console validation was performed; only its environment merge
+branch was simulated in automated tests.
+
+No live Claude requests were made. The installed plugin was not reloaded,
+no automation or worker agent was created, and no changes were pushed.
