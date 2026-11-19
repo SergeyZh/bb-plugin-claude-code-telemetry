@@ -110,4 +110,3 @@ function npmGlobalPackageVersion(
     return null;
   }
 }
-

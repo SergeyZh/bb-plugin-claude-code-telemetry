@@ -487,3 +487,12 @@ branch was simulated in automated tests.
 
 No live Claude requests were made. The installed plugin was not reloaded,
 no automation or worker agent was created, and no changes were pushed.
+
+The staged diff check additionally caught a trailing blank line in each of two
+new helper files (untracked files were absent from the earlier working-tree
+diff check). The initial integration commit had already been created because
+the shell sequence did not stop on that check's failure. Both blank lines were
+removed, patches regenerated, and the staged diff and patch checks rerun before
+a separate correction commit, without amending history or bumping the release
+again. This correction changes only whitespace and these verification notes;
+the passing runtime checks above remain applicable.

@@ -17,4 +17,3 @@ export function sliceUtf16Head(value: string, maxChars: number): string {
   }
   return value.slice(0, end);
 }
-

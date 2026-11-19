@@ -195,10 +195,10 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab7
      method: z.literal("thread/start"),
 diff --git a/src/bridge/maintenance-compat.ts b/src/bridge/maintenance-compat.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..7faa38abb71ae79b2573f15a7ac071732ccfc2a9
+index 0000000000000000000000000000000000000000..f86283f36b38b9834c8847d702dde24f9a2a93b0
 --- /dev/null
 +++ b/src/bridge/maintenance-compat.ts
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,112 @@
 +// Backported from get-bb/bb at d9bcc98cac2b924e4c667e435d721a602e63e4c4.
 +// Keep SDK 0.6.104 standalone compatibility until these helpers are published.
 +import {
@@ -311,7 +311,6 @@ index 0000000000000000000000000000000000000000..7faa38abb71ae79b2573f15a7ac07173
 +    return null;
 +  }
 +}
-+
 diff --git a/src/bridge/provider-commands.ts b/src/bridge/provider-commands.ts
 index 1f014b194f47a97d00e0a6d59cb8efb2ea2f17ba..dc0f3311f917a00709a1adef3a73c12269abe694 100644
 --- a/src/bridge/provider-commands.ts
@@ -1043,10 +1042,10 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
  }
 diff --git a/src/utf16.ts b/src/utf16.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..8a022093f7749dbcc3c8697976385b7ffbde25e9
+index 0000000000000000000000000000000000000000..bbce3d06fc73e691283527f0f9dccfa1d6493601
 --- /dev/null
 +++ b/src/utf16.ts
-@@ -0,0 +1,20 @@
+@@ -0,0 +1,19 @@
 +// Backported from get-bb/bb at d9bcc98cac2b924e4c667e435d721a602e63e4c4.
 +// Keep SDK 0.6.104 standalone compatibility until these helpers are published.
 +function isHighSurrogateAt(value: string, index: number): boolean {
@@ -1066,4 +1065,3 @@ index 0000000000000000000000000000000000000000..8a022093f7749dbcc3c8697976385b7f
 +  }
 +  return value.slice(0, end);
 +}
-+
