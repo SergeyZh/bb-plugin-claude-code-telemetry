@@ -503,7 +503,7 @@ index 9c2ab273dadfa77563a3f9b1d3447c252087066e..cdd85dba88cc8082a4556e0c6abb1c8d
  }
  
 diff --git a/src/delta-translation.ts b/src/delta-translation.ts
-index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb7a4b832a 100644
+index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef3a75094e 100644
 --- a/src/delta-translation.ts
 +++ b/src/delta-translation.ts
 @@ -1,3 +1,4 @@
@@ -519,7 +519,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
    errorEnvelopeSchema,
    extractResultText,
    jsonRpcEnvelopeSchema,
-@@ -313,7 +313,7 @@ function normalizeClaudeRateLimits(
+@@ -315,7 +315,7 @@ function normalizeClaudeRateLimits(
    const providerKey = info.rateLimitType ?? null;
  
    return {
@@ -528,7 +528,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
      status,
      kind:
        providerKey === "overage"
-@@ -392,6 +392,7 @@ interface HeldSkillOpen {
+@@ -394,6 +394,7 @@ interface HeldSkillOpen {
  interface ClaudeThreadDialectState {
    mirror: ClaudeTurnMirror;
    cumulativeTokens: ThreadEventTokenUsageBreakdown;
@@ -536,7 +536,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
    promptCacheTtlMs: number | undefined;
    latestRequestContextTokens: number | undefined;
    latestProviderCheckpointId: string | undefined;
-@@ -416,6 +417,7 @@ function createThreadState(): ClaudeThreadDialectState {
+@@ -419,6 +420,7 @@ function createThreadState(): ClaudeThreadDialectState {
    return {
      mirror: { turnOpen: false, responseStarted: false, segment: 0 },
      cumulativeTokens: ZERO_TOKEN_USAGE,
@@ -544,15 +544,15 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
      promptCacheTtlMs: undefined,
      latestRequestContextTokens: undefined,
      latestProviderCheckpointId: undefined,
-@@ -472,6 +474,7 @@ export function createClaudeDeltaTranslator(
+@@ -476,6 +478,7 @@ export function createClaudeDeltaTranslator(
      state.suppressUnacceptedTurnStart = false;
      state.mirror.turnOpen = true;
      state.mirror.segment += 1;
 +    state.requestUsage.resetTurn();
      state.mirror.responseStarted = false;
+     state.continuationBlocked = false;
      state.latestRequestContextTokens = undefined;
-     state.latestProviderCheckpointId = undefined;
-@@ -821,6 +824,16 @@ export function createClaudeDeltaTranslator(
+@@ -847,6 +850,16 @@ export function createClaudeDeltaTranslator(
      state.lastModelFallback = { ...transition, segment: state.mirror.segment };
    }
  
@@ -569,7 +569,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
    function translateAssistantMessage(
      event: unknown,
      state: ClaudeThreadDialectState,
-@@ -891,6 +904,9 @@ export function createClaudeDeltaTranslator(
+@@ -917,6 +930,9 @@ export function createClaudeDeltaTranslator(
        state.latestProviderCheckpointId = providerCheckpointId;
      }
      if (parentToolCallId === undefined) {
@@ -579,7 +579,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
        const requestContextTokens = extractClaudeRequestContextTokens(message);
        if (requestContextTokens !== null) {
          state.latestRequestContextTokens = requestContextTokens;
-@@ -1163,23 +1179,14 @@ export function createClaudeDeltaTranslator(
+@@ -1189,23 +1205,14 @@ export function createClaudeDeltaTranslator(
          attach: "open",
        });
      }
@@ -609,7 +609,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
      }
  
      const pendingHardRateLimitRejection =
-@@ -1441,6 +1448,9 @@ export function createClaudeDeltaTranslator(
+@@ -1470,6 +1477,9 @@ export function createClaudeDeltaTranslator(
      const state = stateFor({ threadId });
      const deltas = releaseHeldSkillOpen(state, undefined);
      if (state.mirror.turnOpen) {
@@ -619,6 +619,53 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
        deltas.push(...withMirror(state, [{ kind: "session.ended" }]));
      }
      deltas.push(
+diff --git a/src/http-error-compat.ts b/src/http-error-compat.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ce6bb277ab4b40eea99f57d5e97df48efc3fe5e8
+--- /dev/null
++++ b/src/http-error-compat.ts
+@@ -0,0 +1,41 @@
++// Backported from get-bb/bb at bce7015f188b8b150a65abb9c3e9d31cb756f4d1.
++// SDK 0.6.104 predates this public API; preserve the upstream cross-copy brand.
++export interface BbHttpErrorArgs {
++  body: unknown;
++  code: string | null;
++  message: string;
++  status: number;
++}
++
++const httpErrorBrand = Symbol.for("@bb/sdk/http-error");
++
++/**
++ * A non-2xx response from the bb server API. `status` is the HTTP status,
++ * `code` the server's error code (`thread_not_found`, `forbidden`, ...) when
++ * the body carried one, and `body` the parsed response body. `instanceof`
++ * recognizes errors thrown by any copy of the SDK, so a plugin's bundled copy
++ * matches the errors `bb.sdk` throws from the host.
++ */
++export class BbHttpError extends Error {
++  static [Symbol.hasInstance](value: unknown): boolean {
++    return (
++      typeof value === "object" &&
++      value !== null &&
++      Reflect.get(value, httpErrorBrand) === true
++    );
++  }
++  readonly body: unknown;
++  readonly code: string | null;
++  readonly status: number;
++
++  constructor(args: BbHttpErrorArgs) {
++    super(`HTTP ${args.status}: ${args.message}`);
++    Object.defineProperty(this, httpErrorBrand, { value: true });
++    this.name = "BbHttpError";
++    this.body = args.body;
++    this.code = args.code;
++    this.status = args.status;
++  }
++}
++
++export { BbHttpError as experimental_BbHttpError };
 diff --git a/src/interactions.ts b/src/interactions.ts
 index 8e15a6ba93c0c57611e96435d29a85bed8f040de..4ddbde32bff98fe08810892e5bff240a29d7decb 100644
 --- a/src/interactions.ts
@@ -997,10 +1044,30 @@ index cbf39cac6c1a47314e7821bc38ae4228434b8945..3774e3e69d2fb6064d403521a347d185
      ...(args.options.reasoningLevel
        ? { reasoningLevel: args.options.reasoningLevel }
 diff --git a/src/usage-source.ts b/src/usage-source.ts
-index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc054696cc3 100644
+index 1b9145c6f06d751a9fe851b9b8aa6e9d286a2891..fac625071db0faac1076137a60ea2de15f3a3d0a 100644
 --- a/src/usage-source.ts
 +++ b/src/usage-source.ts
-@@ -58,8 +58,8 @@ export function registerUsageSource(bb: BbPluginApi) {
+@@ -1,4 +1,5 @@
+-import { experimental_BbHttpError, type BbPluginApi } from "@get-bb/plugin-sdk";
++import type { BbPluginApi } from "@get-bb/plugin-sdk";
++import { experimental_BbHttpError } from "./http-error-compat.js";
+ import { z } from "zod";
+ import {
+   usageSourceRpcContract,
+@@ -32,7 +33,11 @@ export function registerUsageSource(bb: BbPluginApi) {
+   ): Promise<UsageMeasurement> => {
+     const [hostId, providerId] = locatorSchema.parse(JSON.parse(resourceId));
+     const host = await bb.sdk.hosts.get({ hostId }).catch((error: unknown) => {
+-      if (error instanceof experimental_BbHttpError && error.status === 404)
++      // Older hosts do not brand HTTP errors. Retain their previous 404 mapping.
++      if (
++        (error instanceof experimental_BbHttpError && error.status === 404) ||
++        (error instanceof Error && "status" in error && error.status === 404)
++      )
+         throw new Error("Usage resource no longer exists.");
+       throw error;
+     });
+@@ -58,8 +63,8 @@ export function registerUsageSource(bb: BbPluginApi) {
        !providers.some(
          (provider) =>
            provider.id === providerId &&
@@ -1011,7 +1078,7 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
        )
      )
        throw new Error("Usage resource no longer exists.");
-@@ -85,8 +85,6 @@ export function registerUsageSource(bb: BbPluginApi) {
+@@ -85,8 +90,6 @@ export function registerUsageSource(bb: BbPluginApi) {
            observedAt:
              usage.status === "ok" ? Date.now() : (previous?.observedAt ?? null),
            usage: {
@@ -1020,7 +1087,7 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
              ...usage,
              plan: metadata.plan,
              ...(usage.status === "ok"
-@@ -140,8 +138,8 @@ export function registerUsageSource(bb: BbPluginApi) {
+@@ -140,8 +143,8 @@ export function registerUsageSource(bb: BbPluginApi) {
                return providers
                  .filter(
                    (provider) =>
@@ -1031,7 +1098,7 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
                  )
                  .map((provider) => {
                    const id = JSON.stringify([host.id, provider.id]);
-@@ -170,7 +168,7 @@ export function registerUsageSource(bb: BbPluginApi) {
+@@ -170,7 +173,7 @@ export function registerUsageSource(bb: BbPluginApi) {
      {
        experimental_discoverable: true,
        experimental_description:

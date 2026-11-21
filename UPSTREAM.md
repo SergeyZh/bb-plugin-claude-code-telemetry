@@ -14,20 +14,20 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.12+upstream.d9bcc98`:
+The current version is `0.1.0-telemetry.13+upstream.bce7015`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.12` is this fork's release revision. Increment it for every release,
+- `telemetry.13` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.d9bcc98` identifies the latest fully imported upstream baseline.
+- `upstream.bce7015` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.13+upstream.d9bcc98`. A later upstream import would increment the
+`0.1.0-telemetry.14+upstream.bce7015`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
@@ -297,3 +297,56 @@ Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 TTL selection and tooltips, standalone packaging, and extra regressions are
 preserved. No live requests, plugin reload, automation creation, push, or worker
 agents were used.
+
+## Blocking notice and HTTP error sync, 2026-11-21
+
+Imported both provider commits after `d9bcc98`, oldest first, through
+[`bce7015`](https://github.com/get-bb/bb/commit/bce7015f188b8b150a65abb9c3e9d31cb756f4d1):
+
+- [`4d2cbc7`](https://github.com/get-bb/bb/commit/4d2cbc79d69e60b896b5a940b618e843283b1a57)
+  (2026-11-20), "Render blocking Claude SDK notices as turn errors (#7896)":
+  validate blocking informational notices, show their reason as a provider
+  error, and fail the trailing result without duplicating the error or losing
+  token accounting. Hook-block outcomes get their specific reason. A later
+  accepted prompt resets the block; stale notices are suppressed and malformed
+  or nonblocking notices remain diagnostics. All upstream regressions are kept.
+- [`bce7015`](https://github.com/get-bb/bb/commit/bce7015f188b8b150a65abb9c3e9d31cb756f4d1)
+  (2026-11-20), "Send plugin failures to the plugin's own log (#7875)":
+  recognize branded `experimental_BbHttpError` host-not-found responses in
+  usage discovery. The plugin's standalone adaptation retains its earlier
+  unbranded `Error.status === 404` fallback for older hosts.
+
+GitHub confirms baseline ancestry and the complete ordered provider history.
+Every provider file from the exact baseline, intermediate, and target archives
+was compared. Only the four notice files and two usage-source files changed;
+ordered patches were adapted without replacing fork files. The target package
+version remains `0.1.0`; the fork revision increments once from 12 to
+`0.1.0-telemetry.13+upstream.bce7015`. The full baseline is
+`bce7015f188b8b150a65abb9c3e9d31cb756f4d1`. Its 98 provider files have generator
+`digest()` SHA-256 `a9009c7c22c072e6ecee32cd3b136ca8302477e0e06514d8395bd1033592869a`.
+
+### SDK and host compatibility
+
+The notice translation uses existing delta APIs and needs no new host, SDK,
+Claude CLI, or Agent SDK dependency. The HTTP error API was introduced in
+Plugin SDK 0.6.167; this fork keeps its 0.6.104 pin and backports the exact small
+`BbHttpError` class from the target's `packages/sdk/src/http-error.ts` into
+`src/http-error-compat.ts`, exporting the experimental alias locally. Its
+`Symbol.for("@bb/sdk/http-error")` brand and `Symbol.hasInstance` recognize
+errors from newer host SDK copies. The explicit legacy 404 fallback preserves
+older-host behavior; unlike upstream's strict branded-only check, unbranded
+`Error` instances carrying status 404 remain accepted. Tests cover both paths
+and cross-copy branding. No dependency or minimum host requirement changed.
+
+The broader #7875 failure logging and CLI envelopes are BB core changes,
+not standalone provider code. Plugin-attributed failure logs require its
+server/runtime update; forwarding host-worker stdout/stderr and exit reasons
+also requires its matching daemon protocol 273 or newer. This import does not
+provide those host behaviors on older BB installations. Existing withdrawal,
+environment forwarding, JSON serialization, Bash-description, guided sign-in,
+and pooled catalog limitations documented above remain in effect.
+
+Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
+TTL selection and tooltips, standalone packaging, and extra regression tests
+are preserved. No live requests, plugin reload, automation creation, push,
+or additional worker agents were used.

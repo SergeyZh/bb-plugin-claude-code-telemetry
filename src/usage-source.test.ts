@@ -1,3 +1,4 @@
+import { experimental_BbHttpError } from "./http-error-compat.js";
 import { expect, it, vi } from "vitest";
 import {
   createFakePluginHost,
@@ -11,7 +12,15 @@ import {
   usageResourceListSchema,
 } from "./usage-contract.js";
 
-it("publishes only its own maintenance providers without a display and only measures the requested resource", async () => {
+it.each([
+  new experimental_BbHttpError({
+    status: 404,
+    code: null,
+    message: "Host not found",
+    body: null,
+  }),
+  Object.assign(new Error("Host not found"), { status: 404 }),
+])("publishes only its own maintenance providers without a display and only measures the requested resource (%#)", async (missingHostError) => {
   const collect = vi.fn(async () => ({
     "claude-code-telemetry": {
       status: "ok" as const,
@@ -31,8 +40,7 @@ it("publishes only its own maintenance providers without a display and only meas
           makeHostResponse({ id: "offline", status: "disconnected" }),
         ],
         get: async ({ hostId }) => {
-          if (hostId === "missing")
-            throw Object.assign(new Error("Host not found"), { status: 404 });
+          if (hostId === "missing") throw missingHostError;
           return makeHostResponse({
             id: hostId,
             status: hostId === "offline" ? "disconnected" : "connected",

@@ -1,4 +1,5 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
+import { experimental_BbHttpError } from "./http-error-compat.js";
 import { z } from "zod";
 import {
   usageSourceRpcContract,
@@ -32,7 +33,11 @@ export function registerUsageSource(bb: BbPluginApi) {
   ): Promise<UsageMeasurement> => {
     const [hostId, providerId] = locatorSchema.parse(JSON.parse(resourceId));
     const host = await bb.sdk.hosts.get({ hostId }).catch((error: unknown) => {
-      if (error instanceof Error && "status" in error && error.status === 404)
+      // Older hosts do not brand HTTP errors. Retain their previous 404 mapping.
+      if (
+        (error instanceof experimental_BbHttpError && error.status === 404) ||
+        (error instanceof Error && "status" in error && error.status === 404)
+      )
         throw new Error("Usage resource no longer exists.");
       throw error;
     });

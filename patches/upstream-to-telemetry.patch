@@ -175,7 +175,7 @@ index 0000000000000000000000000000000000000000..2d6c97c2ceb3913ec3af0128ea6684c0
 +OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 +SOFTWARE.
 diff --git a/PLUGIN_OVERVIEW.md b/PLUGIN_OVERVIEW.md
-index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..11563dbfb05e507a4bdbad36d63dfe23ea1b4905 100644
+index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..2b1d8ef2cd6ab1e1d3550650b76f03b7bd8b6fb1 100644
 --- a/PLUGIN_OVERVIEW.md
 +++ b/PLUGIN_OVERVIEW.md
 @@ -1,23 +1,63 @@
@@ -194,7 +194,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..11563dbfb05e507a4bdbad36d63dfe23
 -  from your home directory and project.
 -- Health, usage, and install status for Claude Code on each host, with an install or update action.
 +Compared with the original provider at
-+[d9bcc98 (2026-11-19)](https://github.com/get-bb/bb/tree/d9bcc98cac2b924e4c667e435d721a602e63e4c4/plugins/provider-claude-code):
++[bce7015 (2026-11-20)](https://github.com/get-bb/bb/tree/bce7015f188b8b150a65abb9c3e9d31cb756f4d1/plugins/provider-claude-code):
  
 -## Settings
 +- Usage is reported for observed main-agent requests, with message-ID
@@ -260,16 +260,16 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..11563dbfb05e507a4bdbad36d63dfe23
 +The provider bundles the needed helper backports and retains SDK 0.6.104.
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..2d749f3108a92562f93eaba7e9d4574a06e9e020
+index 0000000000000000000000000000000000000000..641f587e010b455423cde5fc5be895369c077cb7
 --- /dev/null
 +++ b/README.md
-@@ -0,0 +1,228 @@
+@@ -0,0 +1,234 @@
 +# Claude Code Telemetry for BB
 +
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.12+upstream.d9bcc98` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.13+upstream.bce7015` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -284,7 +284,7 @@ index 0000000000000000000000000000000000000000..2d749f3108a92562f93eaba7e9d4574a
 +existing threads keep their provider, and the built-in provider stays available.
 +
 +This comparison is against the original provider at
-+[`d9bcc98` (2026-11-19)](https://github.com/get-bb/bb/tree/d9bcc98cac2b924e4c667e435d721a602e63e4c4/plugins/provider-claude-code),
++[`bce7015` (2026-11-20)](https://github.com/get-bb/bb/tree/bce7015f188b8b150a65abb9c3e9d31cb756f4d1/plugins/provider-claude-code),
 +the latest upstream provider revision imported into this fork.
 +
 +| Capability | Original provider at this revision | Claude Code Telemetry |
@@ -319,6 +319,12 @@ index 0000000000000000000000000000000000000000..2d749f3108a92562f93eaba7e9d4574a
 +upstream copies and verifies that the resulting source files match this fork.
 +
 +## Limitations and compatibility
++
++The imported blocking-notice fix works with the existing host APIs. The new
++HTTP error brand is backported while preserving legacy 404 handling. Upstream
++#7875 plugin failure logging and CLI envelopes require its BB core update;
++host-worker log forwarding additionally requires daemon protocol >=273. See
++[import compatibility notes](UPSTREAM.md#blocking-notice-and-http-error-sync-2026-11-21).
 +
 +- **SDK-visible usage, not every network request.** Individual reports require
 +  a stable main-agent message ID and complete token/cache counters. Subagents,
@@ -494,10 +500,10 @@ index 0000000000000000000000000000000000000000..2d749f3108a92562f93eaba7e9d4574a
 +```
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..992e3722c37447dd722acebbf5edd24eaa0468e2
+index 0000000000000000000000000000000000000000..9776443194f5ae538e57102dddf81c4b4d6cf572
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,299 @@
+@@ -0,0 +1,352 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -514,20 +520,20 @@ index 0000000000000000000000000000000000000000..992e3722c37447dd722acebbf5edd24e
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.12+upstream.d9bcc98`:
++The current version is `0.1.0-telemetry.13+upstream.bce7015`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.12` is this fork's release revision. Increment it for every release,
++- `telemetry.13` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-+- `upstream.d9bcc98` identifies the latest fully imported upstream baseline.
++- `upstream.bce7015` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
 +  import date below and in the comparison-patch generator.
 +
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.13+upstream.d9bcc98`. A later upstream import would increment the
++`0.1.0-telemetry.14+upstream.bce7015`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
@@ -797,12 +803,65 @@ index 0000000000000000000000000000000000000000..992e3722c37447dd722acebbf5edd24e
 +TTL selection and tooltips, standalone packaging, and extra regressions are
 +preserved. No live requests, plugin reload, automation creation, push, or worker
 +agents were used.
++
++## Blocking notice and HTTP error sync, 2026-11-21
++
++Imported both provider commits after `d9bcc98`, oldest first, through
++[`bce7015`](https://github.com/get-bb/bb/commit/bce7015f188b8b150a65abb9c3e9d31cb756f4d1):
++
++- [`4d2cbc7`](https://github.com/get-bb/bb/commit/4d2cbc79d69e60b896b5a940b618e843283b1a57)
++  (2026-11-20), "Render blocking Claude SDK notices as turn errors (#7896)":
++  validate blocking informational notices, show their reason as a provider
++  error, and fail the trailing result without duplicating the error or losing
++  token accounting. Hook-block outcomes get their specific reason. A later
++  accepted prompt resets the block; stale notices are suppressed and malformed
++  or nonblocking notices remain diagnostics. All upstream regressions are kept.
++- [`bce7015`](https://github.com/get-bb/bb/commit/bce7015f188b8b150a65abb9c3e9d31cb756f4d1)
++  (2026-11-20), "Send plugin failures to the plugin's own log (#7875)":
++  recognize branded `experimental_BbHttpError` host-not-found responses in
++  usage discovery. The plugin's standalone adaptation retains its earlier
++  unbranded `Error.status === 404` fallback for older hosts.
++
++GitHub confirms baseline ancestry and the complete ordered provider history.
++Every provider file from the exact baseline, intermediate, and target archives
++was compared. Only the four notice files and two usage-source files changed;
++ordered patches were adapted without replacing fork files. The target package
++version remains `0.1.0`; the fork revision increments once from 12 to
++`0.1.0-telemetry.13+upstream.bce7015`. The full baseline is
++`bce7015f188b8b150a65abb9c3e9d31cb756f4d1`. Its 98 provider files have generator
++`digest()` SHA-256 `a9009c7c22c072e6ecee32cd3b136ca8302477e0e06514d8395bd1033592869a`.
++
++### SDK and host compatibility
++
++The notice translation uses existing delta APIs and needs no new host, SDK,
++Claude CLI, or Agent SDK dependency. The HTTP error API was introduced in
++Plugin SDK 0.6.167; this fork keeps its 0.6.104 pin and backports the exact small
++`BbHttpError` class from the target's `packages/sdk/src/http-error.ts` into
++`src/http-error-compat.ts`, exporting the experimental alias locally. Its
++`Symbol.for("@bb/sdk/http-error")` brand and `Symbol.hasInstance` recognize
++errors from newer host SDK copies. The explicit legacy 404 fallback preserves
++older-host behavior; unlike upstream's strict branded-only check, unbranded
++`Error` instances carrying status 404 remain accepted. Tests cover both paths
++and cross-copy branding. No dependency or minimum host requirement changed.
++
++The broader #7875 failure logging and CLI envelopes are BB core changes,
++not standalone provider code. Plugin-attributed failure logs require its
++server/runtime update; forwarding host-worker stdout/stderr and exit reasons
++also requires its matching daemon protocol 273 or newer. This import does not
++provide those host behaviors on older BB installations. Existing withdrawal,
++environment forwarding, JSON serialization, Bash-description, guided sign-in,
++and pooled catalog limitations documented above remain in effect.
++
++Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
++TTL selection and tooltips, standalone packaging, and extra regression tests
++are preserved. No live requests, plugin reload, automation creation, push,
++or additional worker agents were used.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..471cbb0d90319ab5b6d47ebc7ae291ca8f0f065d
+index 0000000000000000000000000000000000000000..dcddedc8f4e1f4239651254f826739a7b312d05a
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,498 @@
+@@ -0,0 +1,542 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -1301,6 +1360,50 @@ index 0000000000000000000000000000000000000000..471cbb0d90319ab5b6d47ebc7ae291ca
 +a separate correction commit, without amending history or bumping the release
 +again. This correction changes only whitespace and these verification notes;
 +the passing runtime checks above remain applicable.
++
++## Blocking notice and HTTP error sync, 2026-11-21
++
++Before editing, the checkout was clean at dispatched HEAD
++`359f1244cea52284b968fe88648e0629b7fe7b30`, and `UPSTREAM_COMMIT` matched
++`d9bcc98cac2b924e4c667e435d721a602e63e4c4`. GitHub confirms ancestry and exactly
++the dispatched two provider commits through the target. Compared every
++provider file from all three exact archives and applied `4d2cbc7` followed by
++`bce7015`, adapting the HTTP error import to the standalone compatibility file.
++No fork files were replaced wholesale. The target upstream package version is
++`0.1.0`; the release increments once to
++`0.1.0-telemetry.13+upstream.bce7015`. Baseline links, full imported SHA, and
++source checksum over all 98 target provider files are updated.
++
++- `npm run typecheck`: passed.
++- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
++- `npm test`: 523 passed, 1 opt-in live SDK test skipped (37 files passed,
++  1 skipped). Includes the unchanged upstream blocking-notice regressions,
++  branded and legacy missing-host usage paths, cross-copy HTTP error branding,
++  error metadata, and retained bridge, telemetry, cache-lifetime, TTL, tooltip,
++  SDK compatibility, and public SDK import coverage.
++- `npm run build`: passed for server, host, and frontend artifacts. Build
++  reports SDK pin 0.6.104 versus the installed host's SDK 0.6.157; the pin is
++  deliberately retained. No dependencies were changed or repinned.
++- Package version, both root lockfile versions, and all three artifact
++  `pluginVersion` fields agree. Artifact plugin IDs remain
++  `claude-code-telemetry`.
++- Both comparison patches regenerated against the exact target archive;
++  generator `--check` verifies application and every resulting file.
++- Working-tree and staged `git diff --check`: passed.
++
++The exact target HTTP error class is backported with its global symbol brand
++rather than requiring SDK 0.6.167. Newer hosts' branded errors are recognized;
++older hosts retain the prior unbranded `Error.status === 404` fallback. This
++compatibility deviation from upstream's strict check is deliberate and tested.
++The blocking-notice fix uses existing host delta APIs. Broader #7875 failure
++logs and CLI envelopes require the BB core update; host-worker log forwarding
++also requires matching daemon protocol >=273. Those core changes are outside
++this provider import. Existing host limitations remain in UPSTREAM.md.
++
++No live Claude requests, live host-log validation, plugin reload, automation
++creation, additional worker agents, or push occurred. The opt-in live SDK test
++was not enabled. The local integration commit uses per-command disabled
++signing, without changing persistent Git settings.
 diff --git a/app.ts b/app.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7beb5bab3a
@@ -1318,19 +1421,19 @@ index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7b
 +});
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..5bff8410941945d89e5b6857d46f04ece831908e
+index 0000000000000000000000000000000000000000..e971fd9c8c14cc75fe1a391a9f07dbc339ef32e8
 --- /dev/null
 +++ b/package-lock.json
 @@ -0,0 +1,4242 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.12+upstream.d9bcc98",
++  "version": "0.1.0-telemetry.13+upstream.bce7015",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.12+upstream.d9bcc98",
++      "version": "0.1.0-telemetry.13+upstream.bce7015",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -5565,7 +5668,7 @@ index 0000000000000000000000000000000000000000..5bff8410941945d89e5b6857d46f04ec
 +  }
 +}
 diff --git a/package.json b/package.json
-index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..46a959d78346a710b7658a98123ddae12e02e349 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..02f16dc5d0269dd7e48281b5824e40bffb3b513e 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,26 +1,28 @@
@@ -5573,7 +5676,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..46a959d78346a710b7658a98123ddae1
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.12+upstream.d9bcc98",
++  "version": "0.1.0-telemetry.13+upstream.bce7015",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -6042,7 +6145,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..3591a8cfce4afb6b90d1f9aab76628b61b6f9369
+index 0000000000000000000000000000000000000000..07e1260d749d7a4b0f17cabb1d1743d77af5428c
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -6058,8 +6161,8 @@ index 0000000000000000000000000000000000000000..3591a8cfce4afb6b90d1f9aab76628b6
 +import urllib.request
 +
 +
-+UPSTREAM_COMMIT = "d9bcc98cac2b924e4c667e435d721a602e63e4c4"
-+UPSTREAM_SOURCE_SHA256 = "1b851551c3f0ca79affdbe919b1c19a64db7635361472921a188cd5b27130822"
++UPSTREAM_COMMIT = "bce7015f188b8b150a65abb9c3e9d31cb756f4d1"
++UPSTREAM_SOURCE_SHA256 = "a9009c7c22c072e6ecee32cd3b136ca8302477e0e06514d8395bd1033592869a"
 +ROOT = Path(__file__).resolve().parents[1]
 +GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 +
@@ -7757,7 +7860,7 @@ index 36ff6d37266d8c961e5ddb483459ae4ee307e9b7..0562d461fbcc07a5633b0d3b9d4bfa0c
  
      expect(
 diff --git a/src/delta-translation.ts b/src/delta-translation.ts
-index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb7a4b832a 100644
+index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef3a75094e 100644
 --- a/src/delta-translation.ts
 +++ b/src/delta-translation.ts
 @@ -1,3 +1,4 @@
@@ -7773,7 +7876,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
    errorEnvelopeSchema,
    extractResultText,
    jsonRpcEnvelopeSchema,
-@@ -313,7 +313,7 @@ function normalizeClaudeRateLimits(
+@@ -315,7 +315,7 @@ function normalizeClaudeRateLimits(
    const providerKey = info.rateLimitType ?? null;
  
    return {
@@ -7782,7 +7885,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
      status,
      kind:
        providerKey === "overage"
-@@ -392,6 +392,7 @@ interface HeldSkillOpen {
+@@ -394,6 +394,7 @@ interface HeldSkillOpen {
  interface ClaudeThreadDialectState {
    mirror: ClaudeTurnMirror;
    cumulativeTokens: ThreadEventTokenUsageBreakdown;
@@ -7790,7 +7893,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
    promptCacheTtlMs: number | undefined;
    latestRequestContextTokens: number | undefined;
    latestProviderCheckpointId: string | undefined;
-@@ -416,6 +417,7 @@ function createThreadState(): ClaudeThreadDialectState {
+@@ -419,6 +420,7 @@ function createThreadState(): ClaudeThreadDialectState {
    return {
      mirror: { turnOpen: false, responseStarted: false, segment: 0 },
      cumulativeTokens: ZERO_TOKEN_USAGE,
@@ -7798,15 +7901,15 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
      promptCacheTtlMs: undefined,
      latestRequestContextTokens: undefined,
      latestProviderCheckpointId: undefined,
-@@ -472,6 +474,7 @@ export function createClaudeDeltaTranslator(
+@@ -476,6 +478,7 @@ export function createClaudeDeltaTranslator(
      state.suppressUnacceptedTurnStart = false;
      state.mirror.turnOpen = true;
      state.mirror.segment += 1;
 +    state.requestUsage.resetTurn();
      state.mirror.responseStarted = false;
+     state.continuationBlocked = false;
      state.latestRequestContextTokens = undefined;
-     state.latestProviderCheckpointId = undefined;
-@@ -821,6 +824,16 @@ export function createClaudeDeltaTranslator(
+@@ -847,6 +850,16 @@ export function createClaudeDeltaTranslator(
      state.lastModelFallback = { ...transition, segment: state.mirror.segment };
    }
  
@@ -7823,7 +7926,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
    function translateAssistantMessage(
      event: unknown,
      state: ClaudeThreadDialectState,
-@@ -891,6 +904,9 @@ export function createClaudeDeltaTranslator(
+@@ -917,6 +930,9 @@ export function createClaudeDeltaTranslator(
        state.latestProviderCheckpointId = providerCheckpointId;
      }
      if (parentToolCallId === undefined) {
@@ -7833,7 +7936,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
        const requestContextTokens = extractClaudeRequestContextTokens(message);
        if (requestContextTokens !== null) {
          state.latestRequestContextTokens = requestContextTokens;
-@@ -1163,23 +1179,14 @@ export function createClaudeDeltaTranslator(
+@@ -1189,23 +1205,14 @@ export function createClaudeDeltaTranslator(
          attach: "open",
        });
      }
@@ -7863,7 +7966,7 @@ index 633039ad1a7c3a5ec7d8fcfc85d79cf01af60ca1..1959ca6d09ab1f8d8ff5e37b63edbcfb
      }
  
      const pendingHardRateLimitRejection =
-@@ -1441,6 +1448,9 @@ export function createClaudeDeltaTranslator(
+@@ -1470,6 +1477,9 @@ export function createClaudeDeltaTranslator(
      const state = stateFor({ threadId });
      const deltas = releaseHeldSkillOpen(state, undefined);
      if (state.mirror.turnOpen) {
@@ -7986,6 +8089,99 @@ index 639f261a2e925f910b1dca49dcca7f4f86c97048..dbcbc9da814f90ca280b12fc3892e865
        threadId: "bb-thread-1",
      });
  
+diff --git a/src/http-error-compat.test.ts b/src/http-error-compat.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..d67ac95b4f7b5f990b2ea08058c52167a0136406
+--- /dev/null
++++ b/src/http-error-compat.test.ts
+@@ -0,0 +1,40 @@
++import { describe, expect, it } from "vitest";
++import { experimental_BbHttpError } from "./http-error-compat.js";
++
++describe("standalone HTTP error compatibility", () => {
++  it("recognizes host errors by the exact upstream brand across SDK copies", () => {
++    const hostError = Object.assign(new Error("Host not found"), {
++      status: 404,
++      code: "host_not_found",
++      body: { error: "missing" },
++    });
++    Object.defineProperty(hostError, Symbol.for("@bb/sdk/http-error"), {
++      value: true,
++    });
++    expect(hostError).toBeInstanceOf(experimental_BbHttpError);
++    expect(Object.assign(new Error("Unrelated"), { status: 404 })).not.toBeInstanceOf(
++      experimental_BbHttpError,
++    );
++    for (const value of [null, undefined, 404, "error", {}, { status: 404 }]) {
++      expect(value instanceof experimental_BbHttpError).toBe(false);
++    }
++  });
++
++  it("constructs the upstream error message and response metadata", () => {
++    const error = new experimental_BbHttpError({
++      status: 503,
++      code: "unavailable",
++      message: "Try later",
++      body: { retry: true },
++    });
++    expect(error).toBeInstanceOf(Error);
++    expect(error).toBeInstanceOf(experimental_BbHttpError);
++    expect(error).toMatchObject({
++      name: "BbHttpError",
++      message: "HTTP 503: Try later",
++      status: 503,
++      code: "unavailable",
++      body: { retry: true },
++    });
++  });
++});
+diff --git a/src/http-error-compat.ts b/src/http-error-compat.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ce6bb277ab4b40eea99f57d5e97df48efc3fe5e8
+--- /dev/null
++++ b/src/http-error-compat.ts
+@@ -0,0 +1,41 @@
++// Backported from get-bb/bb at bce7015f188b8b150a65abb9c3e9d31cb756f4d1.
++// SDK 0.6.104 predates this public API; preserve the upstream cross-copy brand.
++export interface BbHttpErrorArgs {
++  body: unknown;
++  code: string | null;
++  message: string;
++  status: number;
++}
++
++const httpErrorBrand = Symbol.for("@bb/sdk/http-error");
++
++/**
++ * A non-2xx response from the bb server API. `status` is the HTTP status,
++ * `code` the server's error code (`thread_not_found`, `forbidden`, ...) when
++ * the body carried one, and `body` the parsed response body. `instanceof`
++ * recognizes errors thrown by any copy of the SDK, so a plugin's bundled copy
++ * matches the errors `bb.sdk` throws from the host.
++ */
++export class BbHttpError extends Error {
++  static [Symbol.hasInstance](value: unknown): boolean {
++    return (
++      typeof value === "object" &&
++      value !== null &&
++      Reflect.get(value, httpErrorBrand) === true
++    );
++  }
++  readonly body: unknown;
++  readonly code: string | null;
++  readonly status: number;
++
++  constructor(args: BbHttpErrorArgs) {
++    super(`HTTP ${args.status}: ${args.message}`);
++    Object.defineProperty(this, httpErrorBrand, { value: true });
++    this.name = "BbHttpError";
++    this.body = args.body;
++    this.code = args.code;
++    this.status = args.status;
++  }
++}
++
++export { BbHttpError as experimental_BbHttpError };
 diff --git a/src/interactions.test.ts b/src/interactions.test.ts
 index bdff313a0cb8a5e663dce3d8a85ebbb28329fc8f..50d8169522bdb21882701fb24818aeeebab87124 100644
 --- a/src/interactions.test.ts
@@ -8855,19 +9051,51 @@ index 44dec8fdd317aa9040ae3aaedcda23d49b5e8c88..328cadbd3d41bc8cfe84a9a28668f695
          }),
        ]);
 diff --git a/src/usage-source.test.ts b/src/usage-source.test.ts
-index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8ef1ad289 100644
+index 5f49db938c5ecf2264aadb00f546deed5a1fe585..0f447f0af0455b8226722a0546ee729c99d1a5cb 100644
 --- a/src/usage-source.test.ts
 +++ b/src/usage-source.test.ts
-@@ -13,7 +13,7 @@ import {
+@@ -1,4 +1,4 @@
+-import { experimental_BbHttpError } from "@get-bb/plugin-sdk";
++import { experimental_BbHttpError } from "./http-error-compat.js";
+ import { expect, it, vi } from "vitest";
+ import {
+   createFakePluginHost,
+@@ -12,9 +12,17 @@ import {
+   usageResourceListSchema,
+ } from "./usage-contract.js";
  
- it("publishes only its own maintenance providers without a display and only measures the requested resource", async () => {
+-it("publishes only its own maintenance providers without a display and only measures the requested resource", async () => {
++it.each([
++  new experimental_BbHttpError({
++    status: 404,
++    code: null,
++    message: "Host not found",
++    body: null,
++  }),
++  Object.assign(new Error("Host not found"), { status: 404 }),
++])("publishes only its own maintenance providers without a display and only measures the requested resource (%#)", async (missingHostError) => {
    const collect = vi.fn(async () => ({
 -    "claude-code": {
 +    "claude-code-telemetry": {
        status: "ok" as const,
        accountEmail: "same@example.com",
        planLabel: "Custom subscription",
-@@ -50,9 +50,9 @@ it("publishes only its own maintenance providers without a display and only meas
+@@ -32,13 +40,7 @@ it("publishes only its own maintenance providers without a display and only meas
+           makeHostResponse({ id: "offline", status: "disconnected" }),
+         ],
+         get: async ({ hostId }) => {
+-          if (hostId === "missing")
+-            throw new experimental_BbHttpError({
+-              status: 404,
+-              code: null,
+-              message: "Host not found",
+-              body: null,
+-            });
++          if (hostId === "missing") throw missingHostError;
+           return makeHostResponse({
+             id: hostId,
+             status: hostId === "offline" ? "disconnected" : "connected",
+@@ -56,9 +58,9 @@ it("publishes only its own maintenance providers without a display and only meas
                    pluginId: "unrelated",
                  },
                  {
@@ -8879,7 +9107,7 @@ index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8
                  },
                  {
                    id: "another",
-@@ -83,7 +83,7 @@ it("publishes only its own maintenance providers without a display and only meas
+@@ -89,7 +91,7 @@ it("publishes only its own maintenance providers without a display and only meas
        "Usage resource no longer exists.",
      );
      await expect(read("online", "foreign")).rejects.toThrow("no longer exists");
@@ -8888,7 +9116,7 @@ index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8
        accountKey: null,
        usage: {
          status: "ok",
-@@ -94,25 +94,25 @@ it("publishes only its own maintenance providers without a display and only meas
+@@ -100,25 +102,25 @@ it("publishes only its own maintenance providers without a display and only meas
      });
      expect(collect).toHaveBeenCalledWith({
        hostId: "online",
@@ -8919,7 +9147,7 @@ index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8
        "no longer exists",
      );
    } finally {
-@@ -133,15 +133,15 @@ it("forwards validated provider-owned identity and normalization metadata while
+@@ -139,15 +141,15 @@ it("forwards validated provider-owned identity and normalization metadata while
        providers: {
          list: async () => [
            {
@@ -8938,7 +9166,7 @@ index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8
              status: "ok",
              accountKey: "issuer:organization:123",
              accountEmail: "same@example.com",
-@@ -165,7 +165,7 @@ it("forwards validated provider-owned identity and normalization metadata while
+@@ -171,7 +173,7 @@ it("forwards validated provider-owned identity and normalization metadata while
      plugin(bb);
      const value = usageMeasurementSchema.parse(
        await harness.behavior.callRpc(usageFetchMethod, {
@@ -8947,7 +9175,7 @@ index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8
          refresh: false,
        }),
      );
-@@ -193,7 +193,7 @@ it("coalesces concurrent reads and makes a forced refresh wait for a fresh colle
+@@ -199,7 +201,7 @@ it("coalesces concurrent reads and makes a forced refresh wait for a fresh colle
    const collect = vi.fn(async () => {
      await gate;
      return {
@@ -8956,7 +9184,7 @@ index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8
          status: "ok" as const,
          accountEmail: null,
          planLabel: null,
-@@ -213,9 +213,9 @@ it("coalesces concurrent reads and makes a forced refresh wait for a fresh colle
+@@ -219,9 +221,9 @@ it("coalesces concurrent reads and makes a forced refresh wait for a fresh colle
        providers: {
          list: async () => [
            {
@@ -8968,7 +9196,7 @@ index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8
            },
          ],
        },
-@@ -226,7 +226,7 @@ it("coalesces concurrent reads and makes a forced refresh wait for a fresh colle
+@@ -232,7 +234,7 @@ it("coalesces concurrent reads and makes a forced refresh wait for a fresh colle
      plugin(bb);
      const read = (refresh: boolean) =>
        harness.behavior.callRpc(usageFetchMethod, {
@@ -8978,10 +9206,30 @@ index 4b66e08c9e1cd19f52cd48e6a1bc2bcf68f803f6..95bc0e19f2b9070dbf5bb00a7b9629b8
        });
      const first = read(false);
 diff --git a/src/usage-source.ts b/src/usage-source.ts
-index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc054696cc3 100644
+index 1b9145c6f06d751a9fe851b9b8aa6e9d286a2891..fac625071db0faac1076137a60ea2de15f3a3d0a 100644
 --- a/src/usage-source.ts
 +++ b/src/usage-source.ts
-@@ -58,8 +58,8 @@ export function registerUsageSource(bb: BbPluginApi) {
+@@ -1,4 +1,5 @@
+-import { experimental_BbHttpError, type BbPluginApi } from "@get-bb/plugin-sdk";
++import type { BbPluginApi } from "@get-bb/plugin-sdk";
++import { experimental_BbHttpError } from "./http-error-compat.js";
+ import { z } from "zod";
+ import {
+   usageSourceRpcContract,
+@@ -32,7 +33,11 @@ export function registerUsageSource(bb: BbPluginApi) {
+   ): Promise<UsageMeasurement> => {
+     const [hostId, providerId] = locatorSchema.parse(JSON.parse(resourceId));
+     const host = await bb.sdk.hosts.get({ hostId }).catch((error: unknown) => {
+-      if (error instanceof experimental_BbHttpError && error.status === 404)
++      // Older hosts do not brand HTTP errors. Retain their previous 404 mapping.
++      if (
++        (error instanceof experimental_BbHttpError && error.status === 404) ||
++        (error instanceof Error && "status" in error && error.status === 404)
++      )
+         throw new Error("Usage resource no longer exists.");
+       throw error;
+     });
+@@ -58,8 +63,8 @@ export function registerUsageSource(bb: BbPluginApi) {
        !providers.some(
          (provider) =>
            provider.id === providerId &&
@@ -8992,7 +9240,7 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
        )
      )
        throw new Error("Usage resource no longer exists.");
-@@ -85,8 +85,6 @@ export function registerUsageSource(bb: BbPluginApi) {
+@@ -85,8 +90,6 @@ export function registerUsageSource(bb: BbPluginApi) {
            observedAt:
              usage.status === "ok" ? Date.now() : (previous?.observedAt ?? null),
            usage: {
@@ -9001,7 +9249,7 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
              ...usage,
              plan: metadata.plan,
              ...(usage.status === "ok"
-@@ -140,8 +138,8 @@ export function registerUsageSource(bb: BbPluginApi) {
+@@ -140,8 +143,8 @@ export function registerUsageSource(bb: BbPluginApi) {
                return providers
                  .filter(
                    (provider) =>
@@ -9012,7 +9260,7 @@ index 15ae7da9b2f2a4787743348da6cada9e8eb889f1..2ab9141c5fc6e063906fd8953bb9ecc0
                  )
                  .map((provider) => {
                    const id = JSON.stringify([host.id, provider.id]);
-@@ -170,7 +168,7 @@ export function registerUsageSource(bb: BbPluginApi) {
+@@ -170,7 +173,7 @@ export function registerUsageSource(bb: BbPluginApi) {
      {
        experimental_discoverable: true,
        experimental_description:

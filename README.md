@@ -3,7 +3,7 @@
 A standalone fork of BB's Claude Code provider, installed alongside it.
 
 - Plugin and provider ID: `claude-code-telemetry`
-- Version: `0.1.0-telemetry.12+upstream.d9bcc98` (see [versioning](UPSTREAM.md#versioning))
+- Version: `0.1.0-telemetry.13+upstream.bce7015` (see [versioning](UPSTREAM.md#versioning))
 - Picker name: **Claude Code Telemetry**
 - Original provider: `claude-code`, unchanged
 
@@ -18,7 +18,7 @@ as the built-in provider. It adds a separate picker entry and plugin settings;
 existing threads keep their provider, and the built-in provider stays available.
 
 This comparison is against the original provider at
-[`d9bcc98` (2026-11-19)](https://github.com/get-bb/bb/tree/d9bcc98cac2b924e4c667e435d721a602e63e4c4/plugins/provider-claude-code),
+[`bce7015` (2026-11-20)](https://github.com/get-bb/bb/tree/bce7015f188b8b150a65abb9c3e9d31cb756f4d1/plugins/provider-claude-code),
 the latest upstream provider revision imported into this fork.
 
 | Capability | Original provider at this revision | Claude Code Telemetry |
@@ -53,6 +53,12 @@ to verify they are current. Generation applies both patches to disposable
 upstream copies and verifies that the resulting source files match this fork.
 
 ## Limitations and compatibility
+
+The imported blocking-notice fix works with the existing host APIs. The new
+HTTP error brand is backported while preserving legacy 404 handling. Upstream
+#7875 plugin failure logging and CLI envelopes require its BB core update;
+host-worker log forwarding additionally requires daemon protocol >=273. See
+[import compatibility notes](UPSTREAM.md#blocking-notice-and-http-error-sync-2026-11-21).
 
 - **SDK-visible usage, not every network request.** Individual reports require
   a stable main-agent message ID and complete token/cache counters. Subagents,

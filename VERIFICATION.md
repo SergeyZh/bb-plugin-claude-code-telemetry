@@ -496,3 +496,47 @@ removed, patches regenerated, and the staged diff and patch checks rerun before
 a separate correction commit, without amending history or bumping the release
 again. This correction changes only whitespace and these verification notes;
 the passing runtime checks above remain applicable.
+
+## Blocking notice and HTTP error sync, 2026-11-21
+
+Before editing, the checkout was clean at dispatched HEAD
+`359f1244cea52284b968fe88648e0629b7fe7b30`, and `UPSTREAM_COMMIT` matched
+`d9bcc98cac2b924e4c667e435d721a602e63e4c4`. GitHub confirms ancestry and exactly
+the dispatched two provider commits through the target. Compared every
+provider file from all three exact archives and applied `4d2cbc7` followed by
+`bce7015`, adapting the HTTP error import to the standalone compatibility file.
+No fork files were replaced wholesale. The target upstream package version is
+`0.1.0`; the release increments once to
+`0.1.0-telemetry.13+upstream.bce7015`. Baseline links, full imported SHA, and
+source checksum over all 98 target provider files are updated.
+
+- `npm run typecheck`: passed.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm test`: 523 passed, 1 opt-in live SDK test skipped (37 files passed,
+  1 skipped). Includes the unchanged upstream blocking-notice regressions,
+  branded and legacy missing-host usage paths, cross-copy HTTP error branding,
+  error metadata, and retained bridge, telemetry, cache-lifetime, TTL, tooltip,
+  SDK compatibility, and public SDK import coverage.
+- `npm run build`: passed for server, host, and frontend artifacts. Build
+  reports SDK pin 0.6.104 versus the installed host's SDK 0.6.157; the pin is
+  deliberately retained. No dependencies were changed or repinned.
+- Package version, both root lockfile versions, and all three artifact
+  `pluginVersion` fields agree. Artifact plugin IDs remain
+  `claude-code-telemetry`.
+- Both comparison patches regenerated against the exact target archive;
+  generator `--check` verifies application and every resulting file.
+- Working-tree and staged `git diff --check`: passed.
+
+The exact target HTTP error class is backported with its global symbol brand
+rather than requiring SDK 0.6.167. Newer hosts' branded errors are recognized;
+older hosts retain the prior unbranded `Error.status === 404` fallback. This
+compatibility deviation from upstream's strict check is deliberate and tested.
+The blocking-notice fix uses existing host delta APIs. Broader #7875 failure
+logs and CLI envelopes require the BB core update; host-worker log forwarding
+also requires matching daemon protocol >=273. Those core changes are outside
+this provider import. Existing host limitations remain in UPSTREAM.md.
+
+No live Claude requests, live host-log validation, plugin reload, automation
+creation, additional worker agents, or push occurred. The opt-in live SDK test
+was not enabled. The local integration commit uses per-command disabled
+signing, without changing persistent Git settings.
