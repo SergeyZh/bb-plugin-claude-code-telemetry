@@ -474,7 +474,7 @@ index 0000000000000000000000000000000000000000..37a56fa36defd0ad3c6c1f477cfe378d
 +  requestCancelled: "notifications/cancelled",
 +} as const;
 diff --git a/src/bridge/session-options.ts b/src/bridge/session-options.ts
-index 9c2ab273dadfa77563a3f9b1d3447c252087066e..cdd85dba88cc8082a4556e0c6abb1c8d2a12a207 100644
+index c69a1af6797dee341fec4e4ac08a9bd096f0d2e2..ec7fc7fe1f3ad918dcb8c22e856e12f0d454dc2e 100644
 --- a/src/bridge/session-options.ts
 +++ b/src/bridge/session-options.ts
 @@ -9,6 +9,7 @@ import { accessSync, constants, statSync } from "node:fs";

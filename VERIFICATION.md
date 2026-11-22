@@ -540,3 +540,54 @@ No live Claude requests, live host-log validation, plugin reload, automation
 creation, additional worker agents, or push occurred. The opt-in live SDK test
 was not enabled. The local integration commit uses per-command disabled
 signing, without changing persistent Git settings.
+
+## Per-session writable folder sync, 2026-11-22
+
+Before editing, the checkout was clean at dispatched HEAD
+`1c9429cbaee549653717673e331be1077db8d3e4`, and `UPSTREAM_COMMIT` matched
+`bce7015f188b8b150a65abb9c3e9d31cb756f4d1`. GitHub history pinned to the
+resolved default-branch HEAD contains exactly the dispatched provider commit
+through `796cdcc0f4bf8a55e23664035c54e8db6fe9d272`; the compare API confirms
+baseline ancestry. Comparing all 98 provider files from both exact archives
+finds only the session-options implementation and bridge tests changed.
+Both provider changes are imported, retaining the fork additions. The target
+package version is `0.1.0`; the fork revision increases once from 13 to
+`0.1.0-telemetry.14+upstream.796cdcc`. Baseline links, import notes, and the
+source checksum using the generator's `digest()` are updated.
+
+Initial typecheck, tests, and lint failed because ambiguous upstream test hunks
+placed temporary-directory setup and cleanup in neighboring fork tests.
+Those hunks were moved to the matching start/resume root tests, and all checks
+below were rerun successfully after that correction.
+
+- `npm run typecheck`: passed.
+- `npm test`: 523 passed, 1 opt-in live SDK test skipped (37 files passed,
+  1 skipped). Includes all updated upstream bridge regressions using existing
+  temporary directories, the nonexistent lock-file root exclusion from
+  `additionalDirectories` while retained in sandbox `allowWrite`, and existing
+  start/resume/permission-update coverage. Fork telemetry, cache-lifetime,
+  TTL, tooltips, bridge conformance, and SDK compatibility tests are retained.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm run build`: passed for server, host, and frontend artifacts. The build
+  reports the existing SDK pin 0.6.104 versus host SDK 0.6.157; no dependencies
+  were repinned. The change uses no new SDK APIs.
+- Package version and both root lockfile versions agree. All three generated
+  artifact metadata files have that version and ID `claude-code-telemetry`.
+- Both comparison patches regenerated against the exact target provider
+  archive; generator `--check` verifies application and every resulting file.
+- Working-tree and staged `git diff --check`: passed.
+
+The provider-side target is fully imported. BB core's per-thread storage
+isolation, per-session write roots, and linked-worktree packed-ref grants
+require the matching #7994 server/runtime/host-workspace/daemon update
+(host-daemon protocol >=277). Older hosts keep supplying their old roots.
+The existing provider wire key is unchanged. Upstream SDK metadata 0.6.179
+is not a new requirement for these two provider files. Linux sandboxes discard
+nonexistent write paths, so upstream's lock-file ref-cleanup fix remains
+limited there; macOS supports these file grants. Existing host limitations
+remain documented in UPSTREAM.md.
+
+No live Claude requests, sandbox validation on macOS or Linux, plugin reload,
+automation creation, worker agents, or push occurred. The live SDK test was
+not enabled. The local integration commit uses per-command disabled signing,
+without changing persistent Git settings.

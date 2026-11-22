@@ -167,6 +167,14 @@ export function buildWorkspaceWriteSandbox(
 
 const CLAUDE_WINDOWS_EXECUTABLE_NAME = "claude.exe";
 
+function isExistingDirectory(candidatePath: string): boolean {
+  try {
+    return statSync(candidatePath).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 function isExecutableFile(candidatePath: string): boolean {
   try {
     accessSync(candidatePath, constants.X_OK);
@@ -241,7 +249,7 @@ export function buildSessionOptions(
   const model = params.model;
   const sandbox = buildWorkspaceWriteSandbox(params);
   const additionalDirectories = isWorkspaceWriteSession(params)
-    ? (params.additionalWorkspaceWriteRoots ?? [])
+    ? (params.additionalWorkspaceWriteRoots ?? []).filter(isExistingDirectory)
     : [];
   const pathToClaudeCodeExecutable = resolveClaudeCodeExecutable({ env });
   const flagSettings = buildFlagSettings(params);

@@ -14,20 +14,20 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.13+upstream.bce7015`:
+The current version is `0.1.0-telemetry.14+upstream.796cdcc`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.13` is this fork's release revision. Increment it for every release,
+- `telemetry.14` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.bce7015` identifies the latest fully imported upstream baseline.
+- `upstream.796cdcc` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.14+upstream.bce7015`. A later upstream import would increment the
+`0.1.0-telemetry.15+upstream.796cdcc`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
@@ -350,3 +350,48 @@ Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 TTL selection and tooltips, standalone packaging, and extra regression tests
 are preserved. No live requests, plugin reload, automation creation, push,
 or additional worker agents were used.
+
+## Per-session writable folder sync, 2026-11-22
+
+Imported the only provider commit after `bce7015` through
+[`796cdcc`](https://github.com/get-bb/bb/commit/796cdcc0f4bf8a55e23664035c54e8db6fe9d272)
+(2026-11-22), "Decide agent writable folders per session; grant each thread only its own storage (#7994)".
+Only existing directories are passed as Claude `additionalDirectories`
+(`--add-dir`). Every supplied write root, including nonexistent lock-file
+paths, remains in sandbox `filesystem.allowWrite`. Passing file roots through
+`--add-dir` can prevent their sandbox write grant from taking effect.
+The upstream bridge regressions now use real temporary directories and cover
+start, resume, and permission updates; all fork regressions are retained.
+
+GitHub confirms ancestry and exactly one newer provider commit through the
+target. Comparing all 98 provider files from the exact baseline and target
+archives finds only `session-options.ts` and `bridge.test.ts` changed. Both
+patches were applied without replacing fork files. The target package version
+is `0.1.0`; the fork revision increases once from 13 to
+`0.1.0-telemetry.14+upstream.796cdcc`. The full imported baseline is
+`796cdcc0f4bf8a55e23664035c54e8db6fe9d272`; the generator's source checksum is
+`560ac0f1f9b7f455aabce8a17e2c83a2af36149e5c94a27b8f9e1087db87f124`.
+
+### SDK and host compatibility
+
+The provider filtering uses existing Node and Agent SDK APIs. No new Plugin
+SDK, Claude CLI, Agent SDK, or dependency is required; the SDK stays pinned to
+0.6.104. The upstream repository bumps SDK metadata to 0.6.179, but neither
+changed provider file imports a new SDK API. The wire key
+`providerOptions.additionalWorkspaceWriteRoots` is unchanged and already
+accepted by this fork on session start, resume, turn start, and steer.
+
+Per-session root calculation, granting only the thread's own storage, and
+adding worktree `packed-refs`/lock roots require the matching BB server,
+runtime, host-workspace, and daemon changes in #7994 (host-daemon protocol
+>=277). An older host continues to supply its older root list; this provider
+alone cannot isolate thread storage or add missing host roots. On macOS,
+nonexistent lock-file grants are supported; upstream reports that Linux
+sandboxes discard nonexistent writable paths, so the linked-worktree ref
+cleanup fix remains limited there. The host implementation is outside this
+standalone provider import. Existing compatibility limitations above remain.
+
+Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
+TTL selection and tooltips, standalone packaging, and extra regression tests
+are preserved. No live requests, reload, automation creation, worker agents,
+or push were performed.
