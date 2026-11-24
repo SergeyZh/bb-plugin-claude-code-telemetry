@@ -52,7 +52,7 @@ index 12a77d3b090bcc905a4d8e7b7667f2b1d025a8e8..7a259d86a84728e8bea245a6d88b8590
        passthrough: ["BB_CLAUDE_CODE_EXECUTABLE", "CLAUDE_CODE_OAUTH_TOKEN"],
      },
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index c9f7042288ce01d75af7a376ea08ea710b6f4cd2..7397f094c50ba72864759486b3ab0b18807934d5 100644
+index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626f5ea7b31 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
 @@ -13,7 +13,6 @@ import {
@@ -110,7 +110,7 @@ index c9f7042288ce01d75af7a376ea08ea710b6f4cd2..7397f094c50ba72864759486b3ab0b18
  function applyChromeSetting(
    attachment: ThreadAttachment,
    enabled: boolean | undefined,
-@@ -1087,6 +1109,7 @@ function toSessionConstructionConfig(
+@@ -1098,6 +1120,7 @@ function toSessionConstructionConfig(
        permissionScope: params.permissionScope,
        plugins: params.plugins,
        sandboxEnabled: params.sandboxEnabled,
@@ -118,7 +118,7 @@ index c9f7042288ce01d75af7a376ea08ea710b6f4cd2..7397f094c50ba72864759486b3ab0b18
      },
    };
  }
-@@ -2677,6 +2700,7 @@ async function runTurnInput(
+@@ -2688,6 +2711,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);

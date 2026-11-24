@@ -591,3 +591,47 @@ No live Claude requests, sandbox validation on macOS or Linux, plugin reload,
 automation creation, worker agents, or push occurred. The live SDK test was
 not enabled. The local integration commit uses per-command disabled signing,
 without changing persistent Git settings.
+
+## Project and environment writable folder sync, 2026-11-24
+
+Imported the complete provider change after `796cdcc` through
+`891ceb1bbfb28c36dd1fb51fbdaab800581c44d8` (#8007). GitHub history contains
+exactly one provider commit in this interval, and compare confirms baseline
+ancestry. All 98 provider files from the exact baseline and target archives
+were compared: only `bridge.ts` and `bridge.test.ts` changed. The ordered patch
+was applied to the fork, preserving its telemetry and other additions.
+The target upstream version is `0.1.0`; the fork revision increases once from
+14 to `0.1.0-telemetry.15+upstream.891ceb1`. The exact source checksum,
+baseline links, and import notes are updated.
+
+- `npm run typecheck`: passed.
+- `npm test`: 524 passed, 1 opt-in live SDK test skipped (37 files passed,
+  1 skipped). Includes the upstream writable-folder removal regression and
+  adjusted context-probe and additive permission-update assertions. Existing
+  fork telemetry, cache lifetime, TTL, tooltips, conformance, and compatibility
+  coverage remains in the suite.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm run build`: passed for server, host, and frontend artifacts using
+  BB 0.50.1. The existing SDK-pin warning reports plugin SDK 0.6.104 versus
+  host SDK 0.6.157. No dependencies were repinned.
+- Package version and both root lockfile versions agree. All three generated
+  artifact metadata files contain that version and `claude-code-telemetry` ID.
+- Both comparison patches regenerated against the exact target provider
+  archive. Generator `--check` verifies patch freshness, application, and every
+  resulting file; working-tree and staged `git diff --check` passed.
+
+The provider-side target is fully imported. Removing a workspace write root
+marks the resident session for reconstruction before the next turn; adding
+roots retains live permission updates. No new SDK API, Claude CLI, or Agent
+SDK dependency is required. Project folder management, environment-provider
+`additionalPaths`, and merging those roots before each turn require the
+matching #8007 BB core changes and host-daemon protocol 278. Upstream SDK
+0.6.187's environment-provider API is not an agent-provider requirement.
+Older hosts must supply a reduced root list to trigger removal handling;
+this standalone plugin cannot add the BB folder-management features itself.
+Existing host and Linux sandbox limitations remain in UPSTREAM.md.
+
+No live Claude requests, live sandbox checks, plugin reload, automation
+creation, additional worker agents, or push occurred. The live SDK test was
+not enabled. The integration commit uses per-command disabled signing without
+changing persistent Git settings.

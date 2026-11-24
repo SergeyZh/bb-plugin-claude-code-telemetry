@@ -14,20 +14,20 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.14+upstream.796cdcc`:
+The current version is `0.1.0-telemetry.15+upstream.891ceb1`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.14` is this fork's release revision. Increment it for every release,
+- `telemetry.15` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.796cdcc` identifies the latest fully imported upstream baseline.
+- `upstream.891ceb1` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.15+upstream.796cdcc`. A later upstream import would increment the
+`0.1.0-telemetry.16+upstream.891ceb1`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
@@ -395,3 +395,43 @@ Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 TTL selection and tooltips, standalone packaging, and extra regression tests
 are preserved. No live requests, reload, automation creation, worker agents,
 or push were performed.
+
+## Project and environment writable folder sync, 2026-11-24
+
+Imported the only provider commit after `796cdcc` through
+[`891ceb1`](https://github.com/get-bb/bb/commit/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8)
+(2026-11-23), "Add project folders and environment folders to the agent's writable workspace (#8007)".
+When a workspace write root is removed, the provider rebuilds the resident
+Claude session before its next turn, resuming the conversation with only the
+remaining roots. Adding roots retains the live permission update behavior.
+The upstream removal regression and its two existing test adjustments are
+included alongside all fork tests.
+
+GitHub confirms baseline ancestry and exactly one newer provider commit through
+the target. Comparing all 98 provider files from both exact archives finds only
+`bridge.ts` and `bridge.test.ts` changed. Both patches were applied to the fork
+without replacing files. The target package version remains `0.1.0`; this
+release increments the fork revision once from 14 to
+`0.1.0-telemetry.15+upstream.891ceb1`. The full imported baseline is
+`891ceb1bbfb28c36dd1fb51fbdaab800581c44d8`; its generator `digest()` checksum is
+`bafa97c3a9b74f774cd7fa27a8f2769eb7f586ff425a7a245e949fdf4539c822`.
+
+### SDK and host compatibility
+
+Neither changed provider file uses a new SDK API. Plugin SDK 0.6.104, the
+Claude Agent SDK dependency, and standalone packaging remain unchanged.
+The provider continues consuming the existing
+`providerOptions.additionalWorkspaceWriteRoots` field on turn start and steer.
+Project folder management, environment-provider `additionalPaths`, and merging
+those folders before each turn require the matching #8007 BB server, runtime,
+host-workspace, and daemon changes (host-daemon protocol 278). The upstream
+Plugin SDK 0.6.187 adds the environment-provider API; it is not required by this
+agent provider's removal handling. Older hosts can still use that handling
+when they supply a reduced root list, but this plugin alone cannot expose
+project folder management or collect environment folders. Existing host and
+Linux sandbox limitations documented above remain in effect.
+
+Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
+TTL selection and tooltips, standalone packaging, and extra regressions are
+preserved. No live requests, reload, automation creation, worker agents, or
+push were performed.

@@ -175,7 +175,7 @@ index 0000000000000000000000000000000000000000..2d6c97c2ceb3913ec3af0128ea6684c0
 +OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 +SOFTWARE.
 diff --git a/PLUGIN_OVERVIEW.md b/PLUGIN_OVERVIEW.md
-index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..82675ad9c07d0b81d14cc81742ad4bec2a5a26b7 100644
+index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..803784e62b044f5d0aab3b999219d988c58ea479 100644
 --- a/PLUGIN_OVERVIEW.md
 +++ b/PLUGIN_OVERVIEW.md
 @@ -1,23 +1,63 @@
@@ -194,7 +194,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..82675ad9c07d0b81d14cc81742ad4bec
 -  from your home directory and project.
 -- Health, usage, and install status for Claude Code on each host, with an install or update action.
 +Compared with the original provider at
-+[796cdcc (2026-11-22)](https://github.com/get-bb/bb/tree/796cdcc0f4bf8a55e23664035c54e8db6fe9d272/plugins/provider-claude-code):
++[891ceb1 (2026-11-23)](https://github.com/get-bb/bb/tree/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8/plugins/provider-claude-code):
  
 -## Settings
 +- Usage is reported for observed main-agent requests, with message-ID
@@ -260,7 +260,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..82675ad9c07d0b81d14cc81742ad4bec
 +The provider bundles the needed helper backports and retains SDK 0.6.104.
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..641d27ba691526694b1bb9b947e5f715c0394ca9
+index 0000000000000000000000000000000000000000..bd5ee71834090fd706dd71ed560cca1dab7a7a7e
 --- /dev/null
 +++ b/README.md
 @@ -0,0 +1,234 @@
@@ -269,7 +269,7 @@ index 0000000000000000000000000000000000000000..641d27ba691526694b1bb9b947e5f715
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.14+upstream.796cdcc` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.15+upstream.891ceb1` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -284,7 +284,7 @@ index 0000000000000000000000000000000000000000..641d27ba691526694b1bb9b947e5f715
 +existing threads keep their provider, and the built-in provider stays available.
 +
 +This comparison is against the original provider at
-+[`796cdcc` (2026-11-22)](https://github.com/get-bb/bb/tree/796cdcc0f4bf8a55e23664035c54e8db6fe9d272/plugins/provider-claude-code),
++[`891ceb1` (2026-11-23)](https://github.com/get-bb/bb/tree/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8/plugins/provider-claude-code),
 +the latest upstream provider revision imported into this fork.
 +
 +| Capability | Original provider at this revision | Claude Code Telemetry |
@@ -500,10 +500,10 @@ index 0000000000000000000000000000000000000000..641d27ba691526694b1bb9b947e5f715
 +```
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..555b9a6c9fee088cd4c6e18d7a12bed135568a16
+index 0000000000000000000000000000000000000000..5fe645dfe2f8fc7518e5f07e096fc8d6cf6d265f
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,397 @@
+@@ -0,0 +1,437 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -520,20 +520,20 @@ index 0000000000000000000000000000000000000000..555b9a6c9fee088cd4c6e18d7a12bed1
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.14+upstream.796cdcc`:
++The current version is `0.1.0-telemetry.15+upstream.891ceb1`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.14` is this fork's release revision. Increment it for every release,
++- `telemetry.15` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-+- `upstream.796cdcc` identifies the latest fully imported upstream baseline.
++- `upstream.891ceb1` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
 +  import date below and in the comparison-patch generator.
 +
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.15+upstream.796cdcc`. A later upstream import would increment the
++`0.1.0-telemetry.16+upstream.891ceb1`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
@@ -901,12 +901,52 @@ index 0000000000000000000000000000000000000000..555b9a6c9fee088cd4c6e18d7a12bed1
 +TTL selection and tooltips, standalone packaging, and extra regression tests
 +are preserved. No live requests, reload, automation creation, worker agents,
 +or push were performed.
++
++## Project and environment writable folder sync, 2026-11-24
++
++Imported the only provider commit after `796cdcc` through
++[`891ceb1`](https://github.com/get-bb/bb/commit/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8)
++(2026-11-23), "Add project folders and environment folders to the agent's writable workspace (#8007)".
++When a workspace write root is removed, the provider rebuilds the resident
++Claude session before its next turn, resuming the conversation with only the
++remaining roots. Adding roots retains the live permission update behavior.
++The upstream removal regression and its two existing test adjustments are
++included alongside all fork tests.
++
++GitHub confirms baseline ancestry and exactly one newer provider commit through
++the target. Comparing all 98 provider files from both exact archives finds only
++`bridge.ts` and `bridge.test.ts` changed. Both patches were applied to the fork
++without replacing files. The target package version remains `0.1.0`; this
++release increments the fork revision once from 14 to
++`0.1.0-telemetry.15+upstream.891ceb1`. The full imported baseline is
++`891ceb1bbfb28c36dd1fb51fbdaab800581c44d8`; its generator `digest()` checksum is
++`bafa97c3a9b74f774cd7fa27a8f2769eb7f586ff425a7a245e949fdf4539c822`.
++
++### SDK and host compatibility
++
++Neither changed provider file uses a new SDK API. Plugin SDK 0.6.104, the
++Claude Agent SDK dependency, and standalone packaging remain unchanged.
++The provider continues consuming the existing
++`providerOptions.additionalWorkspaceWriteRoots` field on turn start and steer.
++Project folder management, environment-provider `additionalPaths`, and merging
++those folders before each turn require the matching #8007 BB server, runtime,
++host-workspace, and daemon changes (host-daemon protocol 278). The upstream
++Plugin SDK 0.6.187 adds the environment-provider API; it is not required by this
++agent provider's removal handling. Older hosts can still use that handling
++when they supply a reduced root list, but this plugin alone cannot expose
++project folder management or collect environment folders. Existing host and
++Linux sandbox limitations documented above remain in effect.
++
++Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
++TTL selection and tooltips, standalone packaging, and extra regressions are
++preserved. No live requests, reload, automation creation, worker agents, or
++push were performed.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..bae1f1927cd9769a0257c134dcad1675a2080edc
+index 0000000000000000000000000000000000000000..cfce29811548d9857104198daa7b32f02624d284
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,593 @@
+@@ -0,0 +1,637 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -1500,6 +1540,50 @@ index 0000000000000000000000000000000000000000..bae1f1927cd9769a0257c134dcad1675
 +automation creation, worker agents, or push occurred. The live SDK test was
 +not enabled. The local integration commit uses per-command disabled signing,
 +without changing persistent Git settings.
++
++## Project and environment writable folder sync, 2026-11-24
++
++Imported the complete provider change after `796cdcc` through
++`891ceb1bbfb28c36dd1fb51fbdaab800581c44d8` (#8007). GitHub history contains
++exactly one provider commit in this interval, and compare confirms baseline
++ancestry. All 98 provider files from the exact baseline and target archives
++were compared: only `bridge.ts` and `bridge.test.ts` changed. The ordered patch
++was applied to the fork, preserving its telemetry and other additions.
++The target upstream version is `0.1.0`; the fork revision increases once from
++14 to `0.1.0-telemetry.15+upstream.891ceb1`. The exact source checksum,
++baseline links, and import notes are updated.
++
++- `npm run typecheck`: passed.
++- `npm test`: 524 passed, 1 opt-in live SDK test skipped (37 files passed,
++  1 skipped). Includes the upstream writable-folder removal regression and
++  adjusted context-probe and additive permission-update assertions. Existing
++  fork telemetry, cache lifetime, TTL, tooltips, conformance, and compatibility
++  coverage remains in the suite.
++- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
++- `npm run build`: passed for server, host, and frontend artifacts using
++  BB 0.50.1. The existing SDK-pin warning reports plugin SDK 0.6.104 versus
++  host SDK 0.6.157. No dependencies were repinned.
++- Package version and both root lockfile versions agree. All three generated
++  artifact metadata files contain that version and `claude-code-telemetry` ID.
++- Both comparison patches regenerated against the exact target provider
++  archive. Generator `--check` verifies patch freshness, application, and every
++  resulting file; working-tree and staged `git diff --check` passed.
++
++The provider-side target is fully imported. Removing a workspace write root
++marks the resident session for reconstruction before the next turn; adding
++roots retains live permission updates. No new SDK API, Claude CLI, or Agent
++SDK dependency is required. Project folder management, environment-provider
++`additionalPaths`, and merging those roots before each turn require the
++matching #8007 BB core changes and host-daemon protocol 278. Upstream SDK
++0.6.187's environment-provider API is not an agent-provider requirement.
++Older hosts must supply a reduced root list to trigger removal handling;
++this standalone plugin cannot add the BB folder-management features itself.
++Existing host and Linux sandbox limitations remain in UPSTREAM.md.
++
++No live Claude requests, live sandbox checks, plugin reload, automation
++creation, additional worker agents, or push occurred. The live SDK test was
++not enabled. The integration commit uses per-command disabled signing without
++changing persistent Git settings.
 diff --git a/app.ts b/app.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7beb5bab3a
@@ -1517,19 +1601,19 @@ index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7b
 +});
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..63fd3bf775d72e40026c698353ea2f9f5c7d0506
+index 0000000000000000000000000000000000000000..c28facddd69a2c3b2a535844ed16e9159983f5cc
 --- /dev/null
 +++ b/package-lock.json
 @@ -0,0 +1,4242 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.14+upstream.796cdcc",
++  "version": "0.1.0-telemetry.15+upstream.891ceb1",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.14+upstream.796cdcc",
++      "version": "0.1.0-telemetry.15+upstream.891ceb1",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -5764,7 +5848,7 @@ index 0000000000000000000000000000000000000000..63fd3bf775d72e40026c698353ea2f9f
 +  }
 +}
 diff --git a/package.json b/package.json
-index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..3787eb8d29e08c97b3c1c0ef329e0c226152701d 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..4d8b455725adc769218a5b4bd94423f007a2a1ec 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,26 +1,28 @@
@@ -5772,7 +5856,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..3787eb8d29e08c97b3c1c0ef329e0c22
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.14+upstream.796cdcc",
++  "version": "0.1.0-telemetry.15+upstream.891ceb1",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -6241,7 +6325,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..3151078cc46cfbdfa60a034937c8856f1b6fa976
+index 0000000000000000000000000000000000000000..7032754bc85e4c9498a7c6c9f0e4803745777560
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -6257,8 +6341,8 @@ index 0000000000000000000000000000000000000000..3151078cc46cfbdfa60a034937c8856f
 +import urllib.request
 +
 +
-+UPSTREAM_COMMIT = "796cdcc0f4bf8a55e23664035c54e8db6fe9d272"
-+UPSTREAM_SOURCE_SHA256 = "560ac0f1f9b7f455aabce8a17e2c83a2af36149e5c94a27b8f9e1087db87f124"
++UPSTREAM_COMMIT = "891ceb1bbfb28c36dd1fb51fbdaab800581c44d8"
++UPSTREAM_SOURCE_SHA256 = "bafa97c3a9b74f774cd7fa27a8f2769eb7f586ff425a7a245e949fdf4539c822"
 +ROOT = Path(__file__).resolve().parents[1]
 +GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 +
@@ -6800,7 +6884,7 @@ index 16a30b869f43e95ccc91fe0cdf27fb77e39a14a3..7d8568b5424c79ef1c3fbfb493fa42de
    "turn/completed",
  ];
 diff --git a/src/bridge/__tests__/bridge.test.ts b/src/bridge/__tests__/bridge.test.ts
-index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9ab5c1fb8 100644
+index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3de3cdf99a 100644
 --- a/src/bridge/__tests__/bridge.test.ts
 +++ b/src/bridge/__tests__/bridge.test.ts
 @@ -1,3 +1,4 @@
@@ -7085,7 +7169,139 @@ index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9
      const rootsDir = mkdtempSync(join(tmpdir(), "bb-claude-roots-"));
      const worktreeGitDir = join(rootsDir, "worktrees", "bb13");
      const objectsDir = join(rootsDir, "objects");
-@@ -5731,7 +5854,7 @@ describe("bridge", () => {
+@@ -4183,6 +4306,65 @@ describe("bridge", () => {
+     }
+   });
+ 
++  it("rebuilds the session before the next turn when a writable folder is removed", async () => {
++    const bridge = createBridgeJsonRpcTestHarness(handleLine);
++    const queries: ControlledClaudeQuery[] = [];
++    queryMock.mockImplementation(() => {
++      const query = createControlledClaudeQuery();
++      queries.push(query);
++      return query;
++    });
++    const rootsDir = mkdtempSync(join(tmpdir(), "bb-claude-roots-"));
++    const extraFolder = join(rootsDir, "api");
++    const threadStorage = join(rootsDir, "storage");
++    mkdirSync(extraFolder);
++    mkdirSync(threadStorage);
++    const threadId = "thread-folder-removed";
++
++    try {
++      bridge.sendRequest(1, "thread/start", {
++        threadId,
++        cwd: "/tmp/worktree",
++        instructionMode: "append",
++        options: canonicalOptions({
++          providerOptions: {
++            additionalWorkspaceWriteRoots: [extraFolder, threadStorage],
++          },
++        }),
++      });
++      await bridge.waitForResponse(1);
++      expect(queries).toHaveLength(1);
++
++      bridge.sendRequest(10, "turn/start", {
++        ...canonicalTurnParams({
++          threadId,
++          input: [{ type: "text", text: "Continue without the api folder" }],
++        }),
++        options: canonicalOptions({
++          providerOptions: { additionalWorkspaceWriteRoots: [threadStorage] },
++        }),
++      });
++      await bridge.flushWork();
++
++      expect(queries).toHaveLength(2);
++      expect(getLatestQueryOptions()).toMatchObject({
++        resume: expect.any(String),
++        additionalDirectories: [threadStorage],
++        sandbox: expect.objectContaining({
++          filesystem: { allowWrite: [threadStorage] },
++        }),
++      });
++      await readNextPrompt(getLatestQueryCall());
++      await bridge.waitForResponse(10);
++
++      await stopBridgeThread({ bridge, queries: queries.slice(-1), threadId });
++    } finally {
++      queries.forEach((query) => query.finish());
++      bridge.restore();
++      rmSync(rootsDir, { recursive: true, force: true });
++    }
++  });
++
+   it("passes thread/resume additional workspace-write roots to Claude SDK options", async () => {
+     const bridge = createBridgeJsonRpcTestHarness(handleLine);
+     const queries: ControlledClaudeQuery[] = [];
+@@ -4245,65 +4427,6 @@ describe("bridge", () => {
+     }
+   });
+ 
+-  it("rebuilds the session before the next turn when a writable folder is removed", async () => {
+-    const bridge = createBridgeJsonRpcTestHarness(handleLine);
+-    const queries: ControlledClaudeQuery[] = [];
+-    queryMock.mockImplementation(() => {
+-      const query = createControlledClaudeQuery();
+-      queries.push(query);
+-      return query;
+-    });
+-    const rootsDir = mkdtempSync(join(tmpdir(), "bb-claude-roots-"));
+-    const extraFolder = join(rootsDir, "api");
+-    const threadStorage = join(rootsDir, "storage");
+-    mkdirSync(extraFolder);
+-    mkdirSync(threadStorage);
+-    const threadId = "thread-folder-removed";
+-
+-    try {
+-      bridge.sendRequest(1, "thread/start", {
+-        threadId,
+-        cwd: "/tmp/worktree",
+-        instructionMode: "append",
+-        options: canonicalOptions({
+-          providerOptions: {
+-            additionalWorkspaceWriteRoots: [extraFolder, threadStorage],
+-          },
+-        }),
+-      });
+-      await bridge.waitForResponse(1);
+-      expect(queries).toHaveLength(1);
+-
+-      bridge.sendRequest(10, "turn/start", {
+-        ...canonicalTurnParams({
+-          threadId,
+-          input: [{ type: "text", text: "Continue without the api folder" }],
+-        }),
+-        options: canonicalOptions({
+-          providerOptions: { additionalWorkspaceWriteRoots: [threadStorage] },
+-        }),
+-      });
+-      await bridge.flushWork();
+-
+-      expect(queries).toHaveLength(2);
+-      expect(getLatestQueryOptions()).toMatchObject({
+-        resume: expect.any(String),
+-        additionalDirectories: [threadStorage],
+-        sandbox: expect.objectContaining({
+-          filesystem: { allowWrite: [threadStorage] },
+-        }),
+-      });
+-      await readNextPrompt(getLatestQueryCall());
+-      await bridge.waitForResponse(10);
+-
+-      await stopBridgeThread({ bridge, queries: queries.slice(-1), threadId });
+-    } finally {
+-      queries.forEach((query) => query.finish());
+-      bridge.restore();
+-      rmSync(rootsDir, { recursive: true, force: true });
+-    }
+-  });
+-
+   it("returns an existing live same-provider thread/resume session", async () => {
+     const bridge = createBridgeJsonRpcTestHarness(handleLine);
+     const queries: ControlledClaudeQuery[] = [];
+@@ -5793,7 +5916,7 @@ describe("bridge", () => {
        await bridge.flushWork();
  
        expect(
@@ -7094,7 +7310,7 @@ index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9
            (event) => {
              const item =
                event.type === "item/started" ||
-@@ -6199,7 +6322,7 @@ describe("bridge", () => {
+@@ -6261,7 +6384,7 @@ describe("bridge", () => {
  
          expect(bridge.hasResponse(2)).toBe(false);
          expect(
@@ -7103,7 +7319,7 @@ index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9
              (event) => event.type === "turn/started",
            ),
          ).toBe(false);
-@@ -6212,7 +6335,7 @@ describe("bridge", () => {
+@@ -6274,7 +6397,7 @@ describe("bridge", () => {
  
          const events = assembleCapturedThreadEvents(
            bridge.messages,
@@ -7112,7 +7328,7 @@ index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9
          );
          const started = events.find((event) => event.type === "turn/started");
          expect(started).toBeDefined();
-@@ -6247,7 +6370,7 @@ describe("bridge", () => {
+@@ -6309,7 +6432,7 @@ describe("bridge", () => {
            await bridge.waitForResponse(3);
            const steered = assembleCapturedThreadEvents(
              bridge.messages,
@@ -7121,7 +7337,7 @@ index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9
            );
            expect(
              steered.filter((event) => event.type === "turn/started"),
-@@ -6265,7 +6388,7 @@ describe("bridge", () => {
+@@ -6327,7 +6450,7 @@ describe("bridge", () => {
          await stopBridgeThread({ bridge, queries, threadId });
          const stopped = assembleCapturedThreadEvents(
            bridge.messages,
@@ -7130,7 +7346,7 @@ index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9
          );
          expect(stopped).toContainEqual(
            expect.objectContaining({
-@@ -6366,7 +6489,7 @@ describe("bridge", () => {
+@@ -6428,7 +6551,7 @@ describe("bridge", () => {
      function turnEvents(bridge: BridgeJsonRpcTestHarness) {
        const events = assembleCapturedThreadEvents(
          bridge.messages,
@@ -7139,7 +7355,7 @@ index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9
        );
        return {
          completed: events.filter((event) => event.type === "turn/completed"),
-@@ -7043,7 +7166,7 @@ describe("canonical model context-window hint", () => {
+@@ -7105,7 +7228,7 @@ describe("canonical model context-window hint", () => {
  
        const contextWindowEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -7148,7 +7364,7 @@ index 3bfa48221cb4544fd3c6cc8bc402f093d7d4bfd6..7a46dc7379ea06db9c02e2b5a3c203a9
        ).filter(
          (
            event,
-@@ -7059,7 +7182,7 @@ describe("canonical model context-window hint", () => {
+@@ -7121,7 +7244,7 @@ describe("canonical model context-window hint", () => {
  
        const tokenUsageEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -7171,7 +7387,7 @@ index ea9d97ca9561bb3e2c875ed2135d62dc624fdbb8..c9aceb3e30f71749b1050a09256dbd16
        cwd: workspaceDir,
        promptInput: [{ type: "text", text: "say hello", mentions: [] }],
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index c9f7042288ce01d75af7a376ea08ea710b6f4cd2..7397f094c50ba72864759486b3ab0b18807934d5 100644
+index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626f5ea7b31 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
 @@ -13,7 +13,6 @@ import {
@@ -7229,7 +7445,7 @@ index c9f7042288ce01d75af7a376ea08ea710b6f4cd2..7397f094c50ba72864759486b3ab0b18
  function applyChromeSetting(
    attachment: ThreadAttachment,
    enabled: boolean | undefined,
-@@ -1087,6 +1109,7 @@ function toSessionConstructionConfig(
+@@ -1098,6 +1120,7 @@ function toSessionConstructionConfig(
        permissionScope: params.permissionScope,
        plugins: params.plugins,
        sandboxEnabled: params.sandboxEnabled,
@@ -7237,7 +7453,7 @@ index c9f7042288ce01d75af7a376ea08ea710b6f4cd2..7397f094c50ba72864759486b3ab0b18
      },
    };
  }
-@@ -2677,6 +2700,7 @@ async function runTurnInput(
+@@ -2688,6 +2711,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);

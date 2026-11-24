@@ -3,7 +3,7 @@
 A standalone fork of BB's Claude Code provider, installed alongside it.
 
 - Plugin and provider ID: `claude-code-telemetry`
-- Version: `0.1.0-telemetry.14+upstream.796cdcc` (see [versioning](UPSTREAM.md#versioning))
+- Version: `0.1.0-telemetry.15+upstream.891ceb1` (see [versioning](UPSTREAM.md#versioning))
 - Picker name: **Claude Code Telemetry**
 - Original provider: `claude-code`, unchanged
 
@@ -18,7 +18,7 @@ as the built-in provider. It adds a separate picker entry and plugin settings;
 existing threads keep their provider, and the built-in provider stays available.
 
 This comparison is against the original provider at
-[`796cdcc` (2026-11-22)](https://github.com/get-bb/bb/tree/796cdcc0f4bf8a55e23664035c54e8db6fe9d272/plugins/provider-claude-code),
+[`891ceb1` (2026-11-23)](https://github.com/get-bb/bb/tree/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8/plugins/provider-claude-code),
 the latest upstream provider revision imported into this fork.
 
 | Capability | Original provider at this revision | Claude Code Telemetry |
