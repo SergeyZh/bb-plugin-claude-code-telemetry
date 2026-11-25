@@ -175,10 +175,10 @@ index 0000000000000000000000000000000000000000..2d6c97c2ceb3913ec3af0128ea6684c0
 +OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 +SOFTWARE.
 diff --git a/PLUGIN_OVERVIEW.md b/PLUGIN_OVERVIEW.md
-index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..803784e62b044f5d0aab3b999219d988c58ea479 100644
+index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..123dba4d0b743c1d62dcc1539e4787e0bf4ef93f 100644
 --- a/PLUGIN_OVERVIEW.md
 +++ b/PLUGIN_OVERVIEW.md
-@@ -1,23 +1,63 @@
+@@ -1,23 +1,69 @@
 -Start a thread, pick Claude Code, and let it work in your repository from bb. The plugin drives the Claude Code CLI on the host machine. It streams the agent's work into the bb timeline.
 +Inspect Claude usage per observed request and choose a cache lifetime for each
 +thread. This experimental fork installs alongside BB's built-in Claude Code
@@ -194,7 +194,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..803784e62b044f5d0aab3b999219d988
 -  from your home directory and project.
 -- Health, usage, and install status for Claude Code on each host, with an install or update action.
 +Compared with the original provider at
-+[891ceb1 (2026-11-23)](https://github.com/get-bb/bb/tree/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8/plugins/provider-claude-code):
++[12eedb7 (2026-11-24)](https://github.com/get-bb/bb/tree/12eedb7562bd172fd69f86e25a28c1b6e456776d/plugins/provider-claude-code):
  
 -## Settings
 +- Usage is reported for observed main-agent requests, with message-ID
@@ -258,18 +258,24 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..803784e62b044f5d0aab3b999219d988
 +requests require the upstream #7722 host changes (protocol 270 or newer).
 +Older hosts remain accepted, but cannot provide those host-side behaviors.
 +The provider bundles the needed helper backports and retains SDK 0.6.104.
++
++Image reads include the upstream #8081 provider fix: successful absolute
++image-path reads settle once as `imageView`; failed and text-only reads remain
++`fileRead`. SDK 0.6.104 already supports these events. Consistent default titles
++and Eye icons for unlabelled image views require the matching BB thread-view
++update. See [image-read compatibility notes](UPSTREAM.md#image-read-preview-sync-2026-11-25).
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..bd5ee71834090fd706dd71ed560cca1dab7a7a7e
+index 0000000000000000000000000000000000000000..96cc37c71183b5b502d531fe4feae8ce83883d53
 --- /dev/null
 +++ b/README.md
-@@ -0,0 +1,234 @@
+@@ -0,0 +1,240 @@
 +# Claude Code Telemetry for BB
 +
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.15+upstream.891ceb1` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.16+upstream.12eedb7` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -284,7 +290,7 @@ index 0000000000000000000000000000000000000000..bd5ee71834090fd706dd71ed560cca1d
 +existing threads keep their provider, and the built-in provider stays available.
 +
 +This comparison is against the original provider at
-+[`891ceb1` (2026-11-23)](https://github.com/get-bb/bb/tree/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8/plugins/provider-claude-code),
++[`12eedb7` (2026-11-24)](https://github.com/get-bb/bb/tree/12eedb7562bd172fd69f86e25a28c1b6e456776d/plugins/provider-claude-code),
 +the latest upstream provider revision imported into this fork.
 +
 +| Capability | Original provider at this revision | Claude Code Telemetry |
@@ -498,12 +504,18 @@ index 0000000000000000000000000000000000000000..bd5ee71834090fd706dd71ed560cca1d
 +```sh
 +CLAUDE_TELEMETRY_LIVE=1 npm test -- src/live-smoke.test.ts
 +```
++
++Image reads include the upstream #8081 provider fix: successful absolute
++image-path reads settle once as `imageView`; failed and text-only reads remain
++`fileRead`. SDK 0.6.104 already supports these events. Consistent default titles
++and Eye icons for unlabelled image views require the matching BB thread-view
++update. See [image-read compatibility notes](UPSTREAM.md#image-read-preview-sync-2026-11-25).
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..5fe645dfe2f8fc7518e5f07e096fc8d6cf6d265f
+index 0000000000000000000000000000000000000000..6c1579dab0d920e15322b165dd7c0e20f89b832b
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,437 @@
+@@ -0,0 +1,475 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -520,20 +532,20 @@ index 0000000000000000000000000000000000000000..5fe645dfe2f8fc7518e5f07e096fc8d6
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.15+upstream.891ceb1`:
++The current version is `0.1.0-telemetry.16+upstream.12eedb7`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.15` is this fork's release revision. Increment it for every release,
++- `telemetry.16` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-+- `upstream.891ceb1` identifies the latest fully imported upstream baseline.
++- `upstream.12eedb7` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
 +  import date below and in the comparison-patch generator.
 +
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.16+upstream.891ceb1`. A later upstream import would increment the
++`0.1.0-telemetry.17+upstream.12eedb7`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
@@ -941,12 +953,50 @@ index 0000000000000000000000000000000000000000..5fe645dfe2f8fc7518e5f07e096fc8d6
 +TTL selection and tooltips, standalone packaging, and extra regressions are
 +preserved. No live requests, reload, automation creation, worker agents, or
 +push were performed.
++
++## Image-read preview sync, 2026-11-25
++
++Imported the only provider commit after `891ceb1` through
++[`12eedb7`](https://github.com/get-bb/bb/commit/12eedb7562bd172fd69f86e25a28c1b6e456776d)
++(2026-11-24), "Show image previews for ACP and Claude Code image reads (#8081)".
++An absolute image-path `Read` is opened only after its result arrives and
++settles once. Successful results containing an image block become `imageView`
++without a presentation label; text-only results and failed reads remain
++`fileRead`. Supported suffixes are png, jpg, jpeg, gif, webp, and bmp, ignoring
++case. The four upstream result regressions are included unchanged.
++
++GitHub confirms baseline ancestry and the complete provider history through
++the target. Comparing every file from both exact archives finds only
++`src/delta-translation.ts`, its tool-call test, and `src/schemas.ts` changed.
++The import adapts the first import hunk around the fork's request telemetry;
++no fork file is replaced. Upstream package version remains `0.1.0`; the fork
++revision increments once from 15 to
++`0.1.0-telemetry.16+upstream.12eedb7`. The full imported baseline is
++`12eedb7562bd172fd69f86e25a28c1b6e456776d`. Its 98 provider files have generator
++`digest()` SHA-256
++`b92d107d2604374271a87e877fed73cf060d9158402796b0d9040236854cbce7`.
++
++### SDK and host compatibility
++
++The pinned SDK 0.6.104 already supports `imageView` and the existing delta
++APIs. No new SDK API, Claude CLI, Agent SDK, or dependency is required. The
++upstream SDK bump to 0.6.197 ships ACP-kit changes, outside this provider.
++The provider emits a single unlabelled image view using existing APIs; matching
++#8081 BB thread-view changes are required for consistent default titles and
++Eye icons on older unlabelled image rows. This standalone import cannot update
++that host rendering. ACP, Codex, and thread-view source changes remain outside
++this package. Existing host compatibility limitations above still apply.
++
++Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
++TTL selection and tooltips, standalone packaging, and extra regressions are
++preserved. No live requests, reload, automation creation, worker agents, or
++push were performed.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..cfce29811548d9857104198daa7b32f02624d284
+index 0000000000000000000000000000000000000000..f5540f4a6934122454926232ef828ea4f9e97d4e
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,637 @@
+@@ -0,0 +1,683 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -1584,6 +1634,52 @@ index 0000000000000000000000000000000000000000..cfce29811548d9857104198daa7b32f0
 +creation, additional worker agents, or push occurred. The live SDK test was
 +not enabled. The integration commit uses per-command disabled signing without
 +changing persistent Git settings.
++
++## Image-read preview sync, 2026-11-25
++
++Before editing, the checkout was clean at dispatched HEAD
++`477cdd34e048ee91ad8194609f8ab56ee0f46f9d`, and `UPSTREAM_COMMIT` matched
++`891ceb1bbfb28c36dd1fb51fbdaab800581c44d8`. GitHub confirms baseline ancestry
++and exactly one provider commit through target
++`12eedb7562bd172fd69f86e25a28c1b6e456776d` (#8081). The history query was pinned
++to default-branch HEAD `fb045a046653cc127656ca3c7243d44ae4c94f3f`.
++Comparing all 98 provider files from both exact archives finds only the delta
++translator, its tool-call test, and schemas changed. The first import hunk was
++adapted around the fork's request telemetry import; no fork file was replaced.
++The target upstream package version remains `0.1.0`; the fork revision increases
++once from 15 to `0.1.0-telemetry.16+upstream.12eedb7`. Both root lockfile versions,
++baseline links, and the generator's exact source checksum are updated.
++
++- `npm run typecheck`: passed with the pinned SDK 0.6.104.
++- `npm test`: 528 passed, 1 opt-in live SDK test skipped (37 files passed,
++  1 skipped). Includes all four upstream image-read regressions: image-only,
++  mixed image/text, text at an image path, and a failed image read. Each asserts
++  deferred opening and exactly one start/completion pair; image views have no
++  presentation label. Existing fork telemetry, cache lifetime, TTL, tooltips,
++  conformance, and compatibility tests remain in the passing suite.
++- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
++- `npm run build`: passed for server, host, and frontend on BB 0.50.1. The build
++  warns that the plugin pins SDK 0.6.104 while the host uses SDK 0.6.157; no
++  dependency was repinned. All three artifact metadata files retain the correct
++  provider identity and agree with the package and lockfile version.
++- Both comparison patches regenerated against the exact target archive;
++  generator `--check` verifies freshness, application, and every resulting file.
++- Working-tree and staged `git diff --check`: passed.
++
++The complete provider-side change uses existing `imageView` and delta APIs;
++upstream SDK 0.6.197 ships ACP-kit changes and is not required here. Successful
++absolute image-path reads with an image content block settle once as an
++unlabelled `imageView`. Failed and text-only reads remain `fileRead`. No pending
++image row is shown while the tool runs. Consistent default titles and Eye icons
++for unlabelled image views require the matching #8081 BB thread-view update;
++this standalone plugin cannot supply that host rendering update. ACP and Codex
++changes are outside this package. Existing host limitations remain documented
++in UPSTREAM.md.
++
++No live Claude requests, live preview rendering checks, plugin reload,
++automation creation, additional worker agents, or push occurred. The opt-in
++live SDK test was not enabled. The local integration commit uses per-command
++disabled signing without changing persistent Git settings.
 diff --git a/app.ts b/app.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7beb5bab3a
@@ -1601,19 +1697,19 @@ index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7b
 +});
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..c28facddd69a2c3b2a535844ed16e9159983f5cc
+index 0000000000000000000000000000000000000000..5a82d43dd5b92a80d81f6601f796cad1916adb27
 --- /dev/null
 +++ b/package-lock.json
 @@ -0,0 +1,4242 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.15+upstream.891ceb1",
++  "version": "0.1.0-telemetry.16+upstream.12eedb7",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.15+upstream.891ceb1",
++      "version": "0.1.0-telemetry.16+upstream.12eedb7",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -5848,7 +5944,7 @@ index 0000000000000000000000000000000000000000..c28facddd69a2c3b2a535844ed16e915
 +  }
 +}
 diff --git a/package.json b/package.json
-index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..4d8b455725adc769218a5b4bd94423f007a2a1ec 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..cb3748bb38e95658e7a7fd6456c0ecb394eded10 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,26 +1,28 @@
@@ -5856,7 +5952,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..4d8b455725adc769218a5b4bd94423f0
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.15+upstream.891ceb1",
++  "version": "0.1.0-telemetry.16+upstream.12eedb7",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -6325,7 +6421,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..7032754bc85e4c9498a7c6c9f0e4803745777560
+index 0000000000000000000000000000000000000000..fd7fa499e4acab6536f1582660e0996a9143c305
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -6341,8 +6437,8 @@ index 0000000000000000000000000000000000000000..7032754bc85e4c9498a7c6c9f0e48037
 +import urllib.request
 +
 +
-+UPSTREAM_COMMIT = "891ceb1bbfb28c36dd1fb51fbdaab800581c44d8"
-+UPSTREAM_SOURCE_SHA256 = "bafa97c3a9b74f774cd7fa27a8f2769eb7f586ff425a7a245e949fdf4539c822"
++UPSTREAM_COMMIT = "12eedb7562bd172fd69f86e25a28c1b6e456776d"
++UPSTREAM_SOURCE_SHA256 = "b92d107d2604374271a87e877fed73cf060d9158402796b0d9040236854cbce7"
 +ROOT = Path(__file__).resolve().parents[1]
 +GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 +
@@ -8113,10 +8209,10 @@ index d8a62a1b1a991af1fe75efec65002d21bad80d7d..b32a6e047ef004da06c79e608e6cf2a7
            windows: [
              expect.objectContaining({
 diff --git a/src/delta-translation.tool-calls.test.ts b/src/delta-translation.tool-calls.test.ts
-index 36ff6d37266d8c961e5ddb483459ae4ee307e9b7..0562d461fbcc07a5633b0d3b9d4bfa0c748a1f49 100644
+index 0c87bb4f6855a95367b6f2d6adad3eeb3ef157b7..5f883c8efd4111468959869425dec57536bcbf5c 100644
 --- a/src/delta-translation.tool-calls.test.ts
 +++ b/src/delta-translation.tool-calls.test.ts
-@@ -1265,7 +1265,7 @@ describe("claude tool-result translation (delta path)", () => {
+@@ -1354,7 +1354,7 @@ describe("claude tool-result translation (delta path)", () => {
      toolUseId: string,
      description: unknown,
    ): (string | undefined)[] {
@@ -8125,7 +8221,7 @@ index 36ff6d37266d8c961e5ddb483459ae4ee307e9b7..0562d461fbcc07a5633b0d3b9d4bfa0c
        type: "assistant",
        message: {
          role: "assistant",
-@@ -1280,7 +1280,7 @@ describe("claude tool-result translation (delta path)", () => {
+@@ -1369,7 +1369,7 @@ describe("claude tool-result translation (delta path)", () => {
        },
        session_id: "sess-1",
      });
@@ -8134,7 +8230,7 @@ index 36ff6d37266d8c961e5ddb483459ae4ee307e9b7..0562d461fbcc07a5633b0d3b9d4bfa0c
        type: "user",
        message: {
          role: "user",
-@@ -1298,19 +1298,17 @@ describe("claude tool-result translation (delta path)", () => {
+@@ -1387,19 +1387,17 @@ describe("claude tool-result translation (delta path)", () => {
  
      return (
        [
@@ -8161,7 +8257,7 @@ index 36ff6d37266d8c961e5ddb483459ae4ee307e9b7..0562d461fbcc07a5633b0d3b9d4bfa0c
          ? item.item.description
          : undefined;
      });
-@@ -1323,7 +1321,7 @@ describe("claude tool-result translation (delta path)", () => {
+@@ -1412,7 +1410,7 @@ describe("claude tool-result translation (delta path)", () => {
      { input: 42, description: undefined },
      { input: undefined, description: undefined },
    ])(
@@ -8170,7 +8266,7 @@ index 36ff6d37266d8c961e5ddb483459ae4ee307e9b7..0562d461fbcc07a5633b0d3b9d4bfa0c
      ({ input, description }) => {
        const harness = createClaudeDeltaHarness({
          commandDescriptionsEnabled: true,
-@@ -1336,7 +1334,7 @@ describe("claude tool-result translation (delta path)", () => {
+@@ -1425,7 +1423,7 @@ describe("claude tool-result translation (delta path)", () => {
      },
    );
  
@@ -8180,15 +8276,16 @@ index 36ff6d37266d8c961e5ddb483459ae4ee307e9b7..0562d461fbcc07a5633b0d3b9d4bfa0c
  
      expect(
 diff --git a/src/delta-translation.ts b/src/delta-translation.ts
-index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef3a75094e 100644
+index ae18570d49bf2eadb378f509f6b8e1df19af05f3..0e4ab8603e3ab1c268dd656dd6d954e13ef0237f 100644
 --- a/src/delta-translation.ts
 +++ b/src/delta-translation.ts
-@@ -1,3 +1,4 @@
+@@ -1,4 +1,5 @@
+ import { isAbsolute } from "node:path";
 +import { ClaudeRequestUsage } from "./request-usage.js";
  import type { z } from "zod";
  import {
    type DeltaItemShape,
-@@ -10,7 +11,6 @@ import {
+@@ -11,7 +12,6 @@ import {
    type ThreadEventPlanStep,
    type ThreadEventTokenUsageBreakdown,
    ZERO_TOKEN_USAGE,
@@ -8196,7 +8293,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
    errorEnvelopeSchema,
    extractResultText,
    jsonRpcEnvelopeSchema,
-@@ -315,7 +315,7 @@ function normalizeClaudeRateLimits(
+@@ -332,7 +332,7 @@ function normalizeClaudeRateLimits(
    const providerKey = info.rateLimitType ?? null;
  
    return {
@@ -8205,7 +8302,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
      status,
      kind:
        providerKey === "overage"
-@@ -394,6 +394,7 @@ interface HeldSkillOpen {
+@@ -411,6 +411,7 @@ interface HeldSkillOpen {
  interface ClaudeThreadDialectState {
    mirror: ClaudeTurnMirror;
    cumulativeTokens: ThreadEventTokenUsageBreakdown;
@@ -8213,7 +8310,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
    promptCacheTtlMs: number | undefined;
    latestRequestContextTokens: number | undefined;
    latestProviderCheckpointId: string | undefined;
-@@ -419,6 +420,7 @@ function createThreadState(): ClaudeThreadDialectState {
+@@ -437,6 +438,7 @@ function createThreadState(): ClaudeThreadDialectState {
    return {
      mirror: { turnOpen: false, responseStarted: false, segment: 0 },
      cumulativeTokens: ZERO_TOKEN_USAGE,
@@ -8221,7 +8318,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
      promptCacheTtlMs: undefined,
      latestRequestContextTokens: undefined,
      latestProviderCheckpointId: undefined,
-@@ -476,6 +478,7 @@ export function createClaudeDeltaTranslator(
+@@ -495,6 +497,7 @@ export function createClaudeDeltaTranslator(
      state.suppressUnacceptedTurnStart = false;
      state.mirror.turnOpen = true;
      state.mirror.segment += 1;
@@ -8229,7 +8326,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
      state.mirror.responseStarted = false;
      state.continuationBlocked = false;
      state.latestRequestContextTokens = undefined;
-@@ -847,6 +850,16 @@ export function createClaudeDeltaTranslator(
+@@ -868,6 +871,16 @@ export function createClaudeDeltaTranslator(
      state.lastModelFallback = { ...transition, segment: state.mirror.segment };
    }
  
@@ -8246,7 +8343,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
    function translateAssistantMessage(
      event: unknown,
      state: ClaudeThreadDialectState,
-@@ -917,6 +930,9 @@ export function createClaudeDeltaTranslator(
+@@ -938,6 +951,9 @@ export function createClaudeDeltaTranslator(
        state.latestProviderCheckpointId = providerCheckpointId;
      }
      if (parentToolCallId === undefined) {
@@ -8256,7 +8353,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
        const requestContextTokens = extractClaudeRequestContextTokens(message);
        if (requestContextTokens !== null) {
          state.latestRequestContextTokens = requestContextTokens;
-@@ -1189,23 +1205,14 @@ export function createClaudeDeltaTranslator(
+@@ -1237,23 +1253,14 @@ export function createClaudeDeltaTranslator(
          attach: "open",
        });
      }
@@ -8286,7 +8383,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
      }
  
      const pendingHardRateLimitRejection =
-@@ -1470,6 +1477,9 @@ export function createClaudeDeltaTranslator(
+@@ -1518,6 +1525,9 @@ export function createClaudeDeltaTranslator(
      const state = stateFor({ threadId });
      const deltas = releaseHeldSkillOpen(state, undefined);
      if (state.mirror.turnOpen) {

@@ -5,7 +5,7 @@ provider and uses the same native login and CLI.
 ## Differences from the built-in provider
 
 Compared with the original provider at
-[891ceb1 (2026-11-23)](https://github.com/get-bb/bb/tree/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8/plugins/provider-claude-code):
+[12eedb7 (2026-11-24)](https://github.com/get-bb/bb/tree/12eedb7562bd172fd69f86e25a28c1b6e456776d/plugins/provider-claude-code):
 
 - Usage is reported for observed main-agent requests, with message-ID
   deduplication, instead of only a final turn aggregate. Unobserved usage is
@@ -61,3 +61,9 @@ Contributed environment variables on health, installation, and command-list
 requests require the upstream #7722 host changes (protocol 270 or newer).
 Older hosts remain accepted, but cannot provide those host-side behaviors.
 The provider bundles the needed helper backports and retains SDK 0.6.104.
+
+Image reads include the upstream #8081 provider fix: successful absolute
+image-path reads settle once as `imageView`; failed and text-only reads remain
+`fileRead`. SDK 0.6.104 already supports these events. Consistent default titles
+and Eye icons for unlabelled image views require the matching BB thread-view
+update. See [image-read compatibility notes](UPSTREAM.md#image-read-preview-sync-2026-11-25).

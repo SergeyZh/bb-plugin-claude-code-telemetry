@@ -635,3 +635,49 @@ No live Claude requests, live sandbox checks, plugin reload, automation
 creation, additional worker agents, or push occurred. The live SDK test was
 not enabled. The integration commit uses per-command disabled signing without
 changing persistent Git settings.
+
+## Image-read preview sync, 2026-11-25
+
+Before editing, the checkout was clean at dispatched HEAD
+`477cdd34e048ee91ad8194609f8ab56ee0f46f9d`, and `UPSTREAM_COMMIT` matched
+`891ceb1bbfb28c36dd1fb51fbdaab800581c44d8`. GitHub confirms baseline ancestry
+and exactly one provider commit through target
+`12eedb7562bd172fd69f86e25a28c1b6e456776d` (#8081). The history query was pinned
+to default-branch HEAD `fb045a046653cc127656ca3c7243d44ae4c94f3f`.
+Comparing all 98 provider files from both exact archives finds only the delta
+translator, its tool-call test, and schemas changed. The first import hunk was
+adapted around the fork's request telemetry import; no fork file was replaced.
+The target upstream package version remains `0.1.0`; the fork revision increases
+once from 15 to `0.1.0-telemetry.16+upstream.12eedb7`. Both root lockfile versions,
+baseline links, and the generator's exact source checksum are updated.
+
+- `npm run typecheck`: passed with the pinned SDK 0.6.104.
+- `npm test`: 528 passed, 1 opt-in live SDK test skipped (37 files passed,
+  1 skipped). Includes all four upstream image-read regressions: image-only,
+  mixed image/text, text at an image path, and a failed image read. Each asserts
+  deferred opening and exactly one start/completion pair; image views have no
+  presentation label. Existing fork telemetry, cache lifetime, TTL, tooltips,
+  conformance, and compatibility tests remain in the passing suite.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm run build`: passed for server, host, and frontend on BB 0.50.1. The build
+  warns that the plugin pins SDK 0.6.104 while the host uses SDK 0.6.157; no
+  dependency was repinned. All three artifact metadata files retain the correct
+  provider identity and agree with the package and lockfile version.
+- Both comparison patches regenerated against the exact target archive;
+  generator `--check` verifies freshness, application, and every resulting file.
+- Working-tree and staged `git diff --check`: passed.
+
+The complete provider-side change uses existing `imageView` and delta APIs;
+upstream SDK 0.6.197 ships ACP-kit changes and is not required here. Successful
+absolute image-path reads with an image content block settle once as an
+unlabelled `imageView`. Failed and text-only reads remain `fileRead`. No pending
+image row is shown while the tool runs. Consistent default titles and Eye icons
+for unlabelled image views require the matching #8081 BB thread-view update;
+this standalone plugin cannot supply that host rendering update. ACP and Codex
+changes are outside this package. Existing host limitations remain documented
+in UPSTREAM.md.
+
+No live Claude requests, live preview rendering checks, plugin reload,
+automation creation, additional worker agents, or push occurred. The opt-in
+live SDK test was not enabled. The local integration commit uses per-command
+disabled signing without changing persistent Git settings.

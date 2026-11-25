@@ -503,15 +503,16 @@ index c69a1af6797dee341fec4e4ac08a9bd096f0d2e2..ec7fc7fe1f3ad918dcb8c22e856e12f0
  }
  
 diff --git a/src/delta-translation.ts b/src/delta-translation.ts
-index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef3a75094e 100644
+index ae18570d49bf2eadb378f509f6b8e1df19af05f3..0e4ab8603e3ab1c268dd656dd6d954e13ef0237f 100644
 --- a/src/delta-translation.ts
 +++ b/src/delta-translation.ts
-@@ -1,3 +1,4 @@
+@@ -1,4 +1,5 @@
+ import { isAbsolute } from "node:path";
 +import { ClaudeRequestUsage } from "./request-usage.js";
  import type { z } from "zod";
  import {
    type DeltaItemShape,
-@@ -10,7 +11,6 @@ import {
+@@ -11,7 +12,6 @@ import {
    type ThreadEventPlanStep,
    type ThreadEventTokenUsageBreakdown,
    ZERO_TOKEN_USAGE,
@@ -519,7 +520,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
    errorEnvelopeSchema,
    extractResultText,
    jsonRpcEnvelopeSchema,
-@@ -315,7 +315,7 @@ function normalizeClaudeRateLimits(
+@@ -332,7 +332,7 @@ function normalizeClaudeRateLimits(
    const providerKey = info.rateLimitType ?? null;
  
    return {
@@ -528,7 +529,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
      status,
      kind:
        providerKey === "overage"
-@@ -394,6 +394,7 @@ interface HeldSkillOpen {
+@@ -411,6 +411,7 @@ interface HeldSkillOpen {
  interface ClaudeThreadDialectState {
    mirror: ClaudeTurnMirror;
    cumulativeTokens: ThreadEventTokenUsageBreakdown;
@@ -536,7 +537,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
    promptCacheTtlMs: number | undefined;
    latestRequestContextTokens: number | undefined;
    latestProviderCheckpointId: string | undefined;
-@@ -419,6 +420,7 @@ function createThreadState(): ClaudeThreadDialectState {
+@@ -437,6 +438,7 @@ function createThreadState(): ClaudeThreadDialectState {
    return {
      mirror: { turnOpen: false, responseStarted: false, segment: 0 },
      cumulativeTokens: ZERO_TOKEN_USAGE,
@@ -544,7 +545,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
      promptCacheTtlMs: undefined,
      latestRequestContextTokens: undefined,
      latestProviderCheckpointId: undefined,
-@@ -476,6 +478,7 @@ export function createClaudeDeltaTranslator(
+@@ -495,6 +497,7 @@ export function createClaudeDeltaTranslator(
      state.suppressUnacceptedTurnStart = false;
      state.mirror.turnOpen = true;
      state.mirror.segment += 1;
@@ -552,7 +553,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
      state.mirror.responseStarted = false;
      state.continuationBlocked = false;
      state.latestRequestContextTokens = undefined;
-@@ -847,6 +850,16 @@ export function createClaudeDeltaTranslator(
+@@ -868,6 +871,16 @@ export function createClaudeDeltaTranslator(
      state.lastModelFallback = { ...transition, segment: state.mirror.segment };
    }
  
@@ -569,7 +570,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
    function translateAssistantMessage(
      event: unknown,
      state: ClaudeThreadDialectState,
-@@ -917,6 +930,9 @@ export function createClaudeDeltaTranslator(
+@@ -938,6 +951,9 @@ export function createClaudeDeltaTranslator(
        state.latestProviderCheckpointId = providerCheckpointId;
      }
      if (parentToolCallId === undefined) {
@@ -579,7 +580,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
        const requestContextTokens = extractClaudeRequestContextTokens(message);
        if (requestContextTokens !== null) {
          state.latestRequestContextTokens = requestContextTokens;
-@@ -1189,23 +1205,14 @@ export function createClaudeDeltaTranslator(
+@@ -1237,23 +1253,14 @@ export function createClaudeDeltaTranslator(
          attach: "open",
        });
      }
@@ -609,7 +610,7 @@ index a0a4b12d297b0a665b197eb94b711b09f70207e9..6c55fde09f375c56d12f84261cf00aef
      }
  
      const pendingHardRateLimitRejection =
-@@ -1470,6 +1477,9 @@ export function createClaudeDeltaTranslator(
+@@ -1518,6 +1525,9 @@ export function createClaudeDeltaTranslator(
      const state = stateFor({ threadId });
      const deltas = releaseHeldSkillOpen(state, undefined);
      if (state.mirror.turnOpen) {

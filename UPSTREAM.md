@@ -14,20 +14,20 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.15+upstream.891ceb1`:
+The current version is `0.1.0-telemetry.16+upstream.12eedb7`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.15` is this fork's release revision. Increment it for every release,
+- `telemetry.16` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.891ceb1` identifies the latest fully imported upstream baseline.
+- `upstream.12eedb7` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.16+upstream.891ceb1`. A later upstream import would increment the
+`0.1.0-telemetry.17+upstream.12eedb7`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
@@ -430,6 +430,44 @@ agent provider's removal handling. Older hosts can still use that handling
 when they supply a reduced root list, but this plugin alone cannot expose
 project folder management or collect environment folders. Existing host and
 Linux sandbox limitations documented above remain in effect.
+
+Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
+TTL selection and tooltips, standalone packaging, and extra regressions are
+preserved. No live requests, reload, automation creation, worker agents, or
+push were performed.
+
+## Image-read preview sync, 2026-11-25
+
+Imported the only provider commit after `891ceb1` through
+[`12eedb7`](https://github.com/get-bb/bb/commit/12eedb7562bd172fd69f86e25a28c1b6e456776d)
+(2026-11-24), "Show image previews for ACP and Claude Code image reads (#8081)".
+An absolute image-path `Read` is opened only after its result arrives and
+settles once. Successful results containing an image block become `imageView`
+without a presentation label; text-only results and failed reads remain
+`fileRead`. Supported suffixes are png, jpg, jpeg, gif, webp, and bmp, ignoring
+case. The four upstream result regressions are included unchanged.
+
+GitHub confirms baseline ancestry and the complete provider history through
+the target. Comparing every file from both exact archives finds only
+`src/delta-translation.ts`, its tool-call test, and `src/schemas.ts` changed.
+The import adapts the first import hunk around the fork's request telemetry;
+no fork file is replaced. Upstream package version remains `0.1.0`; the fork
+revision increments once from 15 to
+`0.1.0-telemetry.16+upstream.12eedb7`. The full imported baseline is
+`12eedb7562bd172fd69f86e25a28c1b6e456776d`. Its 98 provider files have generator
+`digest()` SHA-256
+`b92d107d2604374271a87e877fed73cf060d9158402796b0d9040236854cbce7`.
+
+### SDK and host compatibility
+
+The pinned SDK 0.6.104 already supports `imageView` and the existing delta
+APIs. No new SDK API, Claude CLI, Agent SDK, or dependency is required. The
+upstream SDK bump to 0.6.197 ships ACP-kit changes, outside this provider.
+The provider emits a single unlabelled image view using existing APIs; matching
+#8081 BB thread-view changes are required for consistent default titles and
+Eye icons on older unlabelled image rows. This standalone import cannot update
+that host rendering. ACP, Codex, and thread-view source changes remain outside
+this package. Existing host compatibility limitations above still apply.
 
 Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 TTL selection and tooltips, standalone packaging, and extra regressions are

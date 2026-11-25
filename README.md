@@ -3,7 +3,7 @@
 A standalone fork of BB's Claude Code provider, installed alongside it.
 
 - Plugin and provider ID: `claude-code-telemetry`
-- Version: `0.1.0-telemetry.15+upstream.891ceb1` (see [versioning](UPSTREAM.md#versioning))
+- Version: `0.1.0-telemetry.16+upstream.12eedb7` (see [versioning](UPSTREAM.md#versioning))
 - Picker name: **Claude Code Telemetry**
 - Original provider: `claude-code`, unchanged
 
@@ -18,7 +18,7 @@ as the built-in provider. It adds a separate picker entry and plugin settings;
 existing threads keep their provider, and the built-in provider stays available.
 
 This comparison is against the original provider at
-[`891ceb1` (2026-11-23)](https://github.com/get-bb/bb/tree/891ceb1bbfb28c36dd1fb51fbdaab800581c44d8/plugins/provider-claude-code),
+[`12eedb7` (2026-11-24)](https://github.com/get-bb/bb/tree/12eedb7562bd172fd69f86e25a28c1b6e456776d/plugins/provider-claude-code),
 the latest upstream provider revision imported into this fork.
 
 | Capability | Original provider at this revision | Claude Code Telemetry |
@@ -232,3 +232,9 @@ thread, disables persistence, and uses only a fixed Bash printf check:
 ```sh
 CLAUDE_TELEMETRY_LIVE=1 npm test -- src/live-smoke.test.ts
 ```
+
+Image reads include the upstream #8081 provider fix: successful absolute
+image-path reads settle once as `imageView`; failed and text-only reads remain
+`fileRead`. SDK 0.6.104 already supports these events. Consistent default titles
+and Eye icons for unlabelled image views require the matching BB thread-view
+update. See [image-read compatibility notes](UPSTREAM.md#image-read-preview-sync-2026-11-25).
