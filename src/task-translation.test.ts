@@ -567,6 +567,7 @@ describe("claude-code background task translation", () => {
 
   it("materializes a backgrounded shell command (task_type local_bash)", () => {
     const harness = createClaudeDeltaHarness();
+    const translateSpy = vi.spyOn(harness.translator, "translate");
     const context = { threadId: "bb-thread-1" };
 
     harness.translate(
@@ -607,6 +608,15 @@ describe("claude-code background task translation", () => {
       skipTranscript: false,
       parentToolCallId: harness.itemId("toolu_bash_1", "bb-thread-1"),
     });
+    // SDK 0.6.104's assembler drops the new field; assert the outgoing wire shape.
+    expect(translateSpy.mock.results.at(-1)?.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "item.open",
+          item: expect.objectContaining({ stoppable: true }),
+        }),
+      ]),
+    );
     expect(startedItem.workflow).toBeUndefined();
     expect(startedItem.workflowName).toBeUndefined();
 
@@ -637,6 +647,20 @@ describe("claude-code background task translation", () => {
       summary:
         'Background command "Count ticks from 1 to 6 with 1 second delays" completed (exit code 0)',
     });
+    const closeDeltas = translateSpy.mock.results.at(-1)?.value;
+    expect(closeDeltas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "item.close",
+          item: expect.objectContaining({ taskStatus: "completed" }),
+        }),
+      ]),
+    );
+    for (const delta of closeDeltas ?? []) {
+      if (delta.kind === "item.close") {
+        expect(delta.item).not.toHaveProperty("stoppable");
+      }
+    }
   });
 
   it("keeps a foreground shell command out of background tasks", () => {

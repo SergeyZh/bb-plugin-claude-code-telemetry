@@ -52,7 +52,7 @@ index 12a77d3b090bcc905a4d8e7b7667f2b1d025a8e8..7a259d86a84728e8bea245a6d88b8590
        passthrough: ["BB_CLAUDE_CODE_EXECUTABLE", "CLAUDE_CODE_OAUTH_TOKEN"],
      },
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626f5ea7b31 100644
+index 11c3126d1ef5d734568dee61efd76a4d96a4117d..655b3cbf000fda8fa9cb90741b71e9f7de86a35c 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
 @@ -13,7 +13,6 @@ import {
@@ -83,7 +83,7 @@ index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626
  import { randomUUID } from "node:crypto";
  import { join as joinPath, resolve as resolvePath } from "node:path";
  import { isDeepStrictEqual } from "node:util";
-@@ -452,6 +454,26 @@ function resolvePendingSessionWork(
+@@ -453,6 +455,26 @@ function resolvePendingSessionWork(
    resolvePendingInteractiveRequests(threadSession, message);
  }
  
@@ -110,7 +110,7 @@ index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626
  function applyChromeSetting(
    attachment: ThreadAttachment,
    enabled: boolean | undefined,
-@@ -1098,6 +1120,7 @@ function toSessionConstructionConfig(
+@@ -1099,6 +1121,7 @@ function toSessionConstructionConfig(
        permissionScope: params.permissionScope,
        plugins: params.plugins,
        sandboxEnabled: params.sandboxEnabled,
@@ -118,7 +118,7 @@ index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626
      },
    };
  }
-@@ -2688,6 +2711,7 @@ async function runTurnInput(
+@@ -2692,6 +2715,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);
@@ -127,18 +127,37 @@ index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626
      applyContextWindowSetting(attachment, params.disable1MContext);
      applyArtifactSetting(attachment, params.artifactsEnabled);
 diff --git a/src/bridge/commands.ts b/src/bridge/commands.ts
-index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab75090f630 100644
+index 23574c0a3adee573d9860635c9f88d1001ec5d86..31292d379ebbac9073e5450883d2fb6a5a42701d 100644
 --- a/src/bridge/commands.ts
 +++ b/src/bridge/commands.ts
-@@ -21,6 +21,7 @@ import {
+@@ -5,7 +5,6 @@ import {
+   permissionEscalationValues,
+   reasoningLevelSchema,
+   runtimePermissionScopeValues,
+-  threadBackgroundTaskStopParamsSchema as canonicalThreadBackgroundTaskStopParamsSchema,
+   threadDiscardParamsSchema as canonicalThreadDiscardParamsSchema,
+   threadForkParamsSchema as canonicalThreadForkParamsSchema,
+   threadResumeParamsSchema as canonicalThreadResumeParamsSchema,
+@@ -22,8 +21,18 @@ import {
    providerInstallationStatusParamsSchema,
  } from "@get-bb/plugin-sdk/provider-bridge";
  import { z } from "zod";
 +import { promptCacheTtlSchema } from "../prompt-cache.js";
  import { claudePermissionModeSchema } from "../interactive-contract.js";
  
++// Backported from upstream #8158; the pinned Plugin SDK predates this request.
++const canonicalThreadBackgroundTaskStopParamsSchema = z
++  .object({
++    threadId: z.string().min(1),
++    providerThreadId: z.string().min(1),
++    familyId: z.string().min(1),
++  })
++  .passthrough();
++
  const bridgeInstructionModeSchema = z.enum(instructionModeValues);
-@@ -41,6 +42,7 @@ const bridgeClaudePluginsSchema = z
+ const bridgePermissionEscalationSchema = z
+   .enum(permissionEscalationValues)
+@@ -42,6 +51,7 @@ const bridgeClaudePluginsSchema = z
    .optional();
  
  export const claudeThreadStartParamsSchema = z.object({
@@ -146,7 +165,7 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab7
    threadId: z.string(),
    cwd: z.string(),
    baseInstructions: z.string(),
-@@ -81,6 +83,7 @@ export const claudeThreadForkParamsSchema =
+@@ -82,6 +92,7 @@ export const claudeThreadForkParamsSchema =
    });
  
  export const claudeTurnStartParamsSchema = z.object({
@@ -154,7 +173,7 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab7
    threadId: z.string(),
    providerThreadId: z.string().nullable(),
    input: z.array(z.unknown()),
-@@ -108,6 +111,9 @@ export const claudeTurnSteerParamsSchema = claudeTurnStartParamsSchema
+@@ -109,6 +120,9 @@ export const claudeTurnSteerParamsSchema = claudeTurnStartParamsSchema
    .omit({ config: true })
    .extend({ expectedTurnId: z.string() });
  
@@ -164,7 +183,7 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab7
  const claudeCodeCommandSchema = z.discriminatedUnion("method", [
    z.object({
      method: z.literal("initialize"),
-@@ -119,23 +125,23 @@ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
+@@ -120,23 +134,23 @@ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
    }),
    z.object({
      method: z.literal("commands/list"),

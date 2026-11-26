@@ -24,6 +24,15 @@ import { z } from "zod";
 import { promptCacheTtlSchema } from "../prompt-cache.js";
 import { claudePermissionModeSchema } from "../interactive-contract.js";
 
+// Backported from upstream #8158; the pinned Plugin SDK predates this request.
+const canonicalThreadBackgroundTaskStopParamsSchema = z
+  .object({
+    threadId: z.string().min(1),
+    providerThreadId: z.string().min(1),
+    familyId: z.string().min(1),
+  })
+  .passthrough();
+
 const bridgeInstructionModeSchema = z.enum(instructionModeValues);
 const bridgePermissionEscalationSchema = z
   .enum(permissionEscalationValues)
@@ -172,6 +181,10 @@ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
     params: canonicalThreadDiscardParamsSchema,
   }),
   z.object({
+    method: z.literal("thread/backgroundTask/stop"),
+    params: canonicalThreadBackgroundTaskStopParamsSchema,
+  }),
+  z.object({
     method: z.literal("skills/configure"),
     params: skillsConfigureParamsSchema,
   }),
@@ -195,6 +208,10 @@ export type TurnStartParams = z.infer<typeof claudeTurnStartParamsSchema>;
 export type TurnSteerParams = z.infer<typeof claudeTurnSteerParamsSchema>;
 
 export type ThreadStopParams = z.infer<typeof canonicalThreadStopParamsSchema>;
+
+export type ThreadBackgroundTaskStopParams = z.infer<
+  typeof canonicalThreadBackgroundTaskStopParamsSchema
+>;
 
 const claudeCodeCommandMethods = new Set<string>(
   claudeCodeCommandSchema.options.map((option) => option.shape.method.value),

@@ -175,7 +175,7 @@ index 0000000000000000000000000000000000000000..2d6c97c2ceb3913ec3af0128ea6684c0
 +OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 +SOFTWARE.
 diff --git a/PLUGIN_OVERVIEW.md b/PLUGIN_OVERVIEW.md
-index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..123dba4d0b743c1d62dcc1539e4787e0bf4ef93f 100644
+index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..ce5de3d2b413c3383ed8ba32da31e199b64c540b 100644
 --- a/PLUGIN_OVERVIEW.md
 +++ b/PLUGIN_OVERVIEW.md
 @@ -1,23 +1,69 @@
@@ -194,7 +194,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..123dba4d0b743c1d62dcc1539e4787e0
 -  from your home directory and project.
 -- Health, usage, and install status for Claude Code on each host, with an install or update action.
 +Compared with the original provider at
-+[12eedb7 (2026-11-24)](https://github.com/get-bb/bb/tree/12eedb7562bd172fd69f86e25a28c1b6e456776d/plugins/provider-claude-code):
++[f7c4bde (2026-11-25)](https://github.com/get-bb/bb/tree/f7c4bde6d0fd60dae653bb5323535c3b749bfced/plugins/provider-claude-code):
  
 -## Settings
 +- Usage is reported for observed main-agent requests, with message-ID
@@ -266,7 +266,7 @@ index e7d3372882d115f26c262f9ab89ea6cf6c739ebd..123dba4d0b743c1d62dcc1539e4787e0
 +update. See [image-read compatibility notes](UPSTREAM.md#image-read-preview-sync-2026-11-25).
 diff --git a/README.md b/README.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..96cc37c71183b5b502d531fe4feae8ce83883d53
+index 0000000000000000000000000000000000000000..ff68abbc67a67bd58e48ca79506d0d820d7ef02d
 --- /dev/null
 +++ b/README.md
 @@ -0,0 +1,240 @@
@@ -275,7 +275,7 @@ index 0000000000000000000000000000000000000000..96cc37c71183b5b502d531fe4feae8ce
 +A standalone fork of BB's Claude Code provider, installed alongside it.
 +
 +- Plugin and provider ID: `claude-code-telemetry`
-+- Version: `0.1.0-telemetry.16+upstream.12eedb7` (see [versioning](UPSTREAM.md#versioning))
++- Version: `0.1.0-telemetry.17+upstream.f7c4bde` (see [versioning](UPSTREAM.md#versioning))
 +- Picker name: **Claude Code Telemetry**
 +- Original provider: `claude-code`, unchanged
 +
@@ -290,7 +290,7 @@ index 0000000000000000000000000000000000000000..96cc37c71183b5b502d531fe4feae8ce
 +existing threads keep their provider, and the built-in provider stays available.
 +
 +This comparison is against the original provider at
-+[`12eedb7` (2026-11-24)](https://github.com/get-bb/bb/tree/12eedb7562bd172fd69f86e25a28c1b6e456776d/plugins/provider-claude-code),
++[`f7c4bde` (2026-11-25)](https://github.com/get-bb/bb/tree/f7c4bde6d0fd60dae653bb5323535c3b749bfced/plugins/provider-claude-code),
 +the latest upstream provider revision imported into this fork.
 +
 +| Capability | Original provider at this revision | Claude Code Telemetry |
@@ -512,10 +512,10 @@ index 0000000000000000000000000000000000000000..96cc37c71183b5b502d531fe4feae8ce
 +update. See [image-read compatibility notes](UPSTREAM.md#image-read-preview-sync-2026-11-25).
 diff --git a/UPSTREAM.md b/UPSTREAM.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..6c1579dab0d920e15322b165dd7c0e20f89b832b
+index 0000000000000000000000000000000000000000..c6ce1f5328a3f876b37534bfcf6dcd4893a63a00
 --- /dev/null
 +++ b/UPSTREAM.md
-@@ -0,0 +1,475 @@
+@@ -0,0 +1,524 @@
 +# Upstream
 +
 +Forked from https://github.com/get-bb/bb/tree/916d684ac23d0b0de82c09cfc7553a50287d2188/plugins/provider-claude-code
@@ -532,20 +532,20 @@ index 0000000000000000000000000000000000000000..6c1579dab0d920e15322b165dd7c0e20
 +
 +The package version follows
 +`<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-+The current version is `0.1.0-telemetry.16+upstream.12eedb7`:
++The current version is `0.1.0-telemetry.17+upstream.f7c4bde`:
 +
 +- `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
 +  or Agent SDK version.
-+- `telemetry.16` is this fork's release revision. Increment it for every release,
++- `telemetry.17` is this fork's release revision. Increment it for every release,
 +  including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-+- `upstream.12eedb7` identifies the latest fully imported upstream baseline.
++- `upstream.f7c4bde` identifies the latest fully imported upstream baseline.
 +  Use the first seven characters of its commit SHA; keep the full SHA and
 +  import date below and in the comparison-patch generator.
 +
 +This is valid SemVer. Build metadata after `+` does not affect version ordering;
 +`telemetry.<revision>` determines the order of fork releases for the same base.
 +A local fix after this release would be
-+`0.1.0-telemetry.17+upstream.12eedb7`. A later upstream import would increment the
++`0.1.0-telemetry.18+upstream.f7c4bde`. A later upstream import would increment the
 +revision again and replace the SHA with the newly imported baseline.
 +
 +## Imported upstream fixes
@@ -991,12 +991,61 @@ index 0000000000000000000000000000000000000000..6c1579dab0d920e15322b165dd7c0e20
 +TTL selection and tooltips, standalone packaging, and extra regressions are
 +preserved. No live requests, reload, automation creation, worker agents, or
 +push were performed.
++
++## Individual background task stop sync, 2026-11-26
++
++Imported the only provider commit after `12eedb7` through
++[`f7c4bde`](https://github.com/get-bb/bb/commit/f7c4bde6d0fd60dae653bb5323535c3b749bfced)
++(2026-11-25), "Stop a single background command from the thread banner, CLI and SDK (#8158)".
++Unsettled background tasks now advertise `stoppable: true`; settled tasks omit
++that capability. The new `thread/backgroundTask/stop` request calls the resident
++Claude session's `query.stopTask(familyId)` without interrupting or closing the
++turn. Missing or closing sessions return a bridge error. Normal Claude task
++notifications continue to settle tasks, including the existing stopped status.
++
++GitHub history pinned to default-branch HEAD
++`b0ddaad731565d7e4de68d824120d802fc78f7d5` confirms exactly this provider commit
++in the interval, and compare confirms baseline ancestry. Comparing every file
++from both exact provider archives finds only six changed files: the bridge,
++commands, SDK session, task translator, and bridge/task translation tests.
++All patches were applied to the fork without replacing files. Both upstream
++regressions are included; capability assertions inspect outgoing deltas because
++the pinned SDK's test assembler drops the new field. Additional regressions
++cover a missing session and the backported request schema's required nonempty
++references and passthrough fields.
++
++The target upstream package version is `0.1.0`; the fork revision increases
++once from 16 to `0.1.0-telemetry.17+upstream.f7c4bde`. The full imported baseline
++is `f7c4bde6d0fd60dae653bb5323535c3b749bfced`. Its 98 provider files have generator
++`digest()` SHA-256
++`f80d8ce74b25e55dbf885d7841ef158110215c3e7bee907217424cb453df6d4c`.
++
++### SDK and host compatibility
++
++Upstream Plugin SDK 0.6.203 exports the new stop-request schema and capability
++field. This fork deliberately retains SDK 0.6.104 and backports the exact small
++passthrough request schema locally in `src/bridge/commands.ts`. The capability
++is emitted directly on the wire through the existing delta sender. The installed
++Claude Agent SDK 0.3.318 already supports `query.stopTask`; no dependency or CLI
++upgrade is introduced by this provider patch.
++
++Stopping tasks from the banner, CLI, or public SDK requires the matching #8158
++BB runtime, server, daemon, API, and UI changes, with host-daemon protocol 285
++or newer. Older hosts do not expose the stop path and may discard `stoppable`;
++this standalone plugin cannot add those host features. Upstream timeline,
++dangling-task reconciliation, and Codex changes are outside this package.
++Existing compatibility limitations above remain in effect.
++
++Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
++TTL selection and tooltips, standalone packaging, and extra regressions are
++preserved. No live requests, plugin reload, automation creation, worker agents,
++or push were performed.
 diff --git a/VERIFICATION.md b/VERIFICATION.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..f5540f4a6934122454926232ef828ea4f9e97d4e
+index 0000000000000000000000000000000000000000..c27dc4b2e73383f3472e803a4d4c0e6e22eb30dc
 --- /dev/null
 +++ b/VERIFICATION.md
-@@ -0,0 +1,683 @@
+@@ -0,0 +1,732 @@
 +# Verification
 +
 +Verified locally on 2026-11-01 with BB 0.48.1 and Plugin SDK 0.6.104.
@@ -1680,6 +1729,55 @@ index 0000000000000000000000000000000000000000..f5540f4a6934122454926232ef828ea4
 +automation creation, additional worker agents, or push occurred. The opt-in
 +live SDK test was not enabled. The local integration commit uses per-command
 +disabled signing without changing persistent Git settings.
++
++## Individual background task stop sync, 2026-11-26
++
++Before editing, the checkout was clean at dispatched HEAD
++`2f36e487c82f197823b0aa60c7fcedb43ee0ae30`, and `UPSTREAM_COMMIT` matched
++`12eedb7562bd172fd69f86e25a28c1b6e456776d`. GitHub history pinned to resolved
++default-branch HEAD `b0ddaad731565d7e4de68d824120d802fc78f7d5` confirms exactly
++one provider commit through `f7c4bde6d0fd60dae653bb5323535c3b749bfced` (#8158).
++Compare confirms baseline ancestry. All 98 provider files from both exact
++archives were compared, identifying six changed files. The exact archive patch
++applied to the fork without replacing files; the new request schema was adapted
++for the retained SDK pin, and capability assertions inspect raw outgoing deltas.
++The target package version remains `0.1.0`; the release increments once from
++16 to `0.1.0-telemetry.17+upstream.f7c4bde`. Both root lockfile versions, baseline
++links, full imported SHA, and generator source checksum are updated.
++
++The first typecheck exposed the pinned SDK test-event type's missing
++`stoppable` property. The upstream capability assertions were moved to raw
++outgoing deltas, which also avoids the old assembler silently dropping the
++field. All final checks below passed after that adaptation.
++
++- `npm run typecheck`: passed with pinned Plugin SDK 0.6.104.
++- `npm test`: 531 passed, 1 opt-in live SDK test skipped (37 files passed,
++  1 skipped). Includes both upstream regressions for individual task stopping
++  and unsettled-only capability advertisement, plus missing-session rejection
++  and local schema validation. Existing telemetry, cache-lifetime, TTL,
++  tooltip, conformance, and compatibility coverage remains in the suite.
++- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
++- `npm run build`: passed for server, host, and frontend. The existing warning
++  reports plugin SDK 0.6.104 versus host SDK 0.6.157; no dependencies were
++  repinned. All three artifact metadata versions and identities agree with
++  the package and both root lockfile versions.
++- Both comparison patches regenerated against the exact target provider
++  archive; generator `--check` verifies freshness, application, and every
++  resulting file. Working-tree and staged `git diff --check` passed.
++
++The complete provider-side target is imported. The exact new request schema
++is backported locally; `stoppable` is emitted on the existing delta wire path.
++Claude Agent SDK 0.3.318 already supports `query.stopTask`. The matching #8158
++BB core changes and host-daemon protocol >=285 are required for the banner,
++CLI, public SDK, and runtime stop routing. Older hosts cannot acquire those
++features from this plugin alone and may drop the capability field. Timeline,
++dangling-task reconciliation, and Codex changes remain outside this package.
++Existing host limitations are documented in UPSTREAM.md.
++
++No live Claude requests, live stop-path validation, plugin reload, automation
++creation, additional worker agents, or push occurred. The opt-in live SDK test
++was not enabled. The integration commit uses per-command disabled signing
++without changing persistent Git settings.
 diff --git a/app.ts b/app.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7beb5bab3a
@@ -1697,19 +1795,19 @@ index 0000000000000000000000000000000000000000..3fcfa2bd952bb34e8c27e432ca15cb7b
 +});
 diff --git a/package-lock.json b/package-lock.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..5a82d43dd5b92a80d81f6601f796cad1916adb27
+index 0000000000000000000000000000000000000000..5d6ac6de05aab89c2270a026c67036f53b25f5e1
 --- /dev/null
 +++ b/package-lock.json
 @@ -0,0 +1,4242 @@
 +{
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.16+upstream.12eedb7",
++  "version": "0.1.0-telemetry.17+upstream.f7c4bde",
 +  "lockfileVersion": 3,
 +  "requires": true,
 +  "packages": {
 +    "": {
 +      "name": "bb-plugin-claude-code-telemetry",
-+      "version": "0.1.0-telemetry.16+upstream.12eedb7",
++      "version": "0.1.0-telemetry.17+upstream.f7c4bde",
 +      "license": "MIT",
 +      "dependencies": {
 +        "@anthropic-ai/claude-agent-sdk": "^0.3.318",
@@ -5944,7 +6042,7 @@ index 0000000000000000000000000000000000000000..5a82d43dd5b92a80d81f6601f796cad1
 +  }
 +}
 diff --git a/package.json b/package.json
-index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..cb3748bb38e95658e7a7fd6456c0ecb394eded10 100644
+index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..2454a47ba85520836fd3c8e955f789555baaeca1 100644
 --- a/package.json
 +++ b/package.json
 @@ -1,26 +1,28 @@
@@ -5952,7 +6050,7 @@ index 962c9e284c12e9304956da5fb9226bd0b6a52e6d..cb3748bb38e95658e7a7fd6456c0ecb3
 -  "name": "bb-plugin-provider-claude-code",
 -  "version": "0.1.0",
 +  "name": "bb-plugin-claude-code-telemetry",
-+  "version": "0.1.0-telemetry.16+upstream.12eedb7",
++  "version": "0.1.0-telemetry.17+upstream.f7c4bde",
    "private": true,
    "type": "module",
 -  "description": "Run bb threads with Claude Code.",
@@ -6421,7 +6519,7 @@ index 0000000000000000000000000000000000000000..9782f02ef9c13bb20d14c11446607909
 +    unittest.main()
 diff --git a/scripts/update-upstream-patches.py b/scripts/update-upstream-patches.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..fd7fa499e4acab6536f1582660e0996a9143c305
+index 0000000000000000000000000000000000000000..71dd53cb00537ec955b0dd8c15bcf113c2ca5796
 --- /dev/null
 +++ b/scripts/update-upstream-patches.py
 @@ -0,0 +1,203 @@
@@ -6437,8 +6535,8 @@ index 0000000000000000000000000000000000000000..fd7fa499e4acab6536f1582660e0996a
 +import urllib.request
 +
 +
-+UPSTREAM_COMMIT = "12eedb7562bd172fd69f86e25a28c1b6e456776d"
-+UPSTREAM_SOURCE_SHA256 = "b92d107d2604374271a87e877fed73cf060d9158402796b0d9040236854cbce7"
++UPSTREAM_COMMIT = "f7c4bde6d0fd60dae653bb5323535c3b749bfced"
++UPSTREAM_SOURCE_SHA256 = "f80d8ce74b25e55dbf885d7841ef158110215c3e7bee907217424cb453df6d4c"
 +ROOT = Path(__file__).resolve().parents[1]
 +GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 +
@@ -6980,7 +7078,7 @@ index 16a30b869f43e95ccc91fe0cdf27fb77e39a14a3..7d8568b5424c79ef1c3fbfb493fa42de
    "turn/completed",
  ];
 diff --git a/src/bridge/__tests__/bridge.test.ts b/src/bridge/__tests__/bridge.test.ts
-index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3de3cdf99a 100644
+index 443ebbd96073f3d04f25fdef033edd473f369308..19778e0a9fa437150e08165ad95bfb83d21e407b 100644
 --- a/src/bridge/__tests__/bridge.test.ts
 +++ b/src/bridge/__tests__/bridge.test.ts
 @@ -1,3 +1,4 @@
@@ -6996,7 +7094,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
    type JsonValue,
    type RuntimePermissionPolicy,
    type RuntimePermissionScope,
-@@ -242,7 +242,7 @@ function getLatestQueryCall(): ClaudeQueryCall {
+@@ -243,7 +243,7 @@ function getLatestQueryCall(): ClaudeQueryCall {
  }
  
  function getFailedTurns(messages: BridgeJsonRpcOutputMessage[]) {
@@ -7005,7 +7103,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
      (event) => event.type === "turn/completed" && event.status === "failed",
    );
  }
-@@ -857,7 +857,7 @@ describe("bridge", () => {
+@@ -859,7 +859,7 @@ describe("bridge", () => {
            await vi.waitFor(() => {
              const events = assembleCapturedThreadEvents(
                bridge.messages,
@@ -7014,7 +7112,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
              );
              expect(
                events
-@@ -878,7 +878,7 @@ describe("bridge", () => {
+@@ -880,7 +880,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const events = assembleCapturedThreadEvents(
              bridge.messages,
@@ -7023,7 +7121,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
            );
            if (delayed) {
              const usage = events
-@@ -931,7 +931,7 @@ describe("bridge", () => {
+@@ -933,7 +933,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const events = assembleCapturedThreadEvents(
              bridge.messages,
@@ -7032,7 +7130,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
            );
            const usage = events
              .filter(
-@@ -958,7 +958,7 @@ describe("bridge", () => {
+@@ -960,7 +960,7 @@ describe("bridge", () => {
          await vi.waitFor(() => {
            const usageEvents = assembleCapturedThreadEvents(
              bridge.messages,
@@ -7041,7 +7139,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
            ).filter(
              (event) => event.type === "thread/contextWindowUsage/updated",
            );
-@@ -1052,7 +1052,7 @@ describe("bridge", () => {
+@@ -1054,7 +1054,7 @@ describe("bridge", () => {
        expect(reports[1].close).toHaveBeenCalledOnce();
        expect(reports).toHaveLength(3);
        expect(
@@ -7050,7 +7148,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
            (event) => event.type === "turn/completed",
          ),
        ).toHaveLength(2);
-@@ -1090,7 +1090,7 @@ describe("bridge", () => {
+@@ -1092,7 +1092,7 @@ describe("bridge", () => {
      });
      const threadId = "thread-provider-commands";
      const providerCommandStates = () =>
@@ -7059,7 +7157,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
          (event) =>
            event.type === "thread/extensionState/updated" &&
            event.kind === "bb/provider-commands"
-@@ -1221,7 +1221,7 @@ describe("bridge", () => {
+@@ -1223,7 +1223,7 @@ describe("bridge", () => {
  
      try {
        bridge.sendRequest(1, "commands/list", {
@@ -7068,7 +7166,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
          cwd: "/tmp/commands-project",
        });
        const response = await bridge.waitForResponse(1);
-@@ -1231,7 +1231,10 @@ describe("bridge", () => {
+@@ -1233,7 +1233,10 @@ describe("bridge", () => {
        });
        expect(queryMock).toHaveBeenCalledWith({
          prompt: expect.anything(),
@@ -7080,7 +7178,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
        });
        expect(close).toHaveBeenCalledOnce();
      } finally {
-@@ -1277,6 +1280,79 @@ describe("bridge", () => {
+@@ -1279,6 +1282,79 @@ describe("bridge", () => {
      }
    });
  
@@ -7160,7 +7258,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
    it("lists models with each request's contributed environment", async () => {
      const bridge = createBridgeJsonRpcTestHarness(handleLine);
      queryMock.mockImplementation(() => ({
-@@ -1376,6 +1452,7 @@ describe("bridge", () => {
+@@ -1378,6 +1454,7 @@ describe("bridge", () => {
            permissionEscalation: "ask",
            instructions: "test",
            envVars: { CLAUDE_CONFIG_DIR: projectConfigDir },
@@ -7168,7 +7266,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
            providerOptions: {
              workflowsEnabled: false,
            },
-@@ -1397,7 +1474,7 @@ describe("bridge", () => {
+@@ -1399,7 +1476,7 @@ describe("bridge", () => {
        expect(forkedTranscript).not.toContain("discarded follow-up");
        expect(queryMock).toHaveBeenLastCalledWith(
          expect.objectContaining({
@@ -7177,7 +7275,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
          }),
        );
      } finally {
-@@ -3533,6 +3610,15 @@ describe("bridge", () => {
+@@ -3535,6 +3612,15 @@ describe("bridge", () => {
          bridge.messages.some((message) => isApprovalInteraction(message)),
        ).toBe(false);
  
@@ -7193,7 +7291,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
        await stopBridgeThread({ bridge, queries, threadId });
      } finally {
        bridge.restore();
-@@ -3679,6 +3765,15 @@ describe("bridge", () => {
+@@ -3681,6 +3767,15 @@ describe("bridge", () => {
          bridge.messages.some((message) => isUserQuestionInteraction(message)),
        ).toBe(false);
  
@@ -7209,7 +7307,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
        await stopBridgeThread({ bridge, queries, threadId });
      } finally {
        bridge.restore();
-@@ -3721,6 +3816,15 @@ describe("bridge", () => {
+@@ -3723,6 +3818,15 @@ describe("bridge", () => {
          toolUseID,
        });
  
@@ -7225,7 +7323,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
        await stopBridgeThread({ bridge, queries, threadId });
      } finally {
        bridge.restore();
-@@ -3761,6 +3865,15 @@ describe("bridge", () => {
+@@ -3763,6 +3867,15 @@ describe("bridge", () => {
          toolUseID,
        });
  
@@ -7241,7 +7339,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
        await stopBridgeThread({ bridge, queries, threadId });
      } finally {
        bridge.restore();
-@@ -3803,6 +3916,15 @@ describe("bridge", () => {
+@@ -3805,6 +3918,15 @@ describe("bridge", () => {
          toolUseID,
        });
  
@@ -7257,7 +7355,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
        await stopBridgeThread({ bridge, queries, threadId });
      } finally {
        bridge.restore();
-@@ -4124,6 +4246,7 @@ describe("bridge", () => {
+@@ -4126,6 +4248,7 @@ describe("bridge", () => {
        queries.push(query);
        return query;
      });
@@ -7265,7 +7363,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
      const rootsDir = mkdtempSync(join(tmpdir(), "bb-claude-roots-"));
      const worktreeGitDir = join(rootsDir, "worktrees", "bb13");
      const objectsDir = join(rootsDir, "objects");
-@@ -4183,6 +4306,65 @@ describe("bridge", () => {
+@@ -4185,6 +4308,65 @@ describe("bridge", () => {
      }
    });
  
@@ -7331,7 +7429,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
    it("passes thread/resume additional workspace-write roots to Claude SDK options", async () => {
      const bridge = createBridgeJsonRpcTestHarness(handleLine);
      const queries: ControlledClaudeQuery[] = [];
-@@ -4245,65 +4427,6 @@ describe("bridge", () => {
+@@ -4247,65 +4429,6 @@ describe("bridge", () => {
      }
    });
  
@@ -7397,7 +7495,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
    it("returns an existing live same-provider thread/resume session", async () => {
      const bridge = createBridgeJsonRpcTestHarness(handleLine);
      const queries: ControlledClaudeQuery[] = [];
-@@ -5793,7 +5916,7 @@ describe("bridge", () => {
+@@ -5795,7 +5918,7 @@ describe("bridge", () => {
        await bridge.flushWork();
  
        expect(
@@ -7406,7 +7504,31 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
            (event) => {
              const item =
                event.type === "item/started" ||
-@@ -6261,7 +6384,7 @@ describe("bridge", () => {
+@@ -5841,6 +5964,23 @@ describe("bridge", () => {
+     }
+   });
+ 
++  it("refuses a background task stop without a running Claude session", async () => {
++    const bridge = createBridgeJsonRpcTestHarness(handleLine);
++    try {
++      bridge.sendRequest(1, "thread/backgroundTask/stop", {
++        threadId: "missing-thread",
++        providerThreadId: "missing-session",
++        familyId: "missing-task",
++      });
++      expect(await bridge.waitForResponse(1)).toMatchObject({
++        error: { message: "Thread missing-thread has no running Claude session" },
++      });
++      expect(queryMock).not.toHaveBeenCalled();
++    } finally {
++      bridge.restore();
++    }
++  });
++
+   it("stops one background command through the Claude SDK", async () => {
+     const bridge = createBridgeJsonRpcTestHarness(handleLine);
+     const queries: ControlledClaudeQuery[] = [];
+@@ -6329,7 +6469,7 @@ describe("bridge", () => {
  
          expect(bridge.hasResponse(2)).toBe(false);
          expect(
@@ -7415,7 +7537,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
              (event) => event.type === "turn/started",
            ),
          ).toBe(false);
-@@ -6274,7 +6397,7 @@ describe("bridge", () => {
+@@ -6342,7 +6482,7 @@ describe("bridge", () => {
  
          const events = assembleCapturedThreadEvents(
            bridge.messages,
@@ -7424,7 +7546,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
          );
          const started = events.find((event) => event.type === "turn/started");
          expect(started).toBeDefined();
-@@ -6309,7 +6432,7 @@ describe("bridge", () => {
+@@ -6377,7 +6517,7 @@ describe("bridge", () => {
            await bridge.waitForResponse(3);
            const steered = assembleCapturedThreadEvents(
              bridge.messages,
@@ -7433,7 +7555,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
            );
            expect(
              steered.filter((event) => event.type === "turn/started"),
-@@ -6327,7 +6450,7 @@ describe("bridge", () => {
+@@ -6395,7 +6535,7 @@ describe("bridge", () => {
          await stopBridgeThread({ bridge, queries, threadId });
          const stopped = assembleCapturedThreadEvents(
            bridge.messages,
@@ -7442,7 +7564,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
          );
          expect(stopped).toContainEqual(
            expect.objectContaining({
-@@ -6428,7 +6551,7 @@ describe("bridge", () => {
+@@ -6496,7 +6636,7 @@ describe("bridge", () => {
      function turnEvents(bridge: BridgeJsonRpcTestHarness) {
        const events = assembleCapturedThreadEvents(
          bridge.messages,
@@ -7451,7 +7573,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
        );
        return {
          completed: events.filter((event) => event.type === "turn/completed"),
-@@ -7105,7 +7228,7 @@ describe("canonical model context-window hint", () => {
+@@ -7173,7 +7313,7 @@ describe("canonical model context-window hint", () => {
  
        const contextWindowEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -7460,7 +7582,7 @@ index a3c9d5721e9281fdba03ab4bf58892de510fd6ac..30f79204c09af6f320f27e1b07217f3d
        ).filter(
          (
            event,
-@@ -7121,7 +7244,7 @@ describe("canonical model context-window hint", () => {
+@@ -7189,7 +7329,7 @@ describe("canonical model context-window hint", () => {
  
        const tokenUsageEvents = assembleCapturedThreadEvents(
          bridge.messages,
@@ -7483,7 +7605,7 @@ index ea9d97ca9561bb3e2c875ed2135d62dc624fdbb8..c9aceb3e30f71749b1050a09256dbd16
        cwd: workspaceDir,
        promptInput: [{ type: "text", text: "say hello", mentions: [] }],
 diff --git a/src/bridge/bridge.ts b/src/bridge/bridge.ts
-index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626f5ea7b31 100644
+index 11c3126d1ef5d734568dee61efd76a4d96a4117d..655b3cbf000fda8fa9cb90741b71e9f7de86a35c 100644
 --- a/src/bridge/bridge.ts
 +++ b/src/bridge/bridge.ts
 @@ -13,7 +13,6 @@ import {
@@ -7514,7 +7636,7 @@ index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626
  import { randomUUID } from "node:crypto";
  import { join as joinPath, resolve as resolvePath } from "node:path";
  import { isDeepStrictEqual } from "node:util";
-@@ -452,6 +454,26 @@ function resolvePendingSessionWork(
+@@ -453,6 +455,26 @@ function resolvePendingSessionWork(
    resolvePendingInteractiveRequests(threadSession, message);
  }
  
@@ -7541,7 +7663,7 @@ index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626
  function applyChromeSetting(
    attachment: ThreadAttachment,
    enabled: boolean | undefined,
-@@ -1098,6 +1120,7 @@ function toSessionConstructionConfig(
+@@ -1099,6 +1121,7 @@ function toSessionConstructionConfig(
        permissionScope: params.permissionScope,
        plugins: params.plugins,
        sandboxEnabled: params.sandboxEnabled,
@@ -7549,7 +7671,7 @@ index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626
      },
    };
  }
-@@ -2688,6 +2711,7 @@ async function runTurnInput(
+@@ -2692,6 +2715,7 @@ async function runTurnInput(
        applyTurnEnvironment(attachment, params.config);
      }
      applyChromeSetting(attachment, params.chromeEnabled);
@@ -7558,18 +7680,37 @@ index 402a89df86ee5a52e7a5a2b3574a3bf00a1228ba..b2ce3296a0901775d7d42e25239c9626
      applyContextWindowSetting(attachment, params.disable1MContext);
      applyArtifactSetting(attachment, params.artifactsEnabled);
 diff --git a/src/bridge/commands.ts b/src/bridge/commands.ts
-index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab75090f630 100644
+index 23574c0a3adee573d9860635c9f88d1001ec5d86..31292d379ebbac9073e5450883d2fb6a5a42701d 100644
 --- a/src/bridge/commands.ts
 +++ b/src/bridge/commands.ts
-@@ -21,6 +21,7 @@ import {
+@@ -5,7 +5,6 @@ import {
+   permissionEscalationValues,
+   reasoningLevelSchema,
+   runtimePermissionScopeValues,
+-  threadBackgroundTaskStopParamsSchema as canonicalThreadBackgroundTaskStopParamsSchema,
+   threadDiscardParamsSchema as canonicalThreadDiscardParamsSchema,
+   threadForkParamsSchema as canonicalThreadForkParamsSchema,
+   threadResumeParamsSchema as canonicalThreadResumeParamsSchema,
+@@ -22,8 +21,18 @@ import {
    providerInstallationStatusParamsSchema,
  } from "@get-bb/plugin-sdk/provider-bridge";
  import { z } from "zod";
 +import { promptCacheTtlSchema } from "../prompt-cache.js";
  import { claudePermissionModeSchema } from "../interactive-contract.js";
  
++// Backported from upstream #8158; the pinned Plugin SDK predates this request.
++const canonicalThreadBackgroundTaskStopParamsSchema = z
++  .object({
++    threadId: z.string().min(1),
++    providerThreadId: z.string().min(1),
++    familyId: z.string().min(1),
++  })
++  .passthrough();
++
  const bridgeInstructionModeSchema = z.enum(instructionModeValues);
-@@ -41,6 +42,7 @@ const bridgeClaudePluginsSchema = z
+ const bridgePermissionEscalationSchema = z
+   .enum(permissionEscalationValues)
+@@ -42,6 +51,7 @@ const bridgeClaudePluginsSchema = z
    .optional();
  
  export const claudeThreadStartParamsSchema = z.object({
@@ -7577,7 +7718,7 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab7
    threadId: z.string(),
    cwd: z.string(),
    baseInstructions: z.string(),
-@@ -81,6 +83,7 @@ export const claudeThreadForkParamsSchema =
+@@ -82,6 +92,7 @@ export const claudeThreadForkParamsSchema =
    });
  
  export const claudeTurnStartParamsSchema = z.object({
@@ -7585,7 +7726,7 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab7
    threadId: z.string(),
    providerThreadId: z.string().nullable(),
    input: z.array(z.unknown()),
-@@ -108,6 +111,9 @@ export const claudeTurnSteerParamsSchema = claudeTurnStartParamsSchema
+@@ -109,6 +120,9 @@ export const claudeTurnSteerParamsSchema = claudeTurnStartParamsSchema
    .omit({ config: true })
    .extend({ expectedTurnId: z.string() });
  
@@ -7595,7 +7736,7 @@ index 28ab2a23a1fb6d14f8f4c2d411288c80187d4816..8641fc1540c57efdf78ca4a3a2405ab7
  const claudeCodeCommandSchema = z.discriminatedUnion("method", [
    z.object({
      method: z.literal("initialize"),
-@@ -119,23 +125,23 @@ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
+@@ -120,23 +134,23 @@ const claudeCodeCommandSchema = z.discriminatedUnion("method", [
    }),
    z.object({
      method: z.literal("commands/list"),
@@ -7926,10 +8067,10 @@ index b68306ae78d556d40a6039e64e914b1e0c7f87ac..d2905a7d1305844162cd5414197a1f92
          })
 diff --git a/src/bridge/sdk-compat.test.ts b/src/bridge/sdk-compat.test.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..34895fee66b363bf671d0f113667528829b90507
+index 0000000000000000000000000000000000000000..a82e76acde080c178721ea3c05ee72c06455a608
 --- /dev/null
 +++ b/src/bridge/sdk-compat.test.ts
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,109 @@
 +import { afterEach, describe, expect, it, vi } from "vitest";
 +import { mkdtemp, rm, writeFile } from "node:fs/promises";
 +import { tmpdir } from "node:os";
@@ -7946,6 +8087,19 @@ index 0000000000000000000000000000000000000000..34895fee66b363bf671d0f1136675288
 +});
 +
 +describe("standalone SDK backports", () => {
++  it("validates background task stop references while retaining extension fields", () => {
++    const params = { threadId: "thread", providerThreadId: "session", familyId: "task", extra: true };
++    const decode = (value: object) => decodeClaudeCodeJsonRpcRequest({
++      jsonrpc: "2.0", id: 1, method: "thread/backgroundTask/stop", params: value,
++    });
++    expect(decode(params)).toMatchObject({ kind: "request", request: { params } });
++    for (const field of ["threadId", "providerThreadId", "familyId"]) {
++      expect(decode({ ...params, [field]: "" }).kind).toBe("invalid_params");
++      expect(decode({ ...params, [field]: undefined }).kind).toBe("invalid_params");
++      expect(decode({ ...params, [field]: 42 }).kind).toBe("invalid_params");
++    }
++  });
++
 +  it("keeps contributed and thread env while removing bridge runtime env", () => {
 +    vi.stubEnv("ELECTRON_RUN_AS_NODE", "1");
 +    vi.stubEnv("BB_PROVIDER_BRIDGE_RECORD_DIR", "/tmp/recording");
@@ -9467,6 +9621,60 @@ index 44dec8fdd317aa9040ae3aaedcda23d49b5e8c88..328cadbd3d41bc8cfe84a9a28668f695
            scope: threadScope(),
          }),
        ]);
+diff --git a/src/task-translation.test.ts b/src/task-translation.test.ts
+index 34a453af5d2f6207f2b96f7839b705e57cac683c..9fc0ffcd03fb38a5612a716e3043003009e636c6 100644
+--- a/src/task-translation.test.ts
++++ b/src/task-translation.test.ts
+@@ -567,6 +567,7 @@ describe("claude-code background task translation", () => {
+ 
+   it("materializes a backgrounded shell command (task_type local_bash)", () => {
+     const harness = createClaudeDeltaHarness();
++    const translateSpy = vi.spyOn(harness.translator, "translate");
+     const context = { threadId: "bb-thread-1" };
+ 
+     harness.translate(
+@@ -604,10 +605,18 @@ describe("claude-code background task translation", () => {
+       description: "Count ticks from 1 to 6 with 1 second delays",
+       status: "pending",
+       taskStatus: "running",
+-      stoppable: true,
+       skipTranscript: false,
+       parentToolCallId: harness.itemId("toolu_bash_1", "bb-thread-1"),
+     });
++    // SDK 0.6.104's assembler drops the new field; assert the outgoing wire shape.
++    expect(translateSpy.mock.results.at(-1)?.value).toEqual(
++      expect.arrayContaining([
++        expect.objectContaining({
++          kind: "item.open",
++          item: expect.objectContaining({ stoppable: true }),
++        }),
++      ]),
++    );
+     expect(startedItem.workflow).toBeUndefined();
+     expect(startedItem.workflowName).toBeUndefined();
+ 
+@@ -638,7 +647,20 @@ describe("claude-code background task translation", () => {
+       summary:
+         'Background command "Count ticks from 1 to 6 with 1 second delays" completed (exit code 0)',
+     });
+-    expect(backgroundTaskItem(completed[0]!).stoppable).toBeUndefined();
++    const closeDeltas = translateSpy.mock.results.at(-1)?.value;
++    expect(closeDeltas).toEqual(
++      expect.arrayContaining([
++        expect.objectContaining({
++          kind: "item.close",
++          item: expect.objectContaining({ taskStatus: "completed" }),
++        }),
++      ]),
++    );
++    for (const delta of closeDeltas ?? []) {
++      if (delta.kind === "item.close") {
++        expect(delta.item).not.toHaveProperty("stoppable");
++      }
++    }
+   });
+ 
+   it("keeps a foreground shell command out of background tasks", () => {
 diff --git a/src/usage-source.test.ts b/src/usage-source.test.ts
 index 5f49db938c5ecf2264aadb00f546deed5a1fe585..0f447f0af0455b8226722a0546ee729c99d1a5cb 100644
 --- a/src/usage-source.test.ts

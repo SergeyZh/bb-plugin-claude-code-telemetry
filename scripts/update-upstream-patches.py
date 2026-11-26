@@ -10,8 +10,8 @@ import tempfile
 import urllib.request
 
 
-UPSTREAM_COMMIT = "12eedb7562bd172fd69f86e25a28c1b6e456776d"
-UPSTREAM_SOURCE_SHA256 = "b92d107d2604374271a87e877fed73cf060d9158402796b0d9040236854cbce7"
+UPSTREAM_COMMIT = "f7c4bde6d0fd60dae653bb5323535c3b749bfced"
+UPSTREAM_SOURCE_SHA256 = "f80d8ce74b25e55dbf885d7841ef158110215c3e7bee907217424cb453df6d4c"
 ROOT = Path(__file__).resolve().parents[1]
 GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.filemode=false"]
 

@@ -14,6 +14,19 @@ afterEach(() => {
 });
 
 describe("standalone SDK backports", () => {
+  it("validates background task stop references while retaining extension fields", () => {
+    const params = { threadId: "thread", providerThreadId: "session", familyId: "task", extra: true };
+    const decode = (value: object) => decodeClaudeCodeJsonRpcRequest({
+      jsonrpc: "2.0", id: 1, method: "thread/backgroundTask/stop", params: value,
+    });
+    expect(decode(params)).toMatchObject({ kind: "request", request: { params } });
+    for (const field of ["threadId", "providerThreadId", "familyId"]) {
+      expect(decode({ ...params, [field]: "" }).kind).toBe("invalid_params");
+      expect(decode({ ...params, [field]: undefined }).kind).toBe("invalid_params");
+      expect(decode({ ...params, [field]: 42 }).kind).toBe("invalid_params");
+    }
+  });
+
   it("keeps contributed and thread env while removing bridge runtime env", () => {
     vi.stubEnv("ELECTRON_RUN_AS_NODE", "1");
     vi.stubEnv("BB_PROVIDER_BRIDGE_RECORD_DIR", "/tmp/recording");

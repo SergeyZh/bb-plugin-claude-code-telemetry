@@ -14,20 +14,20 @@ instructions to reproduce and verify them.
 
 The package version follows
 `<upstream-provider-version>-telemetry.<revision>+upstream.<short-sha>`.
-The current version is `0.1.0-telemetry.16+upstream.12eedb7`:
+The current version is `0.1.0-telemetry.17+upstream.f7c4bde`:
 
 - `0.1.0` is the upstream BB provider package version, not the Claude Code CLI
   or Agent SDK version.
-- `telemetry.16` is this fork's release revision. Increment it for every release,
+- `telemetry.17` is this fork's release revision. Increment it for every release,
   including local fixes and upstream imports, even if upstream stays at `0.1.0`.
-- `upstream.12eedb7` identifies the latest fully imported upstream baseline.
+- `upstream.f7c4bde` identifies the latest fully imported upstream baseline.
   Use the first seven characters of its commit SHA; keep the full SHA and
   import date below and in the comparison-patch generator.
 
 This is valid SemVer. Build metadata after `+` does not affect version ordering;
 `telemetry.<revision>` determines the order of fork releases for the same base.
 A local fix after this release would be
-`0.1.0-telemetry.17+upstream.12eedb7`. A later upstream import would increment the
+`0.1.0-telemetry.18+upstream.f7c4bde`. A later upstream import would increment the
 revision again and replace the SHA with the newly imported baseline.
 
 ## Imported upstream fixes
@@ -473,3 +473,52 @@ Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
 TTL selection and tooltips, standalone packaging, and extra regressions are
 preserved. No live requests, reload, automation creation, worker agents, or
 push were performed.
+
+## Individual background task stop sync, 2026-11-26
+
+Imported the only provider commit after `12eedb7` through
+[`f7c4bde`](https://github.com/get-bb/bb/commit/f7c4bde6d0fd60dae653bb5323535c3b749bfced)
+(2026-11-25), "Stop a single background command from the thread banner, CLI and SDK (#8158)".
+Unsettled background tasks now advertise `stoppable: true`; settled tasks omit
+that capability. The new `thread/backgroundTask/stop` request calls the resident
+Claude session's `query.stopTask(familyId)` without interrupting or closing the
+turn. Missing or closing sessions return a bridge error. Normal Claude task
+notifications continue to settle tasks, including the existing stopped status.
+
+GitHub history pinned to default-branch HEAD
+`b0ddaad731565d7e4de68d824120d802fc78f7d5` confirms exactly this provider commit
+in the interval, and compare confirms baseline ancestry. Comparing every file
+from both exact provider archives finds only six changed files: the bridge,
+commands, SDK session, task translator, and bridge/task translation tests.
+All patches were applied to the fork without replacing files. Both upstream
+regressions are included; capability assertions inspect outgoing deltas because
+the pinned SDK's test assembler drops the new field. Additional regressions
+cover a missing session and the backported request schema's required nonempty
+references and passthrough fields.
+
+The target upstream package version is `0.1.0`; the fork revision increases
+once from 16 to `0.1.0-telemetry.17+upstream.f7c4bde`. The full imported baseline
+is `f7c4bde6d0fd60dae653bb5323535c3b749bfced`. Its 98 provider files have generator
+`digest()` SHA-256
+`f80d8ce74b25e55dbf885d7841ef158110215c3e7bee907217424cb453df6d4c`.
+
+### SDK and host compatibility
+
+Upstream Plugin SDK 0.6.203 exports the new stop-request schema and capability
+field. This fork deliberately retains SDK 0.6.104 and backports the exact small
+passthrough request schema locally in `src/bridge/commands.ts`. The capability
+is emitted directly on the wire through the existing delta sender. The installed
+Claude Agent SDK 0.3.318 already supports `query.stopTask`; no dependency or CLI
+upgrade is introduced by this provider patch.
+
+Stopping tasks from the banner, CLI, or public SDK requires the matching #8158
+BB runtime, server, daemon, API, and UI changes, with host-daemon protocol 285
+or newer. Older hosts do not expose the stop path and may discard `stoppable`;
+this standalone plugin cannot add those host features. Upstream timeline,
+dangling-task reconciliation, and Codex changes are outside this package.
+Existing compatibility limitations above remain in effect.
+
+Provider identity, request telemetry, cache-write lifetime breakdown, per-thread
+TTL selection and tooltips, standalone packaging, and extra regressions are
+preserved. No live requests, plugin reload, automation creation, worker agents,
+or push were performed.

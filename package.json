@@ -1,6 +1,6 @@
 {
   "name": "bb-plugin-claude-code-telemetry",
-  "version": "0.1.0-telemetry.16+upstream.12eedb7",
+  "version": "0.1.0-telemetry.17+upstream.f7c4bde",
   "private": true,
   "type": "module",
   "description": "Run Claude Code alongside the built-in provider with usage telemetry for each model request.",

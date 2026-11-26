@@ -681,3 +681,52 @@ No live Claude requests, live preview rendering checks, plugin reload,
 automation creation, additional worker agents, or push occurred. The opt-in
 live SDK test was not enabled. The local integration commit uses per-command
 disabled signing without changing persistent Git settings.
+
+## Individual background task stop sync, 2026-11-26
+
+Before editing, the checkout was clean at dispatched HEAD
+`2f36e487c82f197823b0aa60c7fcedb43ee0ae30`, and `UPSTREAM_COMMIT` matched
+`12eedb7562bd172fd69f86e25a28c1b6e456776d`. GitHub history pinned to resolved
+default-branch HEAD `b0ddaad731565d7e4de68d824120d802fc78f7d5` confirms exactly
+one provider commit through `f7c4bde6d0fd60dae653bb5323535c3b749bfced` (#8158).
+Compare confirms baseline ancestry. All 98 provider files from both exact
+archives were compared, identifying six changed files. The exact archive patch
+applied to the fork without replacing files; the new request schema was adapted
+for the retained SDK pin, and capability assertions inspect raw outgoing deltas.
+The target package version remains `0.1.0`; the release increments once from
+16 to `0.1.0-telemetry.17+upstream.f7c4bde`. Both root lockfile versions, baseline
+links, full imported SHA, and generator source checksum are updated.
+
+The first typecheck exposed the pinned SDK test-event type's missing
+`stoppable` property. The upstream capability assertions were moved to raw
+outgoing deltas, which also avoids the old assembler silently dropping the
+field. All final checks below passed after that adaptation.
+
+- `npm run typecheck`: passed with pinned Plugin SDK 0.6.104.
+- `npm test`: 531 passed, 1 opt-in live SDK test skipped (37 files passed,
+  1 skipped). Includes both upstream regressions for individual task stopping
+  and unsettled-only capability advertisement, plus missing-session rejection
+  and local schema validation. Existing telemetry, cache-lifetime, TTL,
+  tooltip, conformance, and compatibility coverage remains in the suite.
+- `npm run lint:type-aware`: passed, including its typecheck prerequisite.
+- `npm run build`: passed for server, host, and frontend. The existing warning
+  reports plugin SDK 0.6.104 versus host SDK 0.6.157; no dependencies were
+  repinned. All three artifact metadata versions and identities agree with
+  the package and both root lockfile versions.
+- Both comparison patches regenerated against the exact target provider
+  archive; generator `--check` verifies freshness, application, and every
+  resulting file. Working-tree and staged `git diff --check` passed.
+
+The complete provider-side target is imported. The exact new request schema
+is backported locally; `stoppable` is emitted on the existing delta wire path.
+Claude Agent SDK 0.3.318 already supports `query.stopTask`. The matching #8158
+BB core changes and host-daemon protocol >=285 are required for the banner,
+CLI, public SDK, and runtime stop routing. Older hosts cannot acquire those
+features from this plugin alone and may drop the capability field. Timeline,
+dangling-task reconciliation, and Codex changes remain outside this package.
+Existing host limitations are documented in UPSTREAM.md.
+
+No live Claude requests, live stop-path validation, plugin reload, automation
+creation, additional worker agents, or push occurred. The opt-in live SDK test
+was not enabled. The integration commit uses per-command disabled signing
+without changing persistent Git settings.
